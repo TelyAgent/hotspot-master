@@ -31,9 +31,17 @@ export default function Monitor() {
   const handleRefresh = () => {
     toast('已发起五个榜单的立即采集')
     refreshMonitor()
-      .then(reload)
-      .catch(() => {
-        /* 刷新失败时，reload 会重新请求并展示错误 */
+      .then((result) => {
+        if (result.status === 'failed') {
+          toast(result.error ? `采集失败：${result.error}` : '采集失败')
+          return
+        }
+
+        toast(result.message)
+        reload()
+      })
+      .catch((error: unknown) => {
+        toast(error instanceof Error ? error.message : '采集请求失败')
       })
   }
 

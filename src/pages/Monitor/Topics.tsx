@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { refreshTopicCircleTopics } from '../../api/topicCircle'
-import { useSettings } from '../../hooks/useSettings'
 import { useTopicCircleTopics } from '../../hooks/useTopicCircleTopics'
+import { useTwitterTopicConfigs } from '../../hooks/useTwitterTopicConfigs'
 import styles from './Monitor.module.css'
 
 const TRIGGER_LABEL: Record<string, string> = {
@@ -14,28 +13,22 @@ const TRIGGER_LABEL: Record<string, string> = {
 
 export default function Topics() {
   const { topicDetail, set, toast } = useApp()
-  const { items, loading, error } = useSettings('topics')
+  const { topics, loading, error } = useTwitterTopicConfigs()
   const [refreshing, setRefreshing] = useState(false)
 
   const refreshTopics = async () => {
     setRefreshing(true)
-    try {
-      const result = await refreshTopicCircleTopics()
-      toast(
-        `主题圈采集完成：新增 ${result.collect.collected} 条帖子，新增 ${result.summarize.topics} 个话题`,
-      )
-    } catch (e) {
-      toast(e instanceof Error ? e.message : '主题圈采集失败')
-    } finally {
+    window.setTimeout(() => {
+      toast('主题圈帖子采集工作流尚未接入新后端，当前先展示 Twitter 主题配置。')
       setRefreshing(false)
-    }
+    }, 200)
   }
 
   if (topicDetail) return <TopicDetail name={topicDetail} />
 
   if (loading) return <div className="note">正在加载主题…</div>
   if (error) return <div className="note warning">加载失败：{error}</div>
-  if (items.length === 0) return <div className="note">暂无主题，请在系统设置里配置。</div>
+  if (topics.length === 0) return <div className="note">暂无主题，请在系统设置里配置。</div>
 
   return (
     <>
@@ -46,21 +39,21 @@ export default function Topics() {
         </button>
       </div>
       <div className="three grid">
-        {items.map((c) => {
-          const accountCount = String(c.accounts ?? '')
-            .split('\n')
-            .map((s) => s.trim())
-            .filter(Boolean).length
+        {topics.map((c) => {
+          const accountCount = c.accounts.length
+          const keywordCount = c.keywords.length
           return (
             <article className={styles.topic} key={c.id}>
               <div className={styles.topicTop}>
                 <div>
                   <h2>{c.name}</h2>
-                  <span className="small">{accountCount} 个监控账号</span>
+                  <span className="small">
+                    {c.enabled ? '启用' : '停用'} · {accountCount} 个监控账号 · {keywordCount} 个关键词
+                  </span>
                 </div>
                 <span className={styles.number}>{accountCount}</span>
               </div>
-              <p>{c.description}</p>
+              <p>{c.positiveExamples.slice(0, 2).join('；') || c.keywords.slice(0, 8).join('、')}</p>
               <button className="btn link" onClick={() => set({ topicDetail: c.name })}>
                 查看该主题全部话题 →
               </button>
@@ -81,17 +74,11 @@ function TopicDetail({ name }: { name: string }) {
 
   const refreshTopics = async () => {
     setRefreshing(true)
-    try {
-      const result = await refreshTopicCircleTopics()
+    window.setTimeout(() => {
       reload()
-      toast(
-        `主题圈采集完成：新增 ${result.collect.collected} 条帖子，新增 ${result.summarize.topics} 个话题`,
-      )
-    } catch (e) {
-      toast(e instanceof Error ? e.message : '主题圈采集失败')
-    } finally {
+      toast('主题圈帖子采集工作流尚未接入新后端，当前先展示已生成话题。')
       setRefreshing(false)
-    }
+    }, 200)
   }
 
   return (

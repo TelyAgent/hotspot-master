@@ -16,4 +16,7 @@ export interface TrendingResponse {
 export interface RefreshResponse {
   status: string
   message: string
+  fetchRunId?: string
+  itemCount?: number
+  error?: string
 }
