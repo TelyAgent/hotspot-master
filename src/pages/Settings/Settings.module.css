@@ -47,6 +47,10 @@
   border-bottom: 1px solid var(--line2);
 }
 
+.settingRowSimple {
+  grid-template-columns: minmax(210px, 1fr) auto;
+}
+
 .twitterGrid {
   display: grid;
   gap: 14px;
@@ -102,6 +106,10 @@
   color: var(--ink);
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.accountList {
+  display: grid;
 }
 
 @media (max-width: 1180px) {

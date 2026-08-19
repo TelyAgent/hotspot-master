@@ -17,20 +17,22 @@ export function SettingRow({
 }: {
   name: string
   desc: string
-  status: string
-  middle: string
+  status?: string
+  middle?: string
   actionLabel: string
   onEdit: () => void
 }) {
+  const simple = !middle && !status
+
   return (
-    <div className={styles.settingRow}>
+    <div className={`${styles.settingRow} ${simple ? styles.settingRowSimple : ''}`}>
       <span>
         <b>{name}</b>
         <br />
         <small className="muted">{desc}</small>
       </span>
-      <span>{middle}</span>
-      <span className={`pill ${statusTone(status)}`}>{status}</span>
+      {middle ? <span>{middle}</span> : null}
+      {status ? <span className={`pill ${statusTone(status)}`}>{status}</span> : null}
       <button className="btn link" onClick={onEdit}>
         {actionLabel} →
       </button>

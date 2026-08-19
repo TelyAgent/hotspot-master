@@ -59,13 +59,13 @@ export default function SourceStatusPanel() {
               <div className={styles.sourceRowMain}>
                 <b>{SOURCE_LABEL[s.source]}</b>
                 <span className={`pill ${STATUS_TONE[s.status]}`}>{STATUS_LABEL[s.status]}</span>
-                {s.status === 'error' && (
+                {s.status !== 'disabled' && (
                   <button
                     className="btn"
                     onClick={() => onResync(s)}
                     disabled={syncing === s.source}
                   >
-                    {syncing === s.source ? '同步中…' : '重新同步'}
+                    {syncing === s.source ? '同步中…' : s.status === 'error' ? '重新同步' : '立即同步'}
                   </button>
                 )}
               </div>
