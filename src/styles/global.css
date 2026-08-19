@@ -1,0 +1,439 @@
+:root {
+  --bg: #f4f7f7;
+  --p: #fff;
+  --soft: #edf7f5;
+  --ink: #172026;
+  --muted: #647276;
+  --line: #d6dfdf;
+  --line2: #e5ebeb;
+  --g: #087b71;
+  --g2: #05665e;
+  --o: #b55020;
+  --ob: #f8e6db;
+  --r: #a53d44;
+  --rb: #fbeaec;
+  --shadow: 0 16px 46px #163e3b1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font:
+    14px/1.5 Inter,
+    system-ui,
+    -apple-system,
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #82c1bb;
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 25px;
+  margin-bottom: 4px;
+}
+
+h2 {
+  font-size: 17px;
+  margin-bottom: 5px;
+}
+
+h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---------- app shell ---------- */
+.app {
+  display: grid;
+  grid-template-columns: 224px minmax(940px, 1fr);
+  min-height: 100vh;
+}
+
+.side {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid var(--line);
+  padding: 20px 12px;
+  z-index: 4;
+}
+
+.brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 10px 23px;
+  font-weight: 750;
+}
+
+.mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: var(--g);
+  color: #fff;
+  font-size: 12px;
+}
+
+.brand small {
+  display: block;
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.group {
+  padding: 14px 10px 6px;
+  color: #869295;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav {
+  width: 100%;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  padding: 10px 11px;
+  text-align: left;
+  color: #526165;
+}
+
+.nav b {
+  display: block;
+}
+
+.nav small {
+  font-size: 10px;
+  color: #8a9699;
+}
+
+.nav:hover {
+  background: #f2f7f6;
+}
+
+.nav.active {
+  border-left-color: var(--g);
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.nav.active small {
+  color: var(--g);
+}
+
+.top {
+  height: 62px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #fffffff5;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  backdrop-filter: blur(10px);
+}
+
+.top-right,
+.inline,
+.filters,
+.actions,
+.tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.online {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--g);
+  box-shadow: 0 0 0 4px #def1ed;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: #def1ed;
+  color: var(--g);
+  font-weight: 750;
+}
+
+.page {
+  max-width: 1510px;
+  margin: auto;
+  padding: 26px 30px 30px;
+}
+
+.head,
+.card-head,
+.section,
+.setting-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.head {
+  align-items: flex-end;
+  margin-bottom: 18px;
+}
+
+.section {
+  align-items: flex-end;
+  margin: 25px 0 10px;
+}
+
+.section h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.section p,
+.card-head p {
+  margin: 2px 0 0;
+}
+
+/* ---------- buttons & filters ---------- */
+.btn,
+.filter {
+  border: 1px solid #cbd6d7;
+  background: #fff;
+  color: var(--ink);
+  padding: 8px 10px;
+}
+
+.btn:hover,
+.filter:hover {
+  border-color: #8eb7b2;
+  background: #f8fbfa;
+}
+
+.btn.primary {
+  background: var(--g);
+  border-color: var(--g);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: var(--g2);
+}
+
+.btn.link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--g);
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.btn.danger {
+  border-color: #e5bfc3;
+  color: var(--r);
+}
+
+.btn.mini {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+/* ---------- cards & grids ---------- */
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 17px;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.two {
+  grid-template-columns: 1fr 1fr;
+}
+
+.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ---------- pills ---------- */
+.pill {
+  display: inline-flex;
+  padding: 3px 7px;
+  background: #eef4f4;
+  color: #526165;
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.pill.green {
+  background: #def1ed;
+  color: var(--g);
+}
+
+.pill.orange {
+  background: var(--ob);
+  color: var(--o);
+}
+
+.pill.red {
+  background: var(--rb);
+  color: var(--r);
+}
+
+/* ---------- notes ---------- */
+.note {
+  border-left: 3px solid var(--g);
+  background: var(--soft);
+  padding: 11px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+.note.warning {
+  border-color: var(--o);
+  background: #fbf2ec;
+}
+
+/* ---------- form fields ---------- */
+.field label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid #cbd6d7;
+  padding: 9px;
+  background: #fff;
+}
+
+.field textarea {
+  min-height: 72px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ---------- modal ---------- */
+.modal-wrap {
+  position: fixed;
+  inset: 0;
+  background: #0c1f1f73;
+  z-index: 20;
+  place-items: center;
+  padding: 20px;
+  display: grid;
+}
+
+.modal {
+  width: min(760px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.modal.large {
+  width: min(960px, 100%);
+}
+
+.modal-head,
+.modal-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 17px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-foot {
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+}
+
+.modal-body {
+  padding: 17px;
+}
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: #17332f;
+  color: #fff;
+  padding: 11px 14px;
+  z-index: 30;
+}
+
+@media (max-width: 1180px) {
+  .app {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}

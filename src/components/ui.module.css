@@ -1,0 +1,22 @@
+.chart {
+  height: 155px;
+}
+
+.chart svg {
+  width: 100%;
+  height: 100%;
+}
+
+.g {
+  stroke: #e1e9e8;
+}
+
+.a {
+  fill: #e2f2ee;
+}
+
+.l {
+  fill: none;
+  stroke: var(--g);
+  stroke-width: 3;
+}

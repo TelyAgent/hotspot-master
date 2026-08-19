@@ -1,0 +1,22 @@
+.campaignGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.campaign {
+  border: 1px solid var(--line);
+  padding: 13px;
+}
+
+.selected {
+  border: 2px solid var(--g);
+  background: var(--soft);
+  padding: 12px;
+}
+
+@media (max-width: 1180px) {
+  .campaignGrid {
+    grid-template-columns: 1fr;
+  }
+}

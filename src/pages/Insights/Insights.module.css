@@ -1,0 +1,22 @@
+.settingRow {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) 130px 115px auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.attention {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  gap: 11px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.severity {
+  height: 34px;
+  background: var(--o);
+}

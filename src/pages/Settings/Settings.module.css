@@ -1,0 +1,115 @@
+.settingsLayout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.settingsNav {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 7px;
+}
+
+.settingTab {
+  width: 100%;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: #fff;
+  text-align: left;
+  padding: 10px;
+}
+
+.settingTab.active {
+  border-left-color: var(--g);
+  background: var(--soft);
+  color: var(--g);
+  font-weight: 700;
+}
+
+.settingPanel {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 18px;
+}
+
+.settingSection {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settingRow {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) 130px 115px auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.twitterGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.twitterBlock {
+  border-top: 1px solid var(--line2);
+  padding-top: 16px;
+}
+
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.regionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.checkItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px 10px;
+  min-height: 38px;
+}
+
+.checkItem input {
+  width: auto;
+}
+
+.workflowMeta {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line2);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.workflowMeta code {
+  color: var(--ink);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .settingsLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .workflowMeta {
+    grid-template-columns: 1fr;
+  }
+}

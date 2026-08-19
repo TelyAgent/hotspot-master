@@ -1,0 +1,253 @@
+import {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import type { EventItem, PageId, TaskItem } from '../data/types'
+import type { SettingId } from '../data/settings'
+import { initialEvents } from '../data/events'
+import { initialTasks } from '../data/tasks'
+import { normalizedTrendName } from '../data/trends'
+import { PAGE_LABELS } from '../data/labels'
+
+export interface AppState {
+  mt: string
+  region: string
+  eventStatus: string
+  event: string
+  task: string
+  taskEvent: string
+  taskRole: string
+  taskStatus: string
+  taskRisk: string
+  candidate: number | null
+  setting: SettingId
+  campaignVersion: number
+  campaignChoice: number | null
+  topicDetail: string | null
+}
+
+interface ModalState {
+  title: string
+  body: ReactNode
+  readonly: boolean
+  size?: 'default' | 'large'
+  confirm?: {
+    label: string
+    onConfirm: () => void | Promise<void>
+  }
+}
+
+interface ToastState {
+  msg: string
+  id: number
+}
+
+interface AppContextValue extends AppState {
+  page: PageId
+  user: string | null
+  isAuthenticated: boolean
+  events: EventItem[]
+  tasks: TaskItem[]
+  modal: ModalState | null
+  toastState: ToastState | null
+
+  set: (patch: Partial<AppState>) => void
+  go: (page: PageId) => void
+  login: (name: string) => void
+  logout: () => void
+  toast: (msg: string) => void
+  openModal: (
+    title: string,
+    body: ReactNode,
+    readonly?: boolean,
+    size?: 'default' | 'large',
+    confirm?: { label: string; onConfirm: () => void | Promise<void> },
+  ) => void
+  closeModal: () => void
+  ensureEventForTrend: (
+    name: string,
+    region: string,
+    rank?: number | string,
+  ) => EventItem
+  addPreheatTasks: (title: string) => string
+}
+
+const defaultState: AppState = {
+  mt: 'ranking',
+  region: 'Worldwide',
+  eventStatus: '全部',
+  event: 'e1',
+  task: 't1',
+  taskEvent: '全部',
+  taskRole: '全部',
+  taskStatus: '全部',
+  taskRisk: '全部',
+  candidate: null,
+  setting: 'twitter',
+  campaignVersion: 1,
+  campaignChoice: null,
+  topicDetail: null,
+}
+
+const AppContext = createContext<AppContextValue | null>(null)
+
+export function findEventForTrend(
+  events: EventItem[],
+  name: string,
+): EventItem | undefined {
+  const n = normalizedTrendName(name)
+  if (/GPT-6|OpenAI/i.test(n)) return events.find((e) => e.id === 'e1')
+  if (/CPI/i.test(n)) return events.find((e) => e.id === 'e2')
+  if (/Stablecoin/i.test(n)) return events.find((e) => e.id === 'e3')
+  if (/World Cup/i.test(n)) return events.find((e) => e.id === 'e4')
+  if (/NVIDIA/i.test(n)) return events.find((e) => e.id === 'e5')
+  return undefined
+}
+
+const PAGE_IDS = Object.keys(PAGE_LABELS) as PageId[]
+
+const AUTH_STORAGE_KEY = 'hotspot-monitor.user'
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<AppState>(defaultState)
+  const [events, setEvents] = useState<EventItem[]>(initialEvents)
+  const [tasks, setTasks] = useState<TaskItem[]>(initialTasks)
+  const [modal, setModal] = useState<ModalState | null>(null)
+  const [toastState, setToastState] = useState<ToastState | null>(null)
+  const [user, setUser] = useState<string | null>(
+    () => localStorage.getItem(AUTH_STORAGE_KEY),
+  )
+
+  const login = (name: string) => {
+    setUser(name)
+    localStorage.setItem(AUTH_STORAGE_KEY, name)
+  }
+
+  const logout = () => {
+    setUser(null)
+    localStorage.removeItem(AUTH_STORAGE_KEY)
+  }
+
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const path = location.pathname.replace(/^\/+/, '')
+  const page: PageId = (PAGE_IDS as string[]).includes(path)
+    ? (path as PageId)
+    : 'overview'
+
+  const set = (patch: Partial<AppState>) =>
+    setState((prev) => ({ ...prev, ...patch }))
+
+  const go = (target: PageId) => {
+    navigate(`/${target}`)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const toast = (msg: string) => setToastState({ msg, id: Date.now() })
+
+  const openModal = (
+    title: string,
+    body: ReactNode,
+    readonly = false,
+    size: 'default' | 'large' = 'default',
+    confirm?: { label: string; onConfirm: () => void | Promise<void> },
+  ) => setModal({ title, body, readonly, size, confirm })
+
+  const closeModal = () => setModal(null)
+
+  const ensureEventForTrend = (
+    name: string,
+    region: string,
+    rank?: number | string,
+  ): EventItem => {
+    const known = findEventForTrend(events, name)
+    if (known) return known
+
+    const clean = normalizedTrendName(name)
+    const id =
+      'trend-' +
+      clean
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') +
+      '-' +
+      region.toLowerCase().replace(/[^a-z]+/g, '')
+
+    const existing = events.find((e) => e.id === id)
+    if (existing) return existing
+
+    const event: EventItem = {
+      id,
+      title: clean + '成为热搜上升话题',
+      summary: `${clean}进入${region}热搜榜并出现明显讨论增长，系统已聚合该榜单条目及当前可取得的热门帖子。`,
+      status: '内容生成中',
+      verify: '信息一致',
+      regions: region,
+      trigger: `榜单第${rank ?? '—'}位 / 热点监测跳转`,
+      urls: [
+        `https://x.com/search?q=${encodeURIComponent(clean)}&src=trend_click&f=live`,
+      ],
+      related: [],
+    }
+
+    setEvents((prev) => (prev.some((e) => e.id === id) ? prev : [...prev, event]))
+    return event
+  }
+
+  const addPreheatTasks = (title: string): string => {
+    const existing = tasks.find((t) => t.event === title)
+    if (existing) return existing.id
+
+    const base = tasks.length + 1080
+    const newTasks: TaskItem[] = [
+      ['PredX Flash', '快讯型'],
+      ['PredX Explain', '解释翻译型'],
+      ['PredX Markets', '产品承接型'],
+    ].map(([account, role], i) => ({
+      id: 'pre' + (base + i),
+      code: 'T-' + (base + i),
+      event: title,
+      account,
+      role,
+      status: '生成中',
+      risk: '普通',
+      time: '刚刚创建',
+      copies: [],
+    }))
+
+    setTasks((prev) => [...prev, ...newTasks])
+    return newTasks[0].id
+  }
+
+  const value: AppContextValue = {
+    ...state,
+    page,
+    user,
+    isAuthenticated: user != null,
+    events,
+    tasks,
+    modal,
+    toastState,
+    set,
+    go,
+    login,
+    logout,
+    toast,
+    openModal,
+    closeModal,
+    ensureEventForTrend,
+    addPreheatTasks,
+  }
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
+}
+
+export function useApp(): AppContextValue {
+  const ctx = useContext(AppContext)
+  if (!ctx) throw new Error('useApp must be used within AppProvider')
+  return ctx
+}

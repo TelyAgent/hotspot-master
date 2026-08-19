@@ -1,0 +1,72 @@
+import type { EventItem } from './types'
+
+export const initialEvents: EventItem[] = [
+  {
+    id: 'e1',
+    title: 'OpenAI 正式发布 GPT-6 API',
+    summary: 'OpenAI 宣布 GPT-6 API 已开放，符合条件的开发者可从今日开始调用。',
+    status: '内容生成中',
+    verify: '信息一致',
+    regions: 'Worldwide / US / UK',
+    trigger: '重点主题 + 跨区异动',
+    urls: [
+      'https://x.com/OpenAI/status/1896570012843104432',
+      'https://x.com/sama/status/1896571849024123187',
+      'https://x.com/OpenAIDevs/status/1896574118479065441',
+    ],
+    related: [
+      '前置事件 · OpenAI 预告本周发布新模型',
+      '后续进展 · GPT-6 API 定价页面更新',
+    ],
+  },
+  {
+    id: 'e2',
+    title: '美国 CPI 低于市场预期',
+    summary: '美国最新 CPI 数据低于市场预期，多个地区榜单正在讨论利率路径变化。',
+    status: '待发布',
+    verify: '信息一致',
+    regions: 'Worldwide / US / UK',
+    trigger: '前 5 + 急剧上升',
+    urls: [
+      'https://x.com/BLS_gov/status/1896524423810719970',
+      'https://x.com/unusual_whales/status/1896527849104486635',
+    ],
+    related: ['前置事件 · 市场等待 CPI 公布'],
+  },
+  {
+    id: 'e3',
+    title: '稳定币法案进入表决',
+    summary: '多个热门帖子称法案进入表决程序，但对具体表决时间存在不同说法。',
+    status: '处理异常',
+    verify: '存在冲突',
+    regions: 'US',
+    trigger: '上升 12 位',
+    urls: [
+      'https://x.com/FinancialCmte/status/1896498873214052742',
+      'https://x.com/CoinDesk/status/1896501435286102304',
+    ],
+    related: ['前置事件 · 法案通过委员会审议'],
+  },
+  {
+    id: 'e4',
+    title: '世界杯小组赛抽签结果公布',
+    summary: '世界杯小组赛抽签结果已正式公布，各组对阵进入集中讨论。',
+    status: '已完成',
+    verify: '信息一致',
+    regions: 'Worldwide / UK / Japan',
+    trigger: '前 5 + 跨区异动',
+    urls: ['https://x.com/FIFAWorldCup/status/1896412904439742618'],
+    related: ['前置事件 · 世界杯抽签仪式开始'],
+  },
+  {
+    id: 'e5',
+    title: 'NVIDIA 发布季度财报',
+    summary: 'NVIDIA 公布最新季度财报，营收与数据中心业务成为讨论重点。',
+    status: '已完成',
+    verify: '信息一致',
+    regions: 'Worldwide / US',
+    trigger: '前 5',
+    urls: ['https://x.com/nvidia/status/1896371842904105427'],
+    related: [],
+  },
+]

@@ -1,0 +1,133 @@
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  border: 1px solid var(--line);
+  background: #fff;
+  margin-bottom: 14px;
+}
+
+.summaryCell {
+  padding: 12px;
+  border-right: 1px solid var(--line);
+}
+
+.summaryCell strong {
+  display: block;
+  font-size: 21px;
+}
+
+.taskHead,
+.taskRow {
+  display: grid;
+  grid-template-columns: 92px minmax(190px, 1.1fr) minmax(190px, 1fr) 105px 85px 90px;
+  gap: 10px;
+  align-items: center;
+}
+
+.taskHead {
+  padding: 9px;
+  background: #edf2f2;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.taskRow {
+  padding: 12px 9px;
+  border-bottom: 1px solid var(--line2);
+  cursor: pointer;
+}
+
+.taskRow:hover,
+.taskRow.active {
+  background: #eff8f6;
+}
+
+.account {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.accountIcon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: #def1ed;
+  color: var(--g);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.candidateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.candidate {
+  border: 1px solid var(--line);
+  padding: 13px;
+  min-height: 205px;
+  position: relative;
+}
+
+.candidate.selected {
+  border: 2px solid var(--g);
+  background: #f1faf8;
+  padding: 12px;
+}
+
+.candidate.locked:not(.selected) {
+  opacity: 0.52;
+}
+
+.copy {
+  line-height: 1.65;
+  margin: 12px 0 45px;
+}
+
+.candidateActions {
+  position: absolute;
+  left: 13px;
+  right: 13px;
+  bottom: 12px;
+  display: flex;
+  gap: 7px;
+}
+
+.candidateActions .btn {
+  flex: 1;
+}
+
+.taskTools {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.toolBox {
+  border: 1px solid var(--line);
+  padding: 13px;
+  background: #fbfcfc;
+}
+
+.toolBox textarea,
+.toolBox input,
+.toolBox select {
+  width: 100%;
+  border: 1px solid #bdcdcb;
+  padding: 9px;
+  margin: 7px 0;
+}
+
+@media (max-width: 1180px) {
+  .taskTools {
+    grid-template-columns: 1fr;
+  }
+
+  .candidateGrid {
+    grid-template-columns: 1fr;
+  }
+}

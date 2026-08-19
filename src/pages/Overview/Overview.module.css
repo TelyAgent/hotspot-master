@@ -1,0 +1,147 @@
+.stats {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(4, 1fr);
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.stat {
+  padding: 16px 18px;
+  min-height: 108px;
+  border-left: 1px solid var(--line);
+}
+
+.stat:first-child {
+  border: 0;
+  background: var(--g);
+  color: #fff;
+}
+
+.stat label {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+
+.stat:first-child label,
+.stat:first-child :global(.small) {
+  color: #cde8e4;
+}
+
+.stat strong {
+  display: block;
+  font-size: 27px;
+  margin-bottom: 7px;
+}
+
+.delta {
+  color: var(--g);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.overviewBlock {
+  margin-top: 14px;
+}
+
+.attention {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  gap: 11px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.severity {
+  height: 34px;
+  background: var(--o);
+}
+
+.severity.red {
+  background: var(--r);
+}
+
+.accountPerformance {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) 1.6fr 72px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.accountPerformance:last-child {
+  border: 0;
+}
+
+.miniBar {
+  height: 7px;
+  background: #e7eeee;
+  overflow: hidden;
+}
+
+.miniBar i {
+  height: 100%;
+  display: block;
+  background: var(--g);
+}
+
+.anomalyCount {
+  font-size: 23px;
+  color: var(--r);
+  font-weight: 750;
+}
+
+.taskProgress {
+  display: grid;
+  grid-template-columns: minmax(210px, 1.4fr) minmax(150px, 1fr) 72px 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 9px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.taskProgress:first-of-type {
+  background: #edf2f2;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.progressTrack {
+  height: 8px;
+  background: #e2e9e8;
+}
+
+.progressTrack i {
+  display: block;
+  height: 100%;
+  background: var(--g);
+}
+
+.topic {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 15px;
+}
+
+.number {
+  font-size: 25px;
+  color: var(--g);
+  font-weight: 750;
+}
+
+@media (max-width: 1180px) {
+  .stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .taskProgress {
+    grid-template-columns: 1.2fr 1fr 65px;
+  }
+
+  .taskProgress > :last-child {
+    display: none;
+  }
+}
