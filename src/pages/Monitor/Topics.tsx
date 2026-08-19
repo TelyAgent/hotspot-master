@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { refreshTopicCircleTopics } from '../../api/topicCircle'
+import { useTopicCircleMonitorTopics } from '../../hooks/useTopicCircleMonitorTopics'
+import { useTopicCirclePipelineStatus } from '../../hooks/useTopicCirclePipelineStatus'
 import { useTopicCircleTopics } from '../../hooks/useTopicCircleTopics'
-import { useTwitterTopicConfigs } from '../../hooks/useTwitterTopicConfigs'
 import styles from './Monitor.module.css'
 
 const TRIGGER_LABEL: Record<string, string> = {
@@ -13,15 +15,22 @@ const TRIGGER_LABEL: Record<string, string> = {
 
 export default function Topics() {
   const { topicDetail, set, toast } = useApp()
-  const { topics, loading, error } = useTwitterTopicConfigs()
+  const { topics, loading, error, reload } = useTopicCircleMonitorTopics()
+  const pipeline = useTopicCirclePipelineStatus()
   const [refreshing, setRefreshing] = useState(false)
 
   const refreshTopics = async () => {
     setRefreshing(true)
-    window.setTimeout(() => {
-      toast('主题圈帖子采集工作流尚未接入新后端，当前先展示 Twitter 主题配置。')
+    try {
+      const result = await refreshTopicCircleTopics()
+      reload()
+      pipeline.reload()
+      toast(`主题圈采集完成：${result.collected} 条帖子，候选 ${result.analysis?.topics ?? 0} 个`)
+    } catch (error) {
+      toast(error instanceof Error ? error.message : '主题圈采集失败')
+    } finally {
       setRefreshing(false)
-    }, 200)
+    }
   }
 
   if (topicDetail) return <TopicDetail name={topicDetail} />
@@ -33,27 +42,36 @@ export default function Topics() {
   return (
     <>
       <div className={styles.topicToolbar}>
-        <span className="small">主题圈每 3 小时自动采集；需要立即产出话题时可手动运行一次。</span>
+        <span className="small">
+          主题圈每 3 小时自动采集；最近一次：
+          {pipeline.status?.latestFetchRun
+            ? `${pipeline.status.latestFetchRun.status} · ${pipeline.status.latestFetchRun.itemCount} 条 · ${formatTime(pipeline.status.latestFetchRun.startedAt)}`
+            : pipeline.loading
+              ? '读取中'
+              : '暂无记录'}
+          {pipeline.status?.latestWorkflowRun ? ` · Workflow ${pipeline.status.latestWorkflowRun.status}` : ''}
+        </span>
         <button className="btn primary" onClick={refreshTopics} disabled={refreshing}>
           {refreshing ? '采集中…' : '立即采集并总结'}
         </button>
       </div>
+      {pipeline.error ? <div className="note warning">流水线状态加载失败：{pipeline.error}</div> : null}
       <div className="three grid">
         {topics.map((c) => {
-          const accountCount = c.accounts.length
-          const keywordCount = c.keywords.length
           return (
             <article className={styles.topic} key={c.id}>
               <div className={styles.topicTop}>
                 <div>
                   <h2>{c.name}</h2>
                   <span className="small">
-                    {c.enabled ? '启用' : '停用'} · {accountCount} 个监控账号 · {keywordCount} 个关键词
+                    {c.enabled ? '启用' : '停用'} · {c.accountCount} 个监控账号 · 近 3 小时 {c.recentPostCount3h} 条帖子
                   </span>
                 </div>
-                <span className={styles.number}>{accountCount}</span>
+                <span className={styles.number}>{c.accountCount}</span>
               </div>
-              <p>{c.positiveExamples.slice(0, 2).join('；') || c.keywords.slice(0, 8).join('、')}</p>
+              <p>
+                24 小时候选 {c.candidateCount24h} 个，已触发 {c.triggeredEventCount24h} 个。
+              </p>
               <button className="btn link" onClick={() => set({ topicDetail: c.name })}>
                 查看该主题全部话题 →
               </button>
@@ -65,6 +83,17 @@ export default function Topics() {
   )
 }
 
+function formatTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 function TopicDetail({ name }: { name: string }) {
   const { set, toast } = useApp()
   const { topics, loading, error, reload } = useTopicCircleTopics(name)
@@ -74,11 +103,15 @@ function TopicDetail({ name }: { name: string }) {
 
   const refreshTopics = async () => {
     setRefreshing(true)
-    window.setTimeout(() => {
+    try {
+      await refreshTopicCircleTopics()
       reload()
-      toast('主题圈帖子采集工作流尚未接入新后端，当前先展示已生成话题。')
+      toast('主题圈采集已完成')
+    } catch (error) {
+      toast(error instanceof Error ? error.message : '主题圈采集失败')
+    } finally {
       setRefreshing(false)
-    }, 200)
+    }
   }
 
   return (
