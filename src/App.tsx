@@ -11,6 +11,7 @@ import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import Modal from './components/Modal'
 import Toast from './components/Toast'
+import AssistantChatFloat from './components/AssistantChatFloat'
 import Login from './pages/Login/Login'
 import Overview from './pages/Overview/Overview'
 import Monitor from './pages/Monitor/Monitor'
@@ -32,6 +33,7 @@ function AppLayout() {
       </div>
       <Modal />
       <Toast />
+      <AssistantChatFloat />
     </div>
   )
 }
