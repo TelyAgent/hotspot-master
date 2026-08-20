@@ -5,7 +5,7 @@ export interface TaskListParams {
   page?: number
   pageSize?: number
   event?: string
-  role?: string
+  account?: string
   status?: string
   risk?: string
 }
@@ -19,7 +19,7 @@ export interface TaskListResponse {
 
 export interface TaskFacets {
   events: string[]
-  roles: string[]
+  accounts: string[]
   statuses: string[]
   risks: string[]
 }
@@ -67,7 +67,7 @@ export async function getTasks(params: TaskListParams = {}): Promise<TaskListRes
   const mapped = response.items.map(mapContentTaskItem)
   const filtered = mapped.filter((item) => {
     if (params.event && item.event !== params.event) return false
-    if (params.role && item.role !== params.role) return false
+    if (params.account && item.account !== params.account) return false
     if (params.status && item.status !== params.status) return false
     if (params.risk && item.risk !== params.risk) return false
     return true
@@ -93,7 +93,7 @@ export async function getTaskFacets(): Promise<TaskFacets> {
   const mapped = response.items.map(mapContentTaskItem)
   return {
     events: unique(mapped.map((item) => item.event)),
-    roles: unique(mapped.map((item) => item.role)),
+    accounts: unique(mapped.map((item) => item.account)),
     statuses: unique(mapped.map((item) => item.status)),
     risks: unique(mapped.map((item) => item.risk)),
   }
@@ -141,8 +141,8 @@ function mapContentTaskItem(item: ContentTaskItem): TaskItem {
     eventId: item.eventId,
     code: shortCode(item.id),
     event: eventName,
-    account: eventName,
-    role: item.accountName ?? item.skill,
+    account: item.accountName ?? item.accountId,
+    role: item.skill,
     status: statusLabel(item.status),
     risk: riskLabel(item.riskStatus),
     time: timeLabel(item.updatedAt),
@@ -174,7 +174,7 @@ function riskLabel(risk: string) {
 }
 
 function shortCode(id: string) {
-  return id.replace(/^account_response_task_/, 'T-').slice(0, 10)
+  return id.replace(/^(content_task_|account_response_task_)/, 'T-').slice(0, 10)
 }
 
 function timeLabel(value: string) {

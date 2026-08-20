@@ -9,7 +9,18 @@ import styles from '../Settings.module.css'
 const FIELDS: ConfigField[] = [
   { key: 'name', label: '账号类型', defaultValue: '快讯型' },
   { key: 'xAccountId', label: 'X账号ID', defaultValue: '@configured_account' },
-  { key: 'personaType', label: '人设类型', type: 'textarea', defaultValue: '把热点压缩为可快速扫描的单一事实更新' },
+  {
+    key: 'personaType',
+    label: '人设描述',
+    type: 'textarea',
+    defaultValue: '值班新闻编辑型账号：反应快、表述克制、只把已确认的核心事实讲清楚，不做情绪化延展。',
+  },
+  {
+    key: 'contentPromptRule',
+    label: '内容生成规则提示词描述',
+    type: 'textarea',
+    defaultValue: '先给结论，再补充时间、地点、主体、动作和证据边界；只使用已确认事实，不扩写情绪、不做未经证实的因果判断。',
+  },
 ]
 
 export default function AccountsSetting() {
@@ -38,7 +49,7 @@ export default function AccountsSetting() {
         <div className="setting-title">
           <div>
             <h2>运营账号与 Skills</h2>
-            <p className="small">基础生产线与九个人设账号的发布身份、Skill 和适用场景。</p>
+            <p className="small">配置 12 个预设运营账号的发布身份、人设、内容生成规则和 Skill。</p>
           </div>
         </div>
       </div>
@@ -66,7 +77,7 @@ export default function AccountsSetting() {
       <div className="note">
         <b>这个分区承担什么作用？</b>
         <br />
-        一个自动响应 Event 会先进入三条基础生产线；九个人设账号再按各自 Skill 判断参与、观察或跳过。
+        一个自动响应 Event 会先进入三条基础生产线；其余人设账号再按各自 Skill 判断参与、观察或跳过。
       </div>
     </section>
   )

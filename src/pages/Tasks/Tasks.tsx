@@ -19,10 +19,10 @@ export default function Tasks() {
   const { taskEvent, taskRole, taskStatus, taskRisk, set, go, toast, openModal, closeModal } =
     useApp()
   const [page, setPage] = useState(1)
-  const { tasks, accountTypes, facets, total, pageSize, loading, error, reload } = useTasks({
+  const { tasks, accounts, facets, total, pageSize, loading, error, reload } = useTasks({
     page,
     event: taskEvent === '全部' ? undefined : taskEvent,
-    role: taskRole === '全部' ? undefined : taskRole,
+    account: taskRole === '全部' ? undefined : taskRole,
     status: taskStatus === '全部' ? undefined : taskStatus,
     risk: taskRisk === '全部' ? undefined : taskRisk,
   })
@@ -126,8 +126,8 @@ export default function Tasks() {
               setPage(1)
             }}
           >
-            <option value="全部">账号类型：全部</option>
-            {accountTypes.map((x) => (
+            <option value="全部">账号：全部</option>
+            {accounts.map((x) => (
               <option key={x}>{x}</option>
             ))}
           </select>

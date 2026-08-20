@@ -104,9 +104,9 @@ function TopicDetail({ name }: { name: string }) {
   const refreshTopics = async () => {
     setRefreshing(true)
     try {
-      await refreshTopicCircleTopics()
+      const result = await refreshTopicCircleTopics(name)
       reload()
-      toast('主题圈采集已完成')
+      toast(`${name}采集完成：${result.collected} 条帖子，候选 ${result.analysis?.topics ?? 0} 个`)
     } catch (error) {
       toast(error instanceof Error ? error.message : '主题圈采集失败')
     } finally {

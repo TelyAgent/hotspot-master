@@ -94,8 +94,9 @@ export interface TopicCircleRefreshResult {
 }
 
 /** 手动跑一次主题圈数据流水线：采集帖子 → 总结话题 → 计算指标 → 触发判断 */
-export async function refreshTopicCircleTopics(): Promise<TopicCircleRefreshResult> {
-  return request<TopicCircleRefreshResult>('/topic-circle/collect', {
+export async function refreshTopicCircleTopics(circle?: string): Promise<TopicCircleRefreshResult> {
+  const q = circle ? `?circle=${encodeURIComponent(circle)}` : ''
+  return request<TopicCircleRefreshResult>(`/topic-circle/collect${q}`, {
     method: 'POST',
   })
 }
