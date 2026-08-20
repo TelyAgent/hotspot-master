@@ -88,6 +88,15 @@
   background: var(--g);
 }
 
+.trendRow {
+  display: grid;
+  grid-template-columns: 52px minmax(90px, 1fr) minmax(180px, 1.5fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
 .anomalyCount {
   font-size: 23px;
   color: var(--r);
