@@ -5,7 +5,7 @@ import styles from './Overview.module.css'
 
 const manual: [string, string, string][] = [
   ['red', '稳定币法案', '候选生成重试3次后失败'],
-  ['', 'GPT-6快讯', '候选待运营选择'],
+  ['', 'GPT-6快讯', '候选待运营发布'],
   ['', '美国CPI', '已发布，等待URL回填'],
 ]
 

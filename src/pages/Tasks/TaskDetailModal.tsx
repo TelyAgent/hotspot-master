@@ -12,9 +12,9 @@ export default function TaskDetailModal({
   task: TaskItem
   onOpenEvent: () => void
   onRegenerate: (instruction?: string) => Promise<void>
-  onPublish: (url: string, selectedCandidate?: number) => Promise<void>
+  onPublish: (url: string, candidateId: string) => Promise<void>
 }) {
-  const { candidate, set, toast } = useApp()
+  const { toast } = useApp()
   const [instruction, setInstruction] = useState('')
   const [regenerating, setRegenerating] = useState(false)
   const [publishUrl, setPublishUrl] = useState('')
@@ -32,8 +32,9 @@ export default function TaskDetailModal({
   }
 
   const handlePublish = async () => {
-    if (candidate === null) {
-      toast('请先选择要发布的候选')
+    const candidateId = task.candidateIds?.[0]
+    if (!candidateId) {
+      toast('找不到可关联的候选内容，请重新生成后再回填')
       return
     }
     if (!publishUrl.trim()) {
@@ -42,7 +43,7 @@ export default function TaskDetailModal({
     }
     setPublishing(true)
     try {
-      await onPublish(publishUrl.trim(), candidate)
+      await onPublish(publishUrl.trim(), candidateId)
     } catch {
       // 错误已在 onPublish 内 toast
     } finally {
@@ -72,32 +73,17 @@ export default function TaskDetailModal({
             {task.copies.map((c, i) => (
               <article
                 key={i}
-                className={`${styles.candidate} ${candidate === i ? styles.selected : candidate !== null ? styles.locked : ''}`}
+                className={styles.candidate}
               >
                 <b>候选{String.fromCharCode(65 + i)}</b>
                 <div className={styles.copy}>{c}</div>
                 <div className={styles.candidateActions}>
-                  {candidate === i ? (
-                    <>
-                      <button className="btn" onClick={() => set({ candidate: null })}>
-                        取消
-                      </button>
-                      <button
-                        className="btn primary"
-                        onClick={() => toast('内容已复制，请前往X人工发布')}
-                      >
-                        复制
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="btn"
-                      disabled={candidate !== null}
-                      onClick={() => set({ candidate: i })}
-                    >
-                      选择
-                    </button>
-                  )}
+                  <button
+                    className="btn"
+                    onClick={() => toast('内容已复制，请前往X人工发布')}
+                  >
+                    复制
+                  </button>
                 </div>
               </article>
             ))}
@@ -126,15 +112,14 @@ export default function TaskDetailModal({
                 value={publishUrl}
                 onChange={(e) => setPublishUrl(e.target.value)}
               />
-              <select>
-                <option>或选择发布失败原因</option>
-                <option>平台限制</option>
-                <option>内容过时</option>
-                <option>人工放弃</option>
-              </select>
-              <button className="btn primary" disabled={publishing} onClick={handlePublish}>
+              <button
+                className="btn primary"
+                disabled={publishing}
+                onClick={handlePublish}
+              >
                 {publishing ? '提交中…' : '提交回填'}
               </button>
+              <span className="small">用于后续自动跟踪帖子发布效果。</span>
             </div>
           </div>
         </>

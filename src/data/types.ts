@@ -38,4 +38,5 @@ export interface TaskItem {
   risk: string
   time: string
   copies: string[]
+  candidateIds?: string[]
 }

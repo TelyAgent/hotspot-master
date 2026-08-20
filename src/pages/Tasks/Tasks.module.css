@@ -72,16 +72,6 @@
   position: relative;
 }
 
-.candidate.selected {
-  border: 2px solid var(--g);
-  background: #f1faf8;
-  padding: 12px;
-}
-
-.candidate.locked:not(.selected) {
-  opacity: 0.52;
-}
-
 .copy {
   line-height: 1.65;
   margin: 12px 0 45px;

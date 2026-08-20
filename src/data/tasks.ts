@@ -7,7 +7,7 @@ export const initialTasks: TaskItem[] = [
     event: 'OpenAI 正式发布 GPT-6 API',
     account: 'WatcherGuru 快讯号',
     role: '快讯型',
-    status: '待选择',
+    status: '待发布',
     risk: '普通',
     time: '剩18分钟',
     copies: [
@@ -33,7 +33,7 @@ export const initialTasks: TaskItem[] = [
     event: 'OpenAI 正式发布 GPT-6 API',
     account: 'PredX Markets',
     role: '产品承接型',
-    status: '待选择',
+    status: '待发布',
     risk: '中',
     time: '剩24分钟',
     copies: [

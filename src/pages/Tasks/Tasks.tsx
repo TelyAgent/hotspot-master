@@ -3,14 +3,13 @@ import { useApp } from '../../context/AppContext'
 import type { TaskItem } from '../../data/types'
 import { Head } from '../../components/ui'
 import { useTasks } from '../../hooks/useTasks'
-import { publishTask, regenerateTask } from '../../api/task'
+import { getTask, publishTask, regenerateTask } from '../../api/task'
 import TaskDetailModal from './TaskDetailModal'
 import styles from './Tasks.module.css'
 
 const SUMMARY: [string, string][] = [
   ['进行中', '6'],
-  ['待选择', '2'],
-  ['待发布', '1'],
+  ['待发布', '3'],
   ['异常', '1'],
   ['追踪中', '8'],
   ['今日完成', '17'],
@@ -38,20 +37,18 @@ export default function Tasks() {
   const regenerateAndReload = async (t: TaskItem, instruction?: string) => {
     try {
       await regenerateTask(t.id, instruction)
+      const detail = await getTask(t.id)
       toast('已重新生成 3 条候选')
+      showTaskModal(detail)
       reload()
     } catch {
       toast('重新生成失败，请稍后重试')
     }
   }
 
-  const publishAndReload = async (
-    t: TaskItem,
-    url: string,
-    selectedCandidate?: number,
-  ) => {
+  const publishAndReload = async (t: TaskItem, url: string, candidateId: string) => {
     try {
-      await publishTask(t.id, url, selectedCandidate)
+      await publishTask(t.id, url, candidateId)
       toast('发布已记录，开始追踪')
       closeModal()
       reload()
@@ -60,28 +57,40 @@ export default function Tasks() {
     }
   }
 
-  const openTaskModal = (t: TaskItem) => {
-    set({ candidate: null })
+  const showTaskModal = (t: TaskItem) => {
     openModal(
       `${t.code} · ${t.account}`,
       <TaskDetailModal
         task={t}
         onOpenEvent={() => openEvent(t)}
         onRegenerate={(instruction) => regenerateAndReload(t, instruction)}
-        onPublish={(url, selectedCandidate) =>
-          publishAndReload(t, url, selectedCandidate)
-        }
+        onPublish={(url, candidateId) => publishAndReload(t, url, candidateId)}
       />,
       true,
       'large',
     )
   }
 
+  const openTaskModal = async (t: TaskItem) => {
+    openModal(
+      `${t.code} · ${t.account}`,
+      <div className="note">正在加载任务详情…</div>,
+      true,
+      'large',
+    )
+    try {
+      showTaskModal(await getTask(t.id))
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '加载任务详情失败')
+      closeModal()
+    }
+  }
+
   return (
     <>
       <Head
         title="内容发布"
-        desc="完成各账号候选内容的选择、AI调整、人工发布、URL回填与发布异常处理。"
+        desc="完成各账号候选内容的AI调整、人工发布、URL回填与发布异常处理。"
         actions={<button className="btn">导出任务</button>}
       />
 
