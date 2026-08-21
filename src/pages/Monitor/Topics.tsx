@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Alert, Button, Empty, Spin, Statistic, Tag } from 'antd'
+import { Alert, Button, Collapse, Empty, Spin, Statistic, Tag } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { refreshTopicCircleTopics } from '../../api/topicCircle'
+import type { TopicCircleTopicItem, TopicCircleTopicPost } from '../../api/topicCircle'
 import { useTopicCircleMonitorTopics } from '../../hooks/useTopicCircleMonitorTopics'
 import { useTopicCirclePipelineStatus } from '../../hooks/useTopicCirclePipelineStatus'
 import { useTopicCircleTopics } from '../../hooks/useTopicCircleTopics'
@@ -165,21 +166,86 @@ function TopicDetail({ name }: { name: string }) {
         ) : topics.length === 0 ? (
           <Empty description="暂无话题，等待采集与总结" />
         ) : (
-          topics.map((t) => (
-            <div className={styles.topicTrendRow} key={t.id}>
-              <span>
-                <b>{t.title}</b>
-                <br />
-                <small className="muted">{t.summary}</small>
-              </span>
-              <strong>{t.b3h}</strong>
-              <strong>{t.b24h}</strong>
-              <span>{t.tmax != null ? `${t.tmax.toFixed(1)}x` : '—'}</span>
-              <Tag color={t.triggerType ? 'success' : 'default'}>{t.triggerType ? TRIGGER_LABEL[t.triggerType] ?? '已触发' : '观察中'}</Tag>
-            </div>
-          ))
+          <Collapse
+            ghost
+            className={styles.topicTrendCollapse}
+            items={topics.map((topic) => ({
+              key: topic.id,
+              label: <TopicTrendLabel topic={topic} />,
+              children: <TopicPostPanel topic={topic} />,
+            }))}
+          />
         )}
       </section>
     </>
   )
+}
+
+function TopicTrendLabel({ topic }: { topic: TopicCircleTopicItem }) {
+  return (
+    <div className={styles.topicTrendRow}>
+      <span>
+        <b>{topic.title}</b>
+        <br />
+        <small className="muted">{topic.summary}</small>
+      </span>
+      <strong>{topic.b3h}</strong>
+      <strong>{topic.b24h}</strong>
+      <span>{topic.tmax != null ? `${topic.tmax.toFixed(1)}x` : '—'}</span>
+      <Tag color={topic.triggerType ? 'success' : 'default'}>
+        {topic.triggerType ? TRIGGER_LABEL[topic.triggerType] ?? '已触发' : '观察中'}
+      </Tag>
+    </div>
+  )
+}
+
+function TopicPostPanel({ topic }: { topic: TopicCircleTopicItem }) {
+  const uniqueAuthors = Array.from(new Set(topic.posts.map((post) => post.authorHandle).filter(Boolean)))
+
+  return (
+    <div className={styles.topicPostPanel}>
+      <div className={styles.topicPostSummary}>
+        <span>讨论账号：{uniqueAuthors.length ? uniqueAuthors.join('、') : '—'}</span>
+        <span>相关帖子：{topic.posts.length} 条</span>
+      </div>
+      {topic.posts.length === 0 ? (
+        <Empty description="暂无关联帖子" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      ) : (
+        <div className={styles.topicPostList}>
+          {topic.posts.map((post) => (
+            <TopicPostItem key={`${topic.id}-${post.postId}`} post={post} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TopicPostItem({ post }: { post: TopicCircleTopicPost }) {
+  return (
+    <article className={styles.topicPostItem}>
+      <div className={styles.topicPostMeta}>
+        <strong>{post.authorName || post.authorHandle}</strong>
+        <span>@{post.authorHandle.replace(/^@/, '')}</span>
+        <span>{formatTime(post.publishedAt)}</span>
+      </div>
+      <p>{post.text || '暂无正文'}</p>
+      <div className={styles.topicPostFooter}>
+        <span>浏览 {formatMetric(post.metrics?.views)}</span>
+        <span>点赞 {formatMetric(post.metrics?.likes)}</span>
+        <span>回复 {formatMetric(post.metrics?.replies)}</span>
+        <span>转发 {formatMetric(post.metrics?.reposts)}</span>
+        {post.url ? (
+          <Button size="small" href={post.url} target="_blank" rel="noreferrer">
+            打开帖子
+          </Button>
+        ) : null}
+      </div>
+    </article>
+  )
+}
+
+function formatMetric(value?: number) {
+  if (value == null) return '—'
+  return new Intl.NumberFormat('zh-CN', { notation: 'compact' }).format(value)
 }

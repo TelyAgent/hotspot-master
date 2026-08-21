@@ -227,6 +227,85 @@
   background: #f5f9f8;
 }
 
+.topicTrendCollapse {
+  border-bottom: 1px solid var(--line2);
+}
+
+.topicTrendCollapse :global(.ant-collapse-item) {
+  border-bottom: 1px solid var(--line2);
+}
+
+.topicTrendCollapse :global(.ant-collapse-header) {
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+.topicTrendCollapse :global(.ant-collapse-expand-icon) {
+  padding: 12px 0 0 9px !important;
+}
+
+.topicTrendCollapse :global(.ant-collapse-header-text) {
+  min-width: 0;
+}
+
+.topicTrendCollapse :global(.ant-collapse-content-box) {
+  padding: 0 12px 12px 36px !important;
+}
+
+.topicPostPanel {
+  display: grid;
+  gap: 10px;
+  border-left: 2px solid #d6e4e1;
+  padding-left: 12px;
+}
+
+.topicPostSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.topicPostList {
+  display: grid;
+  gap: 10px;
+}
+
+.topicPostItem {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 12px;
+}
+
+.topicPostMeta,
+.topicPostFooter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.topicPostMeta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.topicPostMeta strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.topicPostItem p {
+  margin: 8px 0;
+  line-height: 1.55;
+}
+
+.topicPostFooter {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .topicSpark {
   display: flex;
   align-items: flex-end;
@@ -275,5 +354,9 @@
   .topicTrendHead > :nth-child(4),
   .topicTrendRow > :nth-child(4) {
     display: none;
+  }
+
+  .topicTrendCollapse :global(.ant-collapse-content-box) {
+    padding-left: 18px !important;
   }
 }

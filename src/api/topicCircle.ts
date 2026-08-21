@@ -7,6 +7,7 @@ export interface TopicCircleTopicItem {
   summary: string
   coreFact: string
   postIds: string[]
+  posts: TopicCircleTopicPost[]
   b3h: number
   b24h: number
   tmax: number | null
@@ -16,6 +17,23 @@ export interface TopicCircleTopicItem {
   triggerType: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface TopicCircleTopicPost {
+  postId: string
+  authorHandle: string
+  authorName: string | null
+  text: string
+  url: string | null
+  postType: string | null
+  publishedAt: string
+  metrics: {
+    views?: number
+    likes?: number
+    replies?: number
+    reposts?: number
+    quotes?: number
+  } | null
 }
 
 export interface TopicCircleMonitorTopic {
