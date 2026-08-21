@@ -154,6 +154,8 @@ function EventDetail({
   onAction: (type: string) => void
   onGoTasks: () => void
 }) {
+  const evidence = e.evidence ?? e.urls.map((url) => ({ sourceType: 'x_post', claim: url, url }))
+
   return (
     <section className={styles.eventDetail}>
       <div className="card-head">
@@ -191,7 +193,7 @@ function EventDetail({
         <div className={styles.eventMetric}>
           <small className="muted">依据数量</small>
           <br />
-          <b>{e.urls.length}</b>
+          <b>{evidence.length}</b>
         </div>
         <div className={styles.eventMetric}>
           <small className="muted">任务进度</small>
@@ -216,18 +218,25 @@ function EventDetail({
       </div>
 
       <h2>事实依据</h2>
-      {e.urls.map((u, i) => (
+      {evidence.length === 0 ? <div className="note">暂无事实依据。</div> : null}
+      {evidence.map((item, i) => (
         <div className={styles.evidence} key={i}>
           <span>
             <b>依据 {i + 1}</b>
-            <a className={styles.url} href={u} target="_blank" rel="noreferrer">
-              {u}
-            </a>
-            <small className="muted">X默认热门排序 · 原帖来源</small>
+            {item.url ? (
+              <a className={styles.url} href={item.url} target="_blank" rel="noreferrer">
+                {item.url}
+              </a>
+            ) : (
+              <span className={styles.url}>{item.claim}</span>
+            )}
+            <small className="muted">{item.sourceType === 'x_trend' ? 'X热搜榜快照' : item.sourceType}</small>
           </span>
-          <a className="btn mini" href={u} target="_blank" rel="noreferrer">
-            打开原帖 ↗
-          </a>
+          {item.url ? (
+            <a className="btn mini" href={item.url} target="_blank" rel="noreferrer">
+              打开来源 ↗
+            </a>
+          ) : null}
         </div>
       ))}
 
