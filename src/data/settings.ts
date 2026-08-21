@@ -1,8 +1,5 @@
 export type SettingId =
   | 'twitter'
-  | 'connectors'
-  | 'monitoring'
-  | 'topics'
   | 'accounts'
   | 'product'
   | 'risk'
@@ -13,9 +10,6 @@ export type SettingId =
 
 export const SET: [SettingId, string][] = [
   ['twitter', 'Twitter配置'],
-  ['connectors', '接口与数据源'],
-  ['monitoring', '监控与触发规则'],
-  ['topics', '重点主题'],
   ['accounts', '账号与 Skills'],
   ['product', '产品资料'],
   ['risk', '风险与预检'],
@@ -31,24 +25,6 @@ export const settingData: Record<SettingId, [string, string, string][]> = {
     ['热搜榜采集', 'Worldwide / US / UK / Japan / Korea', '每2小时'],
     ['榜单形成事件', 'x-trend-event-formation', '启用'],
     ['重点主题追踪', '关键词、反例和账号列表', '启用'],
-  ],
-  connectors: [
-    ['X榜单API', '采集五个地区Top30', '正常'],
-    ['X热门帖子API', '每地区获取最多3条默认热门帖子', '正常'],
-    ['X帖子指标API', '浏览、点赞、回复、转发追踪', '异常'],
-    ['内容生成模型', '执行基础账号与人设Skills', '正常'],
-  ],
-  monitoring: [
-    ['榜单采集频率', '相邻成功快照比较', '每1小时'],
-    ['前5触发', '任一目标榜单', '进入前5'],
-    ['急剧上升', '相邻成功快照', '上升≥10位'],
-    ['跨区异动', '同一Event', '≥2地区'],
-  ],
-  topics: [
-    ['AI', '语义词与示例Event', '启用'],
-    ['预测市场', '语义词与示例Event', '启用'],
-    ['加密监管', '语义词与示例Event', '启用'],
-    ['体育大赛', '语义词与示例Event', '启用'],
   ],
   accounts: [
     ['WatcherGuru快讯号', '快讯型 · 全量覆盖', '正常'],
@@ -96,12 +72,6 @@ export const settingData: Record<SettingId, [string, string, string][]> = {
 export const settingHelp: Record<SettingId, string> = {
   twitter:
     '集中配置 X 热搜榜采集频率、目标地区、榜单形成 Event 的 Markdown 工作流，以及重点主题追踪所需的关键词和账号。',
-  connectors:
-    '配置接口地址、认证方式、请求参数、同步频率、超时、最大陈旧时间、失败重试和降级方案。',
-  monitoring:
-    '配置采集地区、Top数量、小时快照、排名阈值、跨区判断和Event归并参数。',
-  topics:
-    '配置五个主题圈及每圈的监控 X 账号；按讨论广度（B3h/B24h）与流量强度（Tmax）识别同一事件并触发响应。',
   accounts:
     '配置X账号ID、账号类型、Skill、响应范围、日发布建议频率和账号可用状态。',
   product: '配置产品能力、目标用户、禁止承诺以及可真实链接的市场页面。',

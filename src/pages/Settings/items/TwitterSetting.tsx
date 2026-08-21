@@ -12,10 +12,10 @@ import styles from '../Settings.module.css'
 const REGION_OPTIONS = ['global', 'United States', 'United Kingdom', 'Japan', 'Korea']
 
 const FREQUENCY_OPTIONS = [
-  { label: '每 1 小时', value: '0 */1 * * *' },
-  { label: '每 2 小时', value: '0 */2 * * *' },
-  { label: '每 4 小时', value: '0 */4 * * *' },
-  { label: '每 6 小时', value: '0 */6 * * *' },
+  { label: '每 1 小时', value: 60 * 60 * 1000 },
+  { label: '每 2 小时', value: 2 * 60 * 60 * 1000 },
+  { label: '每 4 小时', value: 4 * 60 * 60 * 1000 },
+  { label: '每 6 小时', value: 6 * 60 * 60 * 1000 },
 ]
 
 export default function TwitterSetting() {
@@ -26,13 +26,14 @@ export default function TwitterSetting() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [regions, setRegions] = useState<string[]>(REGION_OPTIONS)
-  const [frequency, setFrequency] = useState('0 */2 * * *')
+  const [frequencyMs, setFrequencyMs] = useState(2 * 60 * 60 * 1000)
+  const [trendLimit, setTrendLimit] = useState('30')
   const [workflowId, setWorkflowId] = useState('x-trend-event-formation')
   const [topics, setTopics] = useState<TopicTrackingConfig[]>([])
 
   const frequencyLabel = useMemo(
-    () => FREQUENCY_OPTIONS.find((item) => item.value === frequency)?.label ?? frequency,
-    [frequency],
+    () => FREQUENCY_OPTIONS.find((item) => item.value === frequencyMs)?.label ?? `${Math.round(frequencyMs / 3600000)} 小时`,
+    [frequencyMs],
   )
 
   useEffect(() => {
@@ -46,7 +47,8 @@ export default function TwitterSetting() {
         if (!mounted) return
         setConfig(nextConfig)
         setRegions(nextConfig.variables.regions?.length ? nextConfig.variables.regions : nextConfig.defaultRegions)
-        setFrequency(nextConfig.variables.trendCollectionCron ?? '0 */2 * * *')
+        setFrequencyMs(resolveTrendIntervalMs(nextConfig))
+        setTrendLimit(String(nextConfig.variables.defaultTrendLimit ?? 30))
         setWorkflowId(nextConfig.variables.trendEventWorkflowId ?? 'x-trend-event-formation')
         setTopics(normalizeTopicConfigs(nextConfig))
       } catch (e) {
@@ -71,13 +73,19 @@ export default function TwitterSetting() {
 
   const save = async () => {
     if (!config) return
+    const nextTrendLimit = normalizeTrendLimit(trendLimit)
+    if (!nextTrendLimit) {
+      toast('榜单条数请输入 1-30 之间的整数')
+      return
+    }
     setSaving(true)
     try {
       const flattened = flattenTopicConfigs(topics)
       const nextVariables = {
         ...config.variables,
         regions,
-        trendCollectionCron: frequency,
+        defaultTrendLimit: nextTrendLimit,
+        trendCollectionIntervalMs: frequencyMs,
         trendEventWorkflowId: workflowId,
         topicConfigs: topics,
         topicKeywords: flattened.topicKeywords,
@@ -161,7 +169,7 @@ export default function TwitterSetting() {
           <div className="form-grid">
             <div className="field">
               <label>采集频率</label>
-              <select value={frequency} onChange={(e) => setFrequency(e.target.value)}>
+              <select value={frequencyMs} onChange={(e) => setFrequencyMs(Number(e.target.value))}>
                 {FREQUENCY_OPTIONS.map((item) => (
                   <option key={item.value} value={item.value}>{item.label}</option>
                 ))}
@@ -169,7 +177,14 @@ export default function TwitterSetting() {
             </div>
             <div className="field">
               <label>榜单条数</label>
-              <input value={config?.variables.defaultTrendLimit ?? 30} readOnly />
+              <input
+                type="number"
+                min={1}
+                max={30}
+                step={1}
+                value={trendLimit}
+                onChange={(e) => setTrendLimit(e.target.value)}
+              />
             </div>
           </div>
           <div className={styles.regionList}>
@@ -288,6 +303,21 @@ function flattenTopicConfigs(topics: TopicTrackingConfig[]) {
     topicNegativeKeywords: unique(enabledTopics.flatMap((topic) => topic.negativeExamples)),
     monitoredAccounts: unique(enabledTopics.flatMap((topic) => topic.accounts)),
   }
+}
+
+function resolveTrendIntervalMs(config: PlatformCollectionConfig) {
+  if (typeof config.variables.trendCollectionIntervalMs === 'number' && config.variables.trendCollectionIntervalMs > 0) {
+    return config.variables.trendCollectionIntervalMs
+  }
+  const cron = config.variables.trendCollectionCron
+  const legacyCron = FREQUENCY_OPTIONS.find((item) => cron === `0 */${item.value / 3600000} * * *`)
+  return legacyCron?.value ?? 2 * 60 * 60 * 1000
+}
+
+function normalizeTrendLimit(value: string) {
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 30) return undefined
+  return parsed
 }
 
 function unique(values: string[]) {

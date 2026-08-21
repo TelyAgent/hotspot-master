@@ -16,6 +16,7 @@ export interface PlatformCollectionConfig {
     topicNegativeKeywords?: string[]
     topicConfigs?: TopicTrackingConfig[]
     trendCollectionCron?: string
+    trendCollectionIntervalMs?: number
     trendEventWorkflowId?: string
     defaultTrendLimit?: number
     defaultPostLimit?: number
