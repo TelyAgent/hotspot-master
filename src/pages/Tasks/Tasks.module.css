@@ -112,6 +112,44 @@
   margin: 7px 0;
 }
 
+.evidencePanel {
+  border: 1px solid var(--line);
+  background: #fbfcfc;
+  margin: 12px 0;
+  padding: 13px;
+}
+
+.evidenceSummary {
+  border-bottom: 1px solid var(--line2);
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+.evidenceSummary p,
+.evidenceItem p {
+  margin: 6px 0 0;
+  line-height: 1.6;
+}
+
+.evidenceItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line2);
+  padding: 10px 0;
+}
+
+.evidenceItem:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.evidenceItem a {
+  color: var(--g);
+  word-break: break-all;
+}
+
 @media (max-width: 1180px) {
   .taskTools {
     grid-template-columns: 1fr;

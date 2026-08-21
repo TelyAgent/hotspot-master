@@ -29,6 +29,11 @@ interface ContentTaskItem {
   eventId: string
   eventTitle?: string
   eventSummary?: string
+  eventEvidence?: {
+    sourceType: string
+    claim: string
+    url?: string
+  }[]
   accountId: string
   accountName?: string
   status: string
@@ -104,9 +109,13 @@ export function regenerateTask(
   id: string,
   instruction?: string,
 ): Promise<{ status: string; candidates: string[] }> {
+  const body =
+    instruction === undefined
+      ? {}
+      : { generationKind: 'regenerate_all', instruction }
   return request(`/content/tasks/${id}/generate`, {
     method: 'POST',
-    body: JSON.stringify({ generationKind: 'regenerate_all', instruction }),
+    body: JSON.stringify(body),
   })
 }
 
@@ -141,6 +150,8 @@ function mapContentTaskItem(item: ContentTaskItem): TaskItem {
     eventId: item.eventId,
     code: shortCode(item.id),
     event: eventName,
+    eventSummary: item.eventSummary,
+    eventEvidence: item.eventEvidence ?? [],
     account: item.accountName ?? item.accountId,
     role: item.skill,
     status: statusLabel(item.status),

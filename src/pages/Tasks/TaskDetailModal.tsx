@@ -1,22 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import type { TaskItem } from '../../data/types'
 import styles from './Tasks.module.css'
 
 export default function TaskDetailModal({
   task,
-  onOpenEvent,
   onRegenerate,
   onPublish,
 }: {
   task: TaskItem
-  onOpenEvent: () => void
   onRegenerate: (instruction?: string) => Promise<void>
   onPublish: (url: string, candidateId: string) => Promise<void>
 }) {
   const { toast } = useApp()
   const [instruction, setInstruction] = useState('')
   const [regenerating, setRegenerating] = useState(false)
+  const autoGenerateStarted = useRef(false)
+  const [showEvidence, setShowEvidence] = useState(false)
   const [publishUrl, setPublishUrl] = useState('')
   const [publishing, setPublishing] = useState(false)
 
@@ -51,6 +51,14 @@ export default function TaskDetailModal({
     }
   }
 
+  useEffect(() => {
+    if (task.copies.length > 0 || autoGenerateStarted.current) {
+      return
+    }
+    autoGenerateStarted.current = true
+    void handleRegenerate(false)
+  }, [task.id, task.copies.length])
+
   return (
     <div>
       <div className="card-head">
@@ -62,10 +70,42 @@ export default function TaskDetailModal({
             {task.account} · {task.event}
           </h2>
         </div>
-        <button className="btn" onClick={onOpenEvent}>
-          Event依据 →
+        <button className="btn" onClick={() => setShowEvidence((value) => !value)}>
+          Event依据 {showEvidence ? '↑' : '↓'}
         </button>
       </div>
+
+      {showEvidence && (
+        <section className={styles.evidencePanel}>
+          <div className={styles.evidenceSummary}>
+            <b>一句话事实摘要</b>
+            <p>{task.eventSummary || task.event}</p>
+          </div>
+          {task.eventEvidence?.length ? (
+            task.eventEvidence.map((item, i) => (
+              <div className={styles.evidenceItem} key={`${item.sourceType}-${i}`}>
+                <span>
+                  <b>依据 {i + 1}</b>
+                  <small className="muted">{item.sourceType}</small>
+                  <p>{item.claim}</p>
+                  {item.url ? (
+                    <a href={item.url} target="_blank" rel="noreferrer">
+                      {item.url}
+                    </a>
+                  ) : null}
+                </span>
+                {item.url ? (
+                  <a className="btn mini" href={item.url} target="_blank" rel="noreferrer">
+                    打开来源
+                  </a>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <div className="note">暂无事实依据。</div>
+          )}
+        </section>
+      )}
 
       {task.copies.length ? (
         <>
@@ -125,7 +165,13 @@ export default function TaskDetailModal({
         </>
       ) : (
         <div className={`note ${task.status === '异常' ? 'warning' : ''}`}>
-          <b>{task.status === '异常' ? '重试3次后生成失败' : '正在生成3条候选'}</b>
+          <b>
+            {regenerating
+              ? '正在自动生成3条候选'
+              : task.status === '异常'
+                ? '重试3次后生成失败'
+                : '暂无候选内容'}
+          </b>
           <br />
           <button
             className="btn primary"

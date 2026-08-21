@@ -37,6 +37,12 @@ export interface TaskItem {
   eventId?: string
   code: string
   event: string
+  eventSummary?: string
+  eventEvidence?: {
+    sourceType: string
+    claim: string
+    url?: string
+  }[]
   account: string
   role: string
   status: string

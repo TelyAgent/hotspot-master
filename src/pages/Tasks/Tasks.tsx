@@ -16,7 +16,7 @@ const SUMMARY: [string, string][] = [
 ]
 
 export default function Tasks() {
-  const { taskEvent, taskRole, taskStatus, taskRisk, set, go, toast, openModal, closeModal } =
+  const { taskEvent, taskRole, taskStatus, taskRisk, set, toast, openModal, closeModal } =
     useApp()
   const [page, setPage] = useState(1)
   const { tasks, accounts, facets, total, pageSize, loading, error, reload } = useTasks({
@@ -28,11 +28,6 @@ export default function Tasks() {
   })
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
-
-  const openEvent = (t: TaskItem) => {
-    set({ event: t.eventId ?? '', eventStatus: '全部' })
-    go('events')
-  }
 
   const regenerateAndReload = async (t: TaskItem, instruction?: string) => {
     try {
@@ -62,7 +57,6 @@ export default function Tasks() {
       `${t.code} · ${t.account}`,
       <TaskDetailModal
         task={t}
-        onOpenEvent={() => openEvent(t)}
         onRegenerate={(instruction) => regenerateAndReload(t, instruction)}
         onPublish={(url, candidateId) => publishAndReload(t, url, candidateId)}
       />,
