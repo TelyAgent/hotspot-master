@@ -5,6 +5,7 @@ import {
   type PlatformCollectionConfig,
   type TopicTrackingConfig,
 } from '../../../api/collectionConfig'
+import { getXTrendWorkflowDocument } from '../../../api/workflow'
 import { useApp } from '../../../context/AppContext'
 import { SettingRow } from '../SettingRow'
 import styles from '../Settings.module.css'
@@ -135,6 +136,26 @@ export default function TwitterSetting() {
     )
   }
 
+  const openWorkflowDocument = async () => {
+    openModal('榜单形成事件工作流', <div className="note">正在加载工作流文档…</div>, true, 'large')
+    try {
+      const document = await getXTrendWorkflowDocument()
+      openModal(
+        `${document.definition.name ?? '榜单形成事件工作流'} · ${document.definition.version ?? ''}`,
+        <pre className={styles.workflowDoc}>{document.markdown}</pre>,
+        true,
+        'large',
+      )
+    } catch (e) {
+      openModal(
+        '榜单形成事件工作流',
+        <div className="note warning">{e instanceof Error ? e.message : '加载工作流文档失败'}</div>,
+        true,
+        'large',
+      )
+    }
+  }
+
   if (loading) {
     return <section className={styles.settingPanel}><div className="note">正在加载 Twitter 配置…</div></section>
   }
@@ -207,13 +228,9 @@ export default function TwitterSetting() {
               <h3>榜单形成事件的工作流</h3>
               <p className="small">采集成功形成快照后自动触发。</p>
             </div>
-            <span className="pill green">启用</span>
-          </div>
-          <div className="form-grid">
-            <div className="field">
-              <label>工作流</label>
-              <input value={workflowId} onChange={(e) => setWorkflowId(e.target.value)} />
-            </div>
+            <button type="button" className="btn" onClick={openWorkflowDocument}>
+              查看
+            </button>
           </div>
         </section>
 

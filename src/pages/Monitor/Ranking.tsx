@@ -1,5 +1,4 @@
 import { useApp } from '../../context/AppContext'
-import { regions } from '../../data/trends'
 import type { TrendingResponse } from '../../api/types'
 import styles from './Monitor.module.css'
 
@@ -15,10 +14,12 @@ export default function Ranking({
   data,
   loading,
   error,
+  regions,
 }: {
   data: TrendingResponse | null
   loading: boolean
   error: string | null
+  regions: string[]
 }) {
   const { region, set, go, ensureEventForTrend } = useApp()
 

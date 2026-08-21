@@ -108,6 +108,20 @@
   overflow-wrap: anywhere;
 }
 
+.workflowDoc {
+  background: #f6f8f8;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  max-height: 68vh;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
 .accountList {
   display: grid;
 }

@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Head } from '../../components/ui'
 import { refreshMonitor } from '../../api/monitor'
 import { useTrending } from '../../hooks/useTrending'
+import { useTrendRegions } from '../../hooks/useTrendRegions'
 import Ranking from './Ranking'
 import Topics from './Topics'
 import Regions from './Regions'
@@ -26,7 +28,14 @@ function formatCollectedAt(iso?: string): string {
 
 export default function Monitor() {
   const { mt, toast, set, region } = useApp()
+  const trendRegions = useTrendRegions()
   const { data, loading, error, reload } = useTrending(region)
+
+  useEffect(() => {
+    if (!trendRegions.loading && trendRegions.regions.length > 0 && !trendRegions.regions.includes(region)) {
+      set({ region: trendRegions.regions[0] })
+    }
+  }, [region, set, trendRegions.loading, trendRegions.regions])
 
   const handleRefresh = () => {
     toast('已发起五个榜单的立即采集')
@@ -74,7 +83,12 @@ export default function Monitor() {
         ))}
       </div>
       {mt === 'ranking' ? (
-        <Ranking data={data} loading={loading} error={error} />
+        <Ranking
+          data={data}
+          loading={loading || trendRegions.loading}
+          error={error ?? trendRegions.error}
+          regions={trendRegions.regions}
+        />
       ) : mt === 'topics' ? (
         <Topics />
       ) : mt === 'regions' ? (
