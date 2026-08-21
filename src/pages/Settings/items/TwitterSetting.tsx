@@ -5,7 +5,17 @@ import {
   type PlatformCollectionConfig,
   type TopicTrackingConfig,
 } from '../../../api/collectionConfig'
-import { getXTrendWorkflowDocument } from '../../../api/workflow'
+import {
+  activateWorkflowVersion as activateWorkflowVersionRequest,
+  createWorkflowDraft,
+  getWorkflowAuditLogs,
+  getWorkflowDocument,
+  getWorkflowVersionDiff,
+  resetWorkflowToSystemDefault,
+  repairWorkflowVersion,
+  testWorkflowVersion,
+  type WorkflowVersion,
+} from '../../../api/workflow'
 import { useApp } from '../../../context/AppContext'
 import { SettingRow } from '../SettingRow'
 import styles from '../Settings.module.css'
@@ -19,9 +29,31 @@ const FREQUENCY_OPTIONS = [
   { label: '每 6 小时', value: 6 * 60 * 60 * 1000 },
 ]
 
+interface WorkflowUiConfig {
+  id: string
+  label: string
+  loadingText: string
+  fallbackSummary: string
+}
+
+const X_TREND_WORKFLOW: WorkflowUiConfig = {
+  id: 'x-trend-event-formation',
+  label: '榜单形成事件工作流',
+  loadingText: '正在加载榜单形成事件工作流文档…',
+  fallbackSummary: '系统预置榜单形成事件工作流',
+}
+
+const TOPIC_EVENT_WORKFLOW: WorkflowUiConfig = {
+  id: 'event-formation',
+  label: '主题追踪形成事件工作流',
+  loadingText: '正在加载主题追踪形成事件工作流文档…',
+  fallbackSummary: '系统预置主题追踪形成事件工作流',
+}
+
 export default function TwitterSetting() {
   const { openModal, closeModal, toast } = useApp()
   const formRef = useRef<TopicConfigFormHandle>(null)
+  const workflowDraftRef = useRef<WorkflowDraftFormHandle>(null)
   const [config, setConfig] = useState<PlatformCollectionConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -136,24 +168,245 @@ export default function TwitterSetting() {
     )
   }
 
-  const openWorkflowDocument = async () => {
-    openModal('榜单形成事件工作流', <div className="note">正在加载工作流文档…</div>, true, 'large')
+  const openWorkflowDocument = async (workflow: WorkflowUiConfig = X_TREND_WORKFLOW) => {
+    openModal(workflow.label, <div className="note">{workflow.loadingText}</div>, true, 'large')
     try {
-      const document = await getXTrendWorkflowDocument()
+      const document = await getWorkflowDocument(workflow.id)
+      const active = document.activeVersion
       openModal(
-        `${document.definition.name ?? '榜单形成事件工作流'} · ${document.definition.version ?? ''}`,
-        <pre className={styles.workflowDoc}>{document.markdown}</pre>,
+        `${active.title || workflow.label} · ${active.version}`,
+        <div>
+          <div className={styles.workflowMeta}>
+            <span>当前来源</span>
+            <code>{formatWorkflowSource(active.source)} / {active.isDatabaseVersion ? '数据库版本' : '系统默认文件'}</code>
+            <span>当前状态</span>
+            <code>{active.status}</code>
+            <span>系统默认版本</span>
+            <code>{document.systemVersion.version}</code>
+            <span>历史版本</span>
+            <code>{document.history.length} 个</code>
+            <span>修改摘要</span>
+            <code>{active.changeSummary || workflow.fallbackSummary}</code>
+          </div>
+          <div className={styles.inlineActions}>
+            <button type="button" className="btn" onClick={() => openWorkflowAuditLogs(workflow)}>
+              审计记录
+            </button>
+            <button type="button" className="btn" onClick={() => resetWorkflowDefault(workflow)}>
+              重置默认
+            </button>
+          </div>
+          {document.history.length > 0 && (
+            <div className={styles.workflowVersionList}>
+              <h4>历史版本</h4>
+              {document.history.map((version) => (
+                <div key={version.id} className={styles.workflowVersionItem}>
+                  <div>
+                    <strong>{version.version}</strong>
+                    <span>{formatWorkflowSource(version.source)} · {version.status}</span>
+                    <small>{version.changeSummary || '无修改摘要'}</small>
+                  </div>
+                  {version.id !== active.id && (
+                    <div className={styles.inlineActions}>
+                      <button type="button" className="btn" onClick={() => openWorkflowDiff(workflow, active, version)}>
+                        对比当前
+                      </button>
+                      <button type="button" className="btn" onClick={() => activateWorkflowVersion(workflow, version)}>
+                        启用
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <pre className={styles.workflowDoc}>{active.markdown}</pre>
+        </div>,
         true,
         'large',
       )
     } catch (e) {
       openModal(
-        '榜单形成事件工作流',
+        workflow.label,
         <div className="note warning">{e instanceof Error ? e.message : '加载工作流文档失败'}</div>,
         true,
         'large',
       )
     }
+  }
+
+  const activateWorkflowVersion = async (workflow: WorkflowUiConfig, version: WorkflowVersion) => {
+    openModal('启用工作流版本', <div className="note">正在启用 {workflow.label} 版本 {version.version}...</div>, true, 'large')
+    try {
+      await activateWorkflowVersionRequest(workflow.id, version.id)
+      toast('工作流版本已启用')
+      await openWorkflowDocument(workflow)
+    } catch (e) {
+      openModal(
+        '启用工作流版本',
+        <div className="note warning">{e instanceof Error ? e.message : '启用工作流版本失败'}</div>,
+        true,
+        'large',
+      )
+    }
+  }
+
+  const resetWorkflowDefault = async (workflow: WorkflowUiConfig) => {
+    openModal('重置工作流', <div className="note">正在将 {workflow.label} 重置为系统默认版本...</div>, true, 'large')
+    try {
+      await resetWorkflowToSystemDefault(workflow.id)
+      toast('已重置为系统默认工作流')
+      await openWorkflowDocument(workflow)
+    } catch (e) {
+      openModal(
+        '重置工作流',
+        <div className="note warning">{e instanceof Error ? e.message : '重置工作流失败'}</div>,
+        true,
+        'large',
+      )
+    }
+  }
+
+  const openWorkflowAuditLogs = async (workflow: WorkflowUiConfig) => {
+    openModal(`${workflow.label}审计记录`, <div className="note">正在加载审计记录…</div>, true, 'large')
+    try {
+      const result = await getWorkflowAuditLogs(workflow.id)
+      openModal(
+        `${workflow.label}审计记录`,
+        <div className={styles.workflowAuditList}>
+          {result.logs.length === 0 ? (
+            <div className="note">暂无审计记录</div>
+          ) : (
+            result.logs.map((log) => (
+              <div key={log.id} className={styles.workflowAuditItem}>
+                <strong>{formatWorkflowAction(log.action)}</strong>
+                <span>{log.actor} · {formatDateTime(log.createdAt)}</span>
+                <small>{log.summary || '无摘要'}</small>
+              </div>
+            ))
+          )}
+        </div>,
+        true,
+        'large',
+      )
+    } catch (e) {
+      openModal(
+        `${workflow.label}审计记录`,
+        <div className="note warning">{e instanceof Error ? e.message : '加载审计记录失败'}</div>,
+        true,
+        'large',
+      )
+    }
+  }
+
+  const openWorkflowDiff = async (workflow: WorkflowUiConfig, active: WorkflowVersion, version: WorkflowVersion) => {
+    openModal('工作流版本对比', <div className="note">正在生成版本差异…</div>, true, 'large')
+    try {
+      const diff = await getWorkflowVersionDiff(workflow.id, version.id, active.id)
+      openModal(
+        `${workflow.label}版本对比 · ${active.version} → ${version.version}`,
+        <div>
+          <div className={styles.workflowMeta}>
+            <span>新增</span>
+            <code>{diff.summary.added} 行</code>
+            <span>删除</span>
+            <code>{diff.summary.removed} 行</code>
+            <span>未变</span>
+            <code>{diff.summary.unchanged} 行</code>
+          </div>
+          <pre className={styles.workflowDiff}>
+            {diff.lines.map((line, index) => (
+              <span key={`${index}-${line.type}`} className={styles[`diff_${line.type}`]}>
+                {line.type === 'added' ? '+ ' : line.type === 'removed' ? '- ' : '  '}
+                {line.text || ' '}
+                {'\n'}
+              </span>
+            ))}
+          </pre>
+        </div>,
+        true,
+        'large',
+      )
+    } catch (e) {
+      openModal(
+        '工作流版本对比',
+        <div className="note warning">{e instanceof Error ? e.message : '生成版本差异失败'}</div>,
+        true,
+        'large',
+      )
+    }
+  }
+
+  const openWorkflowDraftDialog = (workflow: WorkflowUiConfig = X_TREND_WORKFLOW) => {
+    openModal(
+      `与 AI 一起修改${workflow.label}`,
+      <WorkflowDraftForm ref={workflowDraftRef} />,
+      false,
+      'large',
+      {
+        label: '生成草稿',
+        onConfirm: async () => {
+          const instruction = workflowDraftRef.current?.snapshot()
+          if (!instruction) {
+            toast('请输入你想调整的工作流要求')
+            return
+          }
+          openModal(`与 AI 一起修改${workflow.label}`, <div className="note">正在生成工作流草稿…</div>, true, 'large')
+          try {
+            let draft = (await createWorkflowDraft(workflow.id, instruction)).draftVersion
+            let repairCount = 0
+            openModal(`与 AI 一起修改${workflow.label}`, <div className="note">草稿已生成，正在运行短流程测试…</div>, true, 'large')
+            let testResult = await testWorkflowVersion(workflow.id, draft.id)
+            while (testResult.status === 'failed' && repairCount < 2) {
+              repairCount += 1
+              openModal(
+                `与 AI 一起修改${workflow.label}`,
+                <div className="note">短流程测试失败，正在让 AI 修复第 {repairCount} 次...</div>,
+                true,
+                'large',
+              )
+              draft = (await repairWorkflowVersion(workflow.id, draft.id)).draftVersion
+              testResult = await testWorkflowVersion(workflow.id, draft.id)
+            }
+            openModal(
+              `${draft.title} · 草稿 ${draft.version}`,
+              <div>
+                <div className={styles.workflowMeta}>
+                  <span>状态</span>
+                  <code>{draft.status}</code>
+                  <span>短流程测试</span>
+                  <code>{formatWorkflowTestStatus(testResult.status)}{testResult.errorMessage ? `：${testResult.errorMessage}` : ''}</code>
+                  <span>AI 自动修复</span>
+                  <code>{repairCount} 次</code>
+                  <span>来源</span>
+                  <code>{formatWorkflowSource(draft.source)}</code>
+                  <span>修改摘要</span>
+                  <code>{draft.changeSummary || '未返回摘要'}</code>
+                </div>
+                {testResult.status === 'passed' && (
+                  <div className={styles.inlineActions}>
+                    <button type="button" className="btn primary" onClick={() => activateWorkflowVersion(workflow, draft)}>
+                      启用此版本
+                    </button>
+                  </div>
+                )}
+                <pre className={styles.workflowDoc}>{draft.markdown}</pre>
+              </div>,
+              true,
+              'large',
+            )
+            toast(testResult.status === 'passed' ? '工作流草稿已通过短流程测试，尚未启用' : '工作流草稿测试失败，尚未启用')
+          } catch (e) {
+            openModal(
+              `与 AI 一起修改${workflow.label}`,
+              <div className="note warning">{e instanceof Error ? e.message : '生成工作流草稿失败'}</div>,
+              true,
+              'large',
+            )
+          }
+        },
+      },
+    )
   }
 
   if (loading) {
@@ -228,9 +481,14 @@ export default function TwitterSetting() {
               <h3>榜单形成事件的工作流</h3>
               <p className="small">采集成功形成快照后自动触发。</p>
             </div>
-            <button type="button" className="btn" onClick={openWorkflowDocument}>
-              查看
-            </button>
+            <div className={styles.inlineActions}>
+              <button type="button" className="btn" onClick={() => openWorkflowDraftDialog(X_TREND_WORKFLOW)}>
+                与 AI 一起修改
+              </button>
+              <button type="button" className="btn" onClick={() => openWorkflowDocument(X_TREND_WORKFLOW)}>
+                查看
+              </button>
+            </div>
           </div>
         </section>
 
@@ -240,9 +498,17 @@ export default function TwitterSetting() {
               <h3>重点主题追踪配置</h3>
               <p className="small">点击主题行配置语义、正反例、账号和主题圈工作流。</p>
             </div>
-            <button type="button" className="btn" onClick={() => openTopicConfig()}>
-              +新增主题
-            </button>
+            <div className={styles.inlineActions}>
+              <button type="button" className="btn" onClick={() => openWorkflowDraftDialog(TOPIC_EVENT_WORKFLOW)}>
+                与 AI 一起修改
+              </button>
+              <button type="button" className="btn" onClick={() => openWorkflowDocument(TOPIC_EVENT_WORKFLOW)}>
+                查看工作流
+              </button>
+              <button type="button" className="btn" onClick={() => openTopicConfig()}>
+                +新增主题
+              </button>
+            </div>
           </div>
           {topics.length === 0 ? (
             <div className="note">暂无重点主题配置</div>
@@ -337,6 +603,40 @@ function normalizeTrendLimit(value: string) {
   return parsed
 }
 
+function formatWorkflowSource(source: string) {
+  const labels: Record<string, string> = {
+    system: '系统默认',
+    ai_custom: 'AI 自定义',
+    manual_import: '人工导入',
+    rollback: '历史回滚',
+  }
+  return labels[source] ?? source
+}
+
+function formatWorkflowTestStatus(status: string) {
+  const labels: Record<string, string> = {
+    running: '测试中',
+    passed: '通过',
+    failed: '失败',
+  }
+  return labels[status] ?? status
+}
+
+function formatWorkflowAction(action: string) {
+  const labels: Record<string, string> = {
+    create_ai_draft: 'AI 生成草稿',
+    repair_ai_draft: 'AI 修复草稿',
+    run_short_test: '短流程测试',
+    activate_version: '启用版本',
+    reset_to_system_default: '重置默认',
+  }
+  return labels[action] ?? action
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString('zh-CN', { hour12: false })
+}
+
 function unique(values: string[]) {
   return Array.from(new Set(values.map((item) => item.trim()).filter(Boolean)))
 }
@@ -353,6 +653,38 @@ function createTopicId(name: string) {
 interface TopicConfigFormHandle {
   snapshot: () => TopicTrackingConfig | null
 }
+
+interface WorkflowDraftFormHandle {
+  snapshot: () => string | null
+}
+
+const WorkflowDraftForm = forwardRef<WorkflowDraftFormHandle>((_, ref) => {
+  const [instruction, setInstruction] = useState('')
+
+  useImperativeHandle(ref, () => ({
+    snapshot: () => {
+      const trimmed = instruction.trim()
+      return trimmed ? trimmed : null
+    },
+  }))
+
+  return (
+    <div className={styles.topicForm}>
+      <div className="field full">
+        <label>修改要求</label>
+        <textarea
+          rows={6}
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          placeholder="例如：泛娱乐话题更严格一点；监管、产品发布、重大资金流动更积极形成事件；重复事件优先合并。"
+        />
+      </div>
+      <div className="note">生成结果会保存为草稿版本，不会覆盖系统默认工作流，也不会自动启用。</div>
+    </div>
+  )
+})
+
+WorkflowDraftForm.displayName = 'WorkflowDraftForm'
 
 const TopicConfigForm = forwardRef<
   TopicConfigFormHandle,

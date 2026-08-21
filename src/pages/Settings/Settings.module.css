@@ -122,6 +122,95 @@
   white-space: pre-wrap;
 }
 
+.inlineActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.topicForm {
+  display: grid;
+  gap: 14px;
+}
+
+.workflowVersionList {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.workflowVersionList h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.workflowVersionItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line2);
+}
+
+.workflowVersionItem div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.workflowVersionItem span,
+.workflowVersionItem small {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workflowAuditList {
+  display: grid;
+  gap: 10px;
+}
+
+.workflowAuditItem {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line2);
+}
+
+.workflowAuditItem span,
+.workflowAuditItem small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.workflowDiff {
+  background: #f6f8f8;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 12px 0 0;
+  max-height: 68vh;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.diff_added {
+  color: #087b71;
+}
+
+.diff_removed {
+  color: #a53d44;
+}
+
+.diff_unchanged {
+  color: var(--muted);
+}
+
 .accountList {
   display: grid;
 }
