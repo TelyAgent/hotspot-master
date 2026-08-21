@@ -6,6 +6,8 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom'
+import { ConfigProvider, Layout } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
 import { AppProvider, useApp } from './context/AppContext'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
@@ -23,18 +25,24 @@ import Settings from './pages/Settings/Settings'
 
 function AppLayout() {
   return (
-    <div className="app">
-      <Sidebar />
-      <div>
-        <Topbar />
-        <main className="page">
-          <Outlet />
-        </main>
-      </div>
+    <Layout className="app">
+      <Layout.Sider className="app-sider" width={224} theme="light">
+        <Sidebar />
+      </Layout.Sider>
+      <Layout className="app-main">
+        <Layout.Header className="app-header">
+          <Topbar />
+        </Layout.Header>
+        <Layout.Content className="app-content">
+          <main className="page">
+            <Outlet />
+          </main>
+        </Layout.Content>
+      </Layout>
       <Modal />
       <Toast />
       <AssistantChatFloat />
-    </div>
+    </Layout>
   )
 }
 
@@ -50,27 +58,57 @@ function RequireAuth() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        token: {
+          colorPrimary: '#087b71',
+          colorInfo: '#087b71',
+          colorSuccess: '#087b71',
+          colorWarning: '#b55020',
+          colorError: '#a53d44',
+          colorLink: '#087b71',
+          colorLinkHover: '#05665e',
+          colorLinkActive: '#04524c',
+          colorText: '#172026',
+          colorTextSecondary: '#647276',
+          colorBorder: '#d6dfdf',
+          colorBgLayout: '#f4f7f7',
+          borderRadius: 6,
+          fontFamily:
+            "Inter, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+        },
+        components: {
+          Alert: {
+            colorInfoBg: 'rgb(244, 247, 247)',
+            colorInfoBorder: '#d6dfdf',
+            colorInfoText: '#647276',
+          },
+        },
+      }}
+    >
+      <BrowserRouter>
+        <AppProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route element={<RequireAuth />}>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Navigate to="/overview" replace />} />
-              <Route path="/overview" element={<Overview />} />
-              <Route path="/monitor" element={<Monitor />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/future" element={<Schedule />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/insights" element={<Insights />} />
-              <Route path="/settings" element={<Settings />} />
+            <Route element={<RequireAuth />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Navigate to="/overview" replace />} />
+                <Route path="/overview" element={<Overview />} />
+                <Route path="/monitor" element={<Monitor />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/future" element={<Schedule />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/insights" element={<Insights />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AppProvider>
-    </BrowserRouter>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AppProvider>
+      </BrowserRouter>
+    </ConfigProvider>
   )
 }

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Alert, Button, Empty, Spin, Statistic, Tag } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { refreshTopicCircleTopics } from '../../api/topicCircle'
 import { useTopicCircleMonitorTopics } from '../../hooks/useTopicCircleMonitorTopics'
@@ -35,9 +37,9 @@ export default function Topics() {
 
   if (topicDetail) return <TopicDetail name={topicDetail} />
 
-  if (loading) return <div className="note">正在加载主题…</div>
-  if (error) return <div className="note warning">加载失败：{error}</div>
-  if (topics.length === 0) return <div className="note">暂无主题，请在系统设置里配置。</div>
+  if (loading) return <Spin tip="正在加载主题…" />
+  if (error) return <Alert type="error" message={`加载失败：${error}`} showIcon />
+  if (topics.length === 0) return <Empty description="暂无主题，请在系统设置里配置" />
 
   return (
     <>
@@ -51,11 +53,11 @@ export default function Topics() {
               : '暂无记录'}
           {pipeline.status?.latestWorkflowRun ? ` · Workflow ${pipeline.status.latestWorkflowRun.status}` : ''}
         </span>
-        <button className="btn primary" onClick={refreshTopics} disabled={refreshing}>
+        <Button type="primary" icon={<ReloadOutlined />} onClick={refreshTopics} loading={refreshing}>
           {refreshing ? '采集中…' : '立即采集并总结'}
-        </button>
+        </Button>
       </div>
-      {pipeline.error ? <div className="note warning">流水线状态加载失败：{pipeline.error}</div> : null}
+      {pipeline.error ? <Alert type="warning" message={`流水线状态加载失败：${pipeline.error}`} showIcon /> : null}
       <div className="three grid">
         {topics.map((c) => {
           return (
@@ -72,9 +74,7 @@ export default function Topics() {
               <p>
                 24 小时候选 {c.candidateCount24h} 个，已触发 {c.triggeredEventCount24h} 个。
               </p>
-              <button className="btn link" onClick={() => set({ topicDetail: c.name })}>
-                查看该主题全部话题 →
-              </button>
+              <Button type="link" onClick={() => set({ topicDetail: c.name })}>查看该主题全部话题</Button>
             </article>
           )
         })}
@@ -117,9 +117,9 @@ function TopicDetail({ name }: { name: string }) {
   return (
     <>
       <div className={styles.topicDetailBreadcrumb}>
-        <button className="btn link" onClick={() => set({ topicDetail: null })}>
+        <Button type="link" onClick={() => set({ topicDetail: null })}>
           重点主题追踪
-        </button>
+        </Button>
         <span className="muted">/</span>
         <b>{name}</b>
       </div>
@@ -130,20 +130,18 @@ function TopicDetail({ name }: { name: string }) {
           <span className="small">从监控账号帖子总结出的具体事件/话题</span>
         </div>
         <div>
-          <span className="small">话题数</span>
-          <strong>{topics.length}</strong>
+          <Statistic title="话题数" value={topics.length} />
           <span className="small">个话题</span>
         </div>
         <div>
-          <span className="small">已触发响应</span>
-          <strong>{triggered}</strong>
+          <Statistic title="已触发响应" value={triggered} />
           <span className="small">已进入内容链路</span>
         </div>
         <div>
           <span className="small">手动刷新</span>
-          <button className="btn primary" onClick={refreshTopics} disabled={refreshing}>
+          <Button type="primary" icon={<ReloadOutlined />} onClick={refreshTopics} loading={refreshing}>
             {refreshing ? '采集中…' : '立即采集并总结'}
-          </button>
+          </Button>
         </div>
       </section>
       <section className="card">
@@ -161,11 +159,11 @@ function TopicDetail({ name }: { name: string }) {
           <span>状态</span>
         </div>
         {loading ? (
-          <div className="note">正在加载话题…</div>
+          <Spin tip="正在加载话题…" />
         ) : error ? (
-          <div className="note warning">加载失败：{error}</div>
+          <Alert type="error" message={`加载失败：${error}`} showIcon />
         ) : topics.length === 0 ? (
-          <div className="note">暂无话题，等待采集与总结。</div>
+          <Empty description="暂无话题，等待采集与总结" />
         ) : (
           topics.map((t) => (
             <div className={styles.topicTrendRow} key={t.id}>
@@ -177,9 +175,7 @@ function TopicDetail({ name }: { name: string }) {
               <strong>{t.b3h}</strong>
               <strong>{t.b24h}</strong>
               <span>{t.tmax != null ? `${t.tmax.toFixed(1)}x` : '—'}</span>
-              <span className={`pill ${t.triggerType ? 'green' : ''}`}>
-                {t.triggerType ? TRIGGER_LABEL[t.triggerType] ?? '已触发' : '观察中'}
-              </span>
+              <Tag color={t.triggerType ? 'success' : 'default'}>{t.triggerType ? TRIGGER_LABEL[t.triggerType] ?? '已触发' : '观察中'}</Tag>
             </div>
           ))
         )}

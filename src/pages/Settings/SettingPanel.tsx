@@ -1,4 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { Alert, Button, Empty, Input, Select, Spin } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { useSettings } from '../../hooks/useSettings'
 import type { SettingItem } from '../../api/settings'
@@ -57,18 +59,18 @@ export function SettingPanel({
             <h2>{title}</h2>
             <p className="small">点击任一行查看并修改该对象的完整配置版式。</p>
           </div>
-          <button className="btn primary" onClick={() => openConfig()}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openConfig()}>
             +新增
-          </button>
+          </Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="note">正在加载…</div>
+        <Spin tip="正在加载…" />
       ) : error ? (
-        <div className="note warning">加载失败：{error}</div>
+        <Alert type="error" message={`加载失败：${error}`} showIcon />
       ) : items.length === 0 ? (
-        <div className="note">暂无配置项</div>
+        <Empty description="暂无配置项" />
       ) : (
         items.map((it) => (
           <SettingRow
@@ -83,11 +85,12 @@ export function SettingPanel({
         ))
       )}
 
-      <div className="note">
-        <b>这个分区承担什么作用？</b>
-        <br />
-        {settingHelp[category as keyof typeof settingHelp]}
-      </div>
+      <Alert
+        style={{ marginTop: 12 }}
+        message="这个分区承担什么作用？"
+        description={settingHelp[category as keyof typeof settingHelp]}
+        showIcon
+      />
     </section>
   )
 }
@@ -135,7 +138,7 @@ const ConfigForm = forwardRef<
       <div className="form-grid">
         <div className="field">
           <label>{nameField.label}</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         {restFields.map((f) => (
           <ConfigFieldInput
@@ -147,17 +150,17 @@ const ConfigForm = forwardRef<
         ))}
         <div className="field">
           <label>启用状态</label>
-          <select value={enabled ? '启用' : '停用'} onChange={(e) => setEnabled(e.target.value === '启用')}>
-            <option>启用</option>
-            <option>停用</option>
-          </select>
+          <Select
+            value={enabled ? '启用' : '停用'}
+            options={[
+              { value: '启用', label: '启用' },
+              { value: '停用', label: '停用' },
+            ]}
+            onChange={(value) => setEnabled(value === '启用')}
+          />
         </div>
       </div>
-      <div className="note">
-        <b>保存影响</b>
-        <br />
-        保存后立即生效。
-      </div>
+      <Alert style={{ marginTop: 12 }} message="保存影响" description="保存后立即生效。" showIcon />
     </div>
   )
 })

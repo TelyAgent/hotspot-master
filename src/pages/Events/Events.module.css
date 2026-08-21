@@ -19,13 +19,14 @@
   overflow-y: auto;
 }
 
+.eventListItems {
+  border-top: 1px solid var(--line2);
+}
+
 .eventItem {
-  width: 100%;
-  border: 0;
+  cursor: pointer;
   border-left: 3px solid transparent;
-  background: #fff;
-  text-align: left;
-  padding: 12px 10px;
+  padding: 12px 10px !important;
   border-bottom: 1px solid var(--line2);
 }
 
@@ -95,7 +96,15 @@
 }
 
 .eventActions button {
-  padding: 10px;
+  min-height: 38px;
+}
+
+.eventPagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 @media (max-width: 1180px) {

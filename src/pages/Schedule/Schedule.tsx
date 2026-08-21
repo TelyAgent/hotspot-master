@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { Alert, Button, Select, Space, Statistic } from 'antd'
+import { ImportOutlined, LeftOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { useFutureEvents } from '../../hooks/useFutureEvents'
 import { respondFutureEvent } from '../../api/futureEvents'
@@ -14,8 +16,8 @@ import {
 } from '../../data/futureEventLabels'
 import { Head } from '../../components/ui'
 import CampaignModal from '../../components/CampaignModal'
-import FutureEventModal from './FutureEventModal'
-import FutureEventImportModal from './FutureEventImportModal'
+import FutureEventModal, { type FutureEventModalHandle } from './FutureEventModal'
+import FutureEventImportModal, { type FutureEventImportModalHandle } from './FutureEventImportModal'
 import SourceStatusPanel from './SourceStatusPanel'
 import UnassignedEventsPanel from './UnassignedEventsPanel'
 import HeatPanel from './HeatPanel'
@@ -56,6 +58,8 @@ function sourcesOf(f: FutureEvent): FutureSourceType[] {
 
 export default function Schedule() {
   const { openModal, closeModal, toast, go } = useApp()
+  const futureEventFormRef = useRef<FutureEventModalHandle>(null)
+  const futureImportFormRef = useRef<FutureEventImportModalHandle>(null)
 
   const [view, setView] = useState<{ year: number; month: number }>({
     year: 2026,
@@ -149,11 +153,33 @@ export default function Schedule() {
   }
 
   const addFuture = () => {
-    openModal('添加未来事件', <FutureEventModal onCreated={reload} />)
+    openModal(
+      '添加未来事件',
+      <FutureEventModal ref={futureEventFormRef} onCreated={reload} />,
+      false,
+      'default',
+      {
+        label: '提交',
+        onConfirm: async () => {
+          await futureEventFormRef.current?.submit()
+        },
+      },
+    )
   }
 
   const importFuture = () => {
-    openModal('批量导入未来事件', <FutureEventImportModal onImported={reload} />)
+    openModal(
+      '批量导入未来事件',
+      <FutureEventImportModal ref={futureImportFormRef} onImported={reload} />,
+      false,
+      'default',
+      {
+        label: '导入',
+        onConfirm: async () => {
+          await futureImportFormRef.current?.submit()
+        },
+      },
+    )
   }
 
   return (
@@ -163,44 +189,36 @@ export default function Schedule() {
         desc="通过日历安排未来事件的监测、预热内容与营销准备。"
         actions={
           <>
-            <div className={styles.monthNav}>
-              <button className="btn" onClick={prevMonth}>
-                ‹
-              </button>
-              <button className="btn">{monthTitle}</button>
-              <button className="btn" onClick={nextMonth}>
-                ›
-              </button>
-            </div>
-            <button className="btn" onClick={importFuture}>
+            <Space.Compact>
+              <Button icon={<LeftOutlined />} onClick={prevMonth} />
+              <Button>{monthTitle}</Button>
+              <Button icon={<RightOutlined />} onClick={nextMonth} />
+            </Space.Compact>
+            <Button icon={<ImportOutlined />} onClick={importFuture}>
               批量导入
-            </button>
-            <button className="btn primary" onClick={addFuture}>
-              +添加事件
-            </button>
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={addFuture}>
+              添加事件
+            </Button>
           </>
         }
       />
 
       <section className={styles.futureKpis}>
         <div className={styles.futureKpi}>
-          <span className="small">本月事件</span>
-          <strong>{events.filter((x) => dayOf(x) != null).length}</strong>
+          <Statistic title="本月事件" value={events.filter((x) => dayOf(x) != null).length} />
           <span className="small">来自5类事件源</span>
         </div>
         <div className={styles.futureKpi}>
-          <span className="small">官方已确认</span>
-          <strong>{confirmedCount}</strong>
+          <Statistic title="官方已确认" value={confirmedCount} />
           <span className="small">可以使用确定日期表达</span>
         </div>
         <div className={styles.futureKpi}>
-          <span className="small">进入预热</span>
-          <strong>{worthCount}</strong>
+          <Statistic title="进入预热" value={worthCount} />
           <span className="small">Action Score ≥ 75</span>
         </div>
         <div className={styles.futureKpi}>
-          <span className="small">时间待确认</span>
-          <strong>{unconfirmedTime}</strong>
+          <Statistic title="时间待确认" value={unconfirmedTime} />
           <span className="small">持续监测官方更新</span>
         </div>
       </section>
@@ -209,48 +227,39 @@ export default function Schedule() {
         <div className={styles.futureControls}>
           <label>
             确认状态
-            <select
-              className="filter"
+            <Select
+              style={{ minWidth: 190 }}
               value={conf}
-              onChange={(e) => setConf(e.target.value as '全部' | ConfirmationLevel)}
-            >
-              <option value="全部">全部状态（{events.length}）</option>
-              {confValues.map((v) => (
-                <option value={v} key={v}>
-                  {CONFIRMATION_LABEL[v]}（{countConf(v)}）
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '全部', label: `全部状态（${events.length}）` },
+                ...confValues.map((v) => ({ value: v, label: `${CONFIRMATION_LABEL[v]}（${countConf(v)}）` })),
+              ]}
+              onChange={(value) => setConf(value)}
+            />
           </label>
           <label>
             事件来源
-            <select
-              className="filter"
+            <Select
+              style={{ minWidth: 190 }}
               value={src}
-              onChange={(e) => setSrc(e.target.value as '全部' | FutureSourceType)}
-            >
-              <option value="全部">全部来源（{events.length}）</option>
-              {srcValues.map((v) => (
-                <option value={v} key={v}>
-                  {SOURCE_LABEL[v]}（{countSrc(v)}）
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '全部', label: `全部来源（${events.length}）` },
+                ...srcValues.map((v) => ({ value: v, label: `${SOURCE_LABEL[v]}（${countSrc(v)}）` })),
+              ]}
+              onChange={(value) => setSrc(value)}
+            />
           </label>
           <label>
             准备状态
-            <select
-              className="filter"
+            <Select
+              style={{ minWidth: 170 }}
               value={band}
-              onChange={(e) => setBand(e.target.value)}
-            >
-              <option value="全部">全部事件（{events.length}）</option>
-              {bandValues.map((v) => (
-                <option value={v} key={v}>
-                  {BAND_LABEL[v]}（{countBand(v)}）
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '全部', label: `全部事件（${events.length}）` },
+                ...bandValues.map((v) => ({ value: v, label: `${BAND_LABEL[v]}（${countBand(v)}）` })),
+              ]}
+              onChange={setBand}
+            />
           </label>
           <span className="small">筛选后 {list.length} 个</span>
         </div>
@@ -259,7 +268,7 @@ export default function Schedule() {
       {loading ? (
         <div className="note">正在加载排期…</div>
       ) : error ? (
-        <div className="note warning">加载失败：{error}</div>
+        <Alert type="error" message={`加载失败：${error}`} showIcon />
       ) : (
         <div className={styles.futureCalendarShell}>
           <section className="card">
@@ -312,7 +321,7 @@ export default function Schedule() {
               <span>确认状态使用中文业务名称，不展示内部字母等级</span>
             </div>
             {list.length === 0 && (
-              <div className="note warning">当前筛选没有匹配事件，请调整上方条件。</div>
+              <Alert type="warning" message="当前筛选没有匹配事件，请调整上方条件。" showIcon />
             )}
             {selected && <HeatPanel event={selected} />}
           </section>

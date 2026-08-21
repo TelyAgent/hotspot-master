@@ -1,3 +1,4 @@
+import { Alert, Button, Empty, Spin, Tag } from 'antd'
 import { useUnassignedFutureEvents } from '../../hooks/useUnassignedFutureEvents'
 import type { FutureEvent } from '../../api/futureEvents'
 import {
@@ -25,11 +26,11 @@ export default function UnassignedEventsPanel({
       </div>
 
       {loading ? (
-        <div className="note">正在加载…</div>
+        <Spin tip="正在加载…" />
       ) : error ? (
-        <div className="note warning">加载失败：{error}</div>
+        <Alert type="error" message={`加载失败：${error}`} showIcon />
       ) : events.length === 0 ? (
-        <div className="note">暂无时间待确认事件。</div>
+        <Empty description="暂无时间待确认事件" />
       ) : (
         <div className={styles.sourceList}>
           {events.map((e) => (
@@ -45,16 +46,16 @@ export default function UnassignedEventsPanel({
                 <div>
                   <div className={styles.sourceRowMain}>
                     <b>{e.title}</b>
-                    <span className="pill">{CONFIRMATION_LABEL[e.confirmationLevel]}</span>
+                    <Tag>{CONFIRMATION_LABEL[e.confirmationLevel]}</Tag>
                   </div>
                   <small className="muted">
                     {SOURCE_LABEL[e.evidence[0]?.sourceType ?? 'manual']} · {e.subject} ·{' '}
                     {e.actionScore.total}分 {scoreBand(e.actionScore.total).label}
                   </small>
                 </div>
-                <button className="btn" onClick={() => onOpen(e)}>
+                <Button onClick={() => onOpen(e)}>
                   查看详情
-                </button>
+                </Button>
               </div>
             </div>
           ))}

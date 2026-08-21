@@ -1,3 +1,4 @@
+import { Alert, Button, Empty, Select, Tag } from 'antd'
 import { useApp } from '../../context/AppContext'
 import type { TrendingResponse } from '../../api/types'
 import styles from './Monitor.module.css'
@@ -37,17 +38,14 @@ export default function Ranking({
       <section className="card">
         <div className="card-head">
           <div className="filters">
-            <select
-              className="filter"
+            <Select
+              style={{ minWidth: 180 }}
               value={region}
-              onChange={(e) => set({ region: e.target.value })}
-            >
-              {regions.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-            <button className="btn">当前Top30</button>
-            <button className="btn">对比09:00快照</button>
+              options={regions.map((r) => ({ value: r, label: r }))}
+              onChange={(value) => set({ region: value })}
+            />
+            <Button>当前Top30</Button>
+            <Button>对比09:00快照</Button>
           </div>
           <span className="small">
             共{rows.length}条 · 其中{rows.filter((x) => x.signal === '已触发').length}条满足自动触发
@@ -64,9 +62,9 @@ export default function Ranking({
         {loading ? (
           <div className="note">正在加载热搜排行榜…</div>
         ) : error ? (
-          <div className="note warning">加载失败：{error}</div>
+          <Alert type="error" message={`加载失败：${error}`} showIcon />
         ) : rows.length === 0 ? (
-          <div className="note">该地区暂无热搜数据。</div>
+          <Empty description="该地区暂无热搜数据" />
         ) : (
           rows.map((x) => (
             <div className={styles.ranking} key={x.rank}>
@@ -76,22 +74,20 @@ export default function Ranking({
                 <br />
                 <small className="muted">{region}榜单原始条目</small>
               </span>
-              <span className={`pill ${x.change.includes('↑') ? 'orange' : x.rank <= 5 ? 'green' : ''}`}>
-                {x.change}
-              </span>
+              <Tag color={x.change.includes('↑') ? 'warning' : x.rank <= 5 ? 'success' : 'default'}>{x.change}</Tag>
               <span>{x.heat}</span>
-              <span className={`pill ${x.signal === '已触发' ? 'green' : ''}`}>{x.signal}</span>
+              <Tag color={x.signal === '已触发' ? 'success' : 'default'}>{x.signal}</Tag>
               {x.signal === '已触发' ? (
-                <button
-                  className="btn link"
+                <Button
+                  type="link"
                   onClick={() => {
                     const event = ensureEventForTrend(x.name, region, x.rank)
                     set({ event: event.id, eventStatus: '全部' })
                     go('events')
                   }}
                 >
-                  查看聚合 →
-                </button>
+                  查看聚合
+                </Button>
               ) : (
                 <span className="small">尚未触发响应</span>
               )}

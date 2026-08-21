@@ -1,4 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { Alert, Button, Checkbox, Empty, Input, InputNumber, Select, Spin } from 'antd'
+import { EyeOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, RobotOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
   updatePlatformCollectionConfig,
@@ -189,12 +191,12 @@ export default function TwitterSetting() {
             <code>{active.changeSummary || workflow.fallbackSummary}</code>
           </div>
           <div className={styles.inlineActions}>
-            <button type="button" className="btn" onClick={() => openWorkflowAuditLogs(workflow)}>
+            <Button icon={<HistoryOutlined />} onClick={() => openWorkflowAuditLogs(workflow)}>
               审计记录
-            </button>
-            <button type="button" className="btn" onClick={() => resetWorkflowDefault(workflow)}>
+            </Button>
+            <Button icon={<UndoOutlined />} onClick={() => resetWorkflowDefault(workflow)}>
               重置默认
-            </button>
+            </Button>
           </div>
           {document.history.length > 0 && (
             <div className={styles.workflowVersionList}>
@@ -208,12 +210,12 @@ export default function TwitterSetting() {
                   </div>
                   {version.id !== active.id && (
                     <div className={styles.inlineActions}>
-                      <button type="button" className="btn" onClick={() => openWorkflowDiff(workflow, active, version)}>
+                      <Button onClick={() => openWorkflowDiff(workflow, active, version)}>
                         对比当前
-                      </button>
-                      <button type="button" className="btn" onClick={() => activateWorkflowVersion(workflow, version)}>
+                      </Button>
+                      <Button onClick={() => activateWorkflowVersion(workflow, version)}>
                         启用
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -385,9 +387,9 @@ export default function TwitterSetting() {
                 </div>
                 {testResult.status === 'passed' && (
                   <div className={styles.inlineActions}>
-                    <button type="button" className="btn primary" onClick={() => activateWorkflowVersion(workflow, draft)}>
+                    <Button type="primary" onClick={() => activateWorkflowVersion(workflow, draft)}>
                       启用此版本
-                    </button>
+                    </Button>
                   </div>
                 )}
                 <pre className={styles.workflowDoc}>{draft.markdown}</pre>
@@ -410,11 +412,11 @@ export default function TwitterSetting() {
   }
 
   if (loading) {
-    return <section className={styles.settingPanel}><div className="note">正在加载 Twitter 配置…</div></section>
+    return <section className={styles.settingPanel}><Spin tip="正在加载 Twitter 配置…" /></section>
   }
 
   if (error) {
-    return <section className={styles.settingPanel}><div className="note warning">加载失败：{error}</div></section>
+    return <section className={styles.settingPanel}><Alert type="error" message={`加载失败：${error}`} showIcon /></section>
   }
 
   return (
@@ -425,9 +427,9 @@ export default function TwitterSetting() {
             <h2>Twitter 配置</h2>
             <p className="small">X 热搜榜采集、榜单形成 Event 工作流、重点主题追踪。</p>
           </div>
-          <button className="btn primary" onClick={save} disabled={saving || regions.length === 0}>
+          <Button type="primary" icon={<SaveOutlined />} onClick={save} loading={saving} disabled={regions.length === 0}>
             {saving ? '保存中…' : '保存配置'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -443,34 +445,33 @@ export default function TwitterSetting() {
           <div className="form-grid">
             <div className="field">
               <label>采集频率</label>
-              <select value={frequencyMs} onChange={(e) => setFrequencyMs(Number(e.target.value))}>
-                {FREQUENCY_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>{item.label}</option>
-                ))}
-              </select>
+              <Select
+                value={frequencyMs}
+                options={FREQUENCY_OPTIONS}
+                onChange={setFrequencyMs}
+              />
             </div>
             <div className="field">
               <label>榜单条数</label>
-              <input
-                type="number"
+              <InputNumber
                 min={1}
                 max={30}
-                step={1}
-                value={trendLimit}
-                onChange={(e) => setTrendLimit(e.target.value)}
+                value={Number(trendLimit)}
+                onChange={(value) => setTrendLimit(String(value ?? ''))}
+                style={{ width: '100%' }}
               />
             </div>
           </div>
           <div className={styles.regionList}>
             {REGION_OPTIONS.map((region) => (
-              <label key={region} className={styles.checkItem}>
-                <input
-                  type="checkbox"
+              <Checkbox
+                key={region}
+                className={styles.checkItem}
                   checked={regions.includes(region)}
                   onChange={() => toggleRegion(region)}
-                />
-                <span>{region}</span>
-              </label>
+              >
+                {region}
+              </Checkbox>
             ))}
           </div>
         </section>
@@ -482,12 +483,12 @@ export default function TwitterSetting() {
               <p className="small">采集成功形成快照后自动触发。</p>
             </div>
             <div className={styles.inlineActions}>
-              <button type="button" className="btn" onClick={() => openWorkflowDraftDialog(X_TREND_WORKFLOW)}>
+              <Button icon={<RobotOutlined />} onClick={() => openWorkflowDraftDialog(X_TREND_WORKFLOW)}>
                 与 AI 一起修改
-              </button>
-              <button type="button" className="btn" onClick={() => openWorkflowDocument(X_TREND_WORKFLOW)}>
+              </Button>
+              <Button icon={<EyeOutlined />} onClick={() => openWorkflowDocument(X_TREND_WORKFLOW)}>
                 查看
-              </button>
+              </Button>
             </div>
           </div>
         </section>
@@ -499,19 +500,19 @@ export default function TwitterSetting() {
               <p className="small">点击主题行配置语义、正反例、账号和主题圈工作流。</p>
             </div>
             <div className={styles.inlineActions}>
-              <button type="button" className="btn" onClick={() => openWorkflowDraftDialog(TOPIC_EVENT_WORKFLOW)}>
+              <Button icon={<RobotOutlined />} onClick={() => openWorkflowDraftDialog(TOPIC_EVENT_WORKFLOW)}>
                 与 AI 一起修改
-              </button>
-              <button type="button" className="btn" onClick={() => openWorkflowDocument(TOPIC_EVENT_WORKFLOW)}>
+              </Button>
+              <Button icon={<EyeOutlined />} onClick={() => openWorkflowDocument(TOPIC_EVENT_WORKFLOW)}>
                 查看工作流
-              </button>
-              <button type="button" className="btn" onClick={() => openTopicConfig()}>
-                +新增主题
-              </button>
+              </Button>
+              <Button icon={<PlusOutlined />} onClick={() => openTopicConfig()}>
+                新增主题
+              </Button>
             </div>
           </div>
           {topics.length === 0 ? (
-            <div className="note">暂无重点主题配置</div>
+            <Empty description="暂无重点主题配置" />
           ) : (
             topics.map((topic, index) => (
               <SettingRow
@@ -672,14 +673,14 @@ const WorkflowDraftForm = forwardRef<WorkflowDraftFormHandle>((_, ref) => {
     <div className={styles.topicForm}>
       <div className="field full">
         <label>修改要求</label>
-        <textarea
+        <Input.TextArea
           rows={6}
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
           placeholder="例如：泛娱乐话题更严格一点；监管、产品发布、重大资金流动更积极形成事件；重复事件优先合并。"
         />
       </div>
-      <div className="note">生成结果会保存为草稿版本，不会覆盖系统默认工作流，也不会自动启用。</div>
+      <Alert message="生成结果会保存为草稿版本，不会覆盖系统默认工作流，也不会自动启用。" showIcon />
     </div>
   )
 })
@@ -741,38 +742,43 @@ const TopicConfigForm = forwardRef<
       <div className="form-grid">
         <div className="field">
           <label>主题名称</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="field">
           <label>启用状态</label>
-          <select value={enabled ? '启用' : '停用'} onChange={(e) => setEnabled(e.target.value === '启用')}>
-            <option>启用</option>
-            <option>停用</option>
-          </select>
+          <Select
+            value={enabled ? '启用' : '停用'}
+            options={[
+              { value: '启用', label: '启用' },
+              { value: '停用', label: '停用' },
+            ]}
+            onChange={(value) => setEnabled(value === '启用')}
+          />
         </div>
         <div className="field">
           <label>语义关键词</label>
-          <textarea value={keywords} onChange={(e) => setKeywords(e.target.value)} />
+          <Input.TextArea value={keywords} onChange={(e) => setKeywords(e.target.value)} />
         </div>
         <div className="field">
           <label>正例 Event</label>
-          <textarea value={positiveExamples} onChange={(e) => setPositiveExamples(e.target.value)} />
+          <Input.TextArea value={positiveExamples} onChange={(e) => setPositiveExamples(e.target.value)} />
         </div>
         <div className="field">
           <label>反例 Event</label>
-          <textarea value={negativeExamples} onChange={(e) => setNegativeExamples(e.target.value)} />
+          <Input.TextArea value={negativeExamples} onChange={(e) => setNegativeExamples(e.target.value)} />
         </div>
         <div className="field">
           <label>单次帖子上限</label>
-          <input value={postLimit} onChange={(e) => setPostLimit(e.target.value)} />
+          <InputNumber min={1} value={Number(postLimit)} onChange={(value) => setPostLimit(String(value ?? ''))} style={{ width: '100%' }} />
         </div>
         <AccountListInput value={accounts} onChange={setAccounts} />
       </div>
-      <div className="note">
-        <b>保存影响</b>
-        <br />
-        保存后会更新 Twitter 平台变量；榜单语义命中和主题圈账号追踪会读取这些字段。
-      </div>
+      <Alert
+        style={{ marginTop: 12 }}
+        message="保存影响"
+        description="保存后会更新 Twitter 平台变量；榜单语义命中和主题圈账号追踪会读取这些字段。"
+        showIcon
+      />
     </div>
   )
 })
@@ -801,20 +807,20 @@ function AccountListInput({
       <div>
         {value.map((account, index) => (
           <div key={index} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-            <input
+            <Input
               value={account}
               onChange={(e) => update(index, e.target.value)}
               placeholder="@handle"
               style={{ flex: 1 }}
             />
-            <button type="button" className="btn" onClick={() => remove(index)}>
+            <Button onClick={() => remove(index)}>
               ×
-            </button>
+            </Button>
           </div>
         ))}
-        <button type="button" className="btn" onClick={add}>
+        <Button icon={<PlusOutlined />} onClick={add}>
           + 添加账号
-        </button>
+        </Button>
       </div>
     </div>
   )

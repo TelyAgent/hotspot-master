@@ -1,3 +1,5 @@
+import { Alert, Button, Card } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../context/AppContext'
 import styles from './CampaignModal.module.css'
 
@@ -35,25 +37,23 @@ export default function CampaignModal() {
           <h2>三个差异化候选 · v{campaignVersion}</h2>
           <p className="small">不要求所有专项条件同时满足；可以重新生成全部候选。</p>
         </div>
-        <button
-          className="btn"
+        <Button
+          icon={<ReloadOutlined />}
           onClick={() =>
             set({ campaignVersion: campaignVersion + 1, campaignChoice: null })
           }
         >
           重新生成3个
-        </button>
+        </Button>
       </div>
 
       <div className={styles.campaignGrid}>
         {PLANS.map((p, i) => (
-          <article
+          <Card
             key={i}
             className={`${styles.campaign} ${campaignChoice === i ? styles.selected : ''}`}
+            title={`方案${i + 1} · ${p[0]}`}
           >
-            <b>
-              方案{i + 1} · {p[0]}
-            </b>
             <p>{p[1]}</p>
             <small>
               <b>目标：</b>
@@ -65,22 +65,23 @@ export default function CampaignModal() {
               <b>准备缺口：</b>
               {p[4]}
             </small>
-            <button
-              className={`btn ${campaignChoice === i ? 'primary' : ''}`}
+            <Button
+              type={campaignChoice === i ? 'primary' : 'default'}
               style={{ width: '100%', marginTop: 10 }}
               onClick={() => set({ campaignChoice: i })}
             >
               {campaignChoice === i ? '已选择' : '选择方案'}
-            </button>
-          </article>
+            </Button>
+          </Card>
         ))}
       </div>
 
-      <div className="note">
-        <b>选定后的最终交付</b>
-        <br />
-        活动名称、机制、适配原因、目标、受众、渠道、时间、准备度、缺口和KOL推荐；系统到方案交付为止，不自动执行。
-      </div>
+      <Alert
+        style={{ marginTop: 12 }}
+        message="选定后的最终交付"
+        description="活动名称、机制、适配原因、目标、受众、渠道、时间、准备度、缺口和KOL推荐；系统到方案交付为止，不自动执行。"
+        showIcon
+      />
     </div>
   )
 }

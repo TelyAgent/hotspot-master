@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom'
+import { Avatar, Badge, Breadcrumb, Button, Space, Tooltip, Typography } from 'antd'
+import { LogoutOutlined, ProfileOutlined } from '@ant-design/icons'
 import { useApp } from '../context/AppContext'
 import { PAGE_LABELS } from '../data/labels'
 
@@ -19,20 +21,28 @@ export default function Topbar() {
 
   return (
     <header className="top">
-      <span className="small">工作区 / {PAGE_LABELS[page]}</span>
-      <div className="top-right">
-        <i className="online"></i>
-        <span className="small">自动响应链路正常</span>
-        <button className="btn mini" onClick={() => go('tasks')}>
+      <Breadcrumb
+        className="top-breadcrumb"
+        items={[
+          { title: '工作区' },
+          { title: PAGE_LABELS[page] },
+        ]}
+      />
+      <Space className="top-right" size={10}>
+        <Badge status="processing" color="#087b71" />
+        <Typography.Text type="secondary" className="top-status">
+          自动响应链路正常
+        </Typography.Text>
+        <Button size="small" icon={<ProfileOutlined />} onClick={() => go('tasks')}>
           待处理 5
-        </button>
-        <span className="avatar" title={user ?? ''}>
-          {initials(user)}
-        </span>
-        <button className="btn mini" onClick={handleLogout}>
+        </Button>
+        <Tooltip title={user ?? ''}>
+          <Avatar className="avatar">{initials(user)}</Avatar>
+        </Tooltip>
+        <Button size="small" icon={<LogoutOutlined />} onClick={handleLogout}>
           退出
-        </button>
-      </div>
+        </Button>
+      </Space>
     </header>
   )
 }

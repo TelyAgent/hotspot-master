@@ -1,3 +1,6 @@
+import { Button, Input, Select } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+
 export type ConfigFieldType = 'text' | 'textarea' | 'select' | 'list'
 
 export interface ConfigField {
@@ -24,15 +27,15 @@ export function ConfigFieldInput({
       {field.type === 'list' ? (
         <ListInput value={value} onChange={onChange} />
       ) : field.type === 'textarea' ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} />
+        <Input.TextArea value={value} onChange={(e) => onChange(e.target.value)} />
       ) : field.type === 'select' ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)}>
-          {(field.options ?? []).map((o) => (
-            <option key={o}>{o}</option>
-          ))}
-        </select>
+        <Select
+          value={value}
+          options={(field.options ?? []).map((o) => ({ value: o, label: o }))}
+          onChange={onChange}
+        />
       ) : (
-        <input value={value} onChange={(e) => onChange(e.target.value)} />
+        <Input value={value} onChange={(e) => onChange(e.target.value)} />
       )}
     </div>
   )
@@ -64,20 +67,20 @@ function ListInput({
     <div>
       {items.map((item, i) => (
         <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-          <input
+          <Input
             value={item}
             onChange={(e) => update(i, e.target.value)}
             placeholder="@handle"
             style={{ flex: 1 }}
           />
-          <button type="button" className="btn" onClick={() => remove(i)}>
+          <Button onClick={() => remove(i)}>
             ×
-          </button>
+          </Button>
         </div>
       ))}
-      <button type="button" className="btn" onClick={add}>
+      <Button icon={<PlusOutlined />} onClick={add}>
         + 添加账号
-      </button>
+      </Button>
     </div>
   )
 }

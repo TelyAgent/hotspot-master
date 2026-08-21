@@ -1,3 +1,4 @@
+import { Menu } from 'antd'
 import { useApp } from '../../context/AppContext'
 import { SET } from '../../data/settings'
 import { Head } from '../../components/ui'
@@ -17,15 +18,13 @@ export default function Settings() {
 
       <div className={styles.settingsLayout}>
         <aside className={styles.settingsNav}>
-          {SET.map((x) => (
-            <button
-              key={x[0]}
-              className={`${styles.settingTab} ${setting === x[0] ? styles.active : ''}`}
-              onClick={() => set({ setting: x[0] })}
-            >
-              {x[1]}
-            </button>
-          ))}
+          <Menu
+            className={styles.settingsMenu}
+            mode="inline"
+            selectedKeys={[setting]}
+            items={SET.map(([key, label]) => ({ key, label }))}
+            onClick={({ key }) => set({ setting: key as typeof setting })}
+          />
         </aside>
 
         <ActiveSetting />

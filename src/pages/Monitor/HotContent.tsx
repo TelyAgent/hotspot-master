@@ -1,3 +1,4 @@
+import { Alert, Button, Tag } from 'antd'
 import { useApp } from '../../context/AppContext'
 import styles from './Monitor.module.css'
 
@@ -6,11 +7,12 @@ export default function HotContent() {
 
   return (
     <>
-      <div className="note">
-        <b>热点内容分析入口</b>
-        <br />
-        这里承载后续的热点叙事、热门帖子结构、传播账号、观点分歧和内容机会分析，不与事件响应流程混在一起。
-      </div>
+      <Alert
+        style={{ marginBottom: 14 }}
+        message="热点内容分析入口"
+        description="这里承载后续的热点叙事、热门帖子结构、传播账号、观点分歧和内容机会分析，不与事件响应流程混在一起。"
+        showIcon
+      />
       <div className={styles.contentModule}>
         {(
           [
@@ -22,10 +24,10 @@ export default function HotContent() {
           <article className={styles.contentCard} key={x[0]}>
             <h2>{x[0]}</h2>
             <p>{x[1]}</p>
-            <span className="pill orange">后续模块</span>
+            <Tag color="warning">后续模块</Tag>
             <br />
-            <button
-              className="btn link"
+            <Button
+              type="link"
               onClick={() =>
                 openModal(
                   '热点内容分析模块',
@@ -34,8 +36,8 @@ export default function HotContent() {
                 )
               }
             >
-              查看模块规划 →
-            </button>
+              查看模块规划
+            </Button>
           </article>
         ))}
       </div>

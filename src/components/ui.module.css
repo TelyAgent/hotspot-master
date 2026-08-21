@@ -1,3 +1,10 @@
+.headTitle {
+  margin: 0 0 4px !important;
+  color: var(--ink) !important;
+  font-size: 25px !important;
+  line-height: 1.25 !important;
+}
+
 .chart {
   height: 155px;
 }

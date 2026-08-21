@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import { Button, Tabs } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { Head } from '../../components/ui'
 import { refreshMonitor } from '../../api/monitor'
@@ -10,12 +12,12 @@ import Regions from './Regions'
 import HotContent from './HotContent'
 import styles from './Monitor.module.css'
 
-const SUBTABS: [string, string][] = [
+const SUBTABS = [
   ['ranking', '热搜排行榜'],
   ['topics', '重点主题追踪'],
   ['regions', '跨区聚合'],
   ['content', '热点内容'],
-]
+] as const
 
 function formatCollectedAt(iso?: string): string {
   if (!iso) return '--'
@@ -61,27 +63,22 @@ export default function Monitor() {
         desc="完整呈现和聚合各地区排行榜；是否进入响应由事件库承接。"
         actions={
           <>
-            <button className="btn">
+            <Button>
               最近成功采集 {formatCollectedAt(data?.collectedAt)}
               {data?.source === 'mock' ? '（模拟）' : ''}
-            </button>
-            <button className="btn primary" onClick={handleRefresh}>
+            </Button>
+            <Button type="primary" icon={<ReloadOutlined />} onClick={handleRefresh}>
               立即采集
-            </button>
+            </Button>
           </>
         }
       />
-      <div className={styles.subtabs}>
-        {SUBTABS.map(([key, label]) => (
-          <button
-            key={key}
-            className={`${styles.subtab} ${mt === key ? styles.active : ''}`}
-            onClick={() => set({ mt: key })}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className={styles.subtabs}
+        activeKey={mt}
+        items={SUBTABS.map(([key, label]) => ({ key, label }))}
+        onChange={(key) => set({ mt: key })}
+      />
       {mt === 'ranking' ? (
         <Ranking
           data={data}

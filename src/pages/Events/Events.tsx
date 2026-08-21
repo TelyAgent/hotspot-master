@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Alert, Button, Empty, Input, List, Pagination, Select, Space, Tag, Typography } from 'antd'
+import { CheckCircleOutlined, ProfileOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import type { EventItem } from '../../data/types'
 import { Head } from '../../components/ui'
@@ -7,6 +9,16 @@ import { CorrectModal, MergeModal, RelateModal, SplitModal } from './EventModals
 import styles from './Events.module.css'
 
 const STATUS_OPTIONS = ['内容生成中', '待发布', '处理异常', '已完成']
+
+function eventStatusColor(status: string) {
+  if (status === '处理异常') return 'error'
+  if (status === '已完成') return 'success'
+  return 'warning'
+}
+
+function verifyColor(verify: string) {
+  return verify === '存在冲突' ? 'error' : 'success'
+}
 
 export default function Events() {
   const { eventStatus, event, set, go, openModal } = useApp()
@@ -54,84 +66,76 @@ export default function Events() {
         desc="集中查看已触发自动响应的Event、任务状态与需要人工消除的异常。"
         actions={
           <>
-            <select
-              className="filter"
+            <Select
+              style={{ minWidth: 150 }}
               value={eventStatus}
-              onChange={(e) => {
-                set({ eventStatus: e.target.value })
+              options={[
+                { value: '全部', label: '全部' },
+                ...STATUS_OPTIONS.map((x) => ({ value: x, label: x })),
+              ]}
+              onChange={(value) => {
+                set({ eventStatus: value })
                 setPage(1)
               }}
-            >
-              <option>全部</option>
-              {STATUS_OPTIONS.map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-            <button className="btn" onClick={() => set({ eventStatus: '已完成' })}>
+            />
+            <Button icon={<CheckCircleOutlined />} onClick={() => set({ eventStatus: '已完成' })}>
               已完成事件库
-            </button>
+            </Button>
           </>
         }
       />
 
       <div className={styles.eventLayout}>
         <aside className={styles.eventList}>
-          <input
-            className="filter"
+          <Input.Search
             style={{ width: '100%', marginBottom: 7 }}
             placeholder="搜索Event"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            allowClear
           />
           {loading ? (
             <div className="note">正在加载事件…</div>
           ) : error ? (
-            <div className="note warning">加载失败：{error}</div>
+            <Alert type="error" message={`加载失败：${error}`} showIcon />
           ) : list.length ? (
-            list.map((x) => (
-              <button
-                key={x.id}
-                className={`${styles.eventItem} ${current && x.id === current.id ? styles.active : ''}`}
-                onClick={() => set({ event: x.id })}
-              >
-                <b>{x.title}</b>
-                <br />
-                <span className="small">
-                  {x.status} · {x.regions}
-                </span>
-                <div style={{ marginTop: 5 }}>
-                  <span className={`pill ${x.verify === '存在冲突' ? 'red' : 'green'}`}>
-                    {x.verify}
-                  </span>
-                </div>
-              </button>
-            ))
+            <List
+              className={styles.eventListItems}
+              dataSource={list}
+              renderItem={(x) => (
+                <List.Item
+                  className={`${styles.eventItem} ${current && x.id === current.id ? styles.active : ''}`}
+                  onClick={() => set({ event: x.id })}
+                >
+                  <List.Item.Meta
+                    title={<Typography.Text strong>{x.title}</Typography.Text>}
+                    description={
+                      <Space direction="vertical" size={5}>
+                        <span className="small">
+                          {x.status} · {x.regions}
+                        </span>
+                        <Tag color={verifyColor(x.verify)}>{x.verify}</Tag>
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
           ) : (
-            <div className="note">当前状态下没有Event。</div>
+            <Empty description="当前状态下没有Event" />
           )}
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 6,
-              marginTop: 8,
-            }}
-          >
-            <button className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-              上一页
-            </button>
+          <div className={styles.eventPagination}>
             <span className="small">
               第 {page} / {totalPages} 页
             </span>
-            <button
-              className="btn"
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              下一页
-            </button>
+            <Pagination
+              simple
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              onChange={setPage}
+            />
           </div>
         </aside>
 
@@ -162,15 +166,13 @@ function EventDetail({
         <div>
           <h1 style={{ fontSize: 21 }}>{e.title}</h1>
           <div className="inline">
-            <span className={`pill ${e.status === '处理异常' ? 'red' : e.status === '已完成' ? 'green' : 'orange'}`}>
-              {e.status}
-            </span>
-            <span className={`pill ${e.verify === '存在冲突' ? 'red' : 'green'}`}>{e.verify}</span>
+            <Tag color={eventStatusColor(e.status)}>{e.status}</Tag>
+            <Tag color={verifyColor(e.verify)}>{e.verify}</Tag>
           </div>
         </div>
-        <button className="btn primary" onClick={onGoTasks}>
+        <Button type="primary" icon={<ProfileOutlined />} onClick={onGoTasks}>
           查看内容任务
-        </button>
+        </Button>
       </div>
 
       <div className={styles.fact}>
@@ -203,18 +205,18 @@ function EventDetail({
       </div>
 
       <div className={styles.eventActions}>
-        <button className="btn" onClick={() => onAction('correct')}>
+        <Button onClick={() => onAction('correct')}>
           校正摘要/依据
-        </button>
-        <button className="btn" onClick={() => onAction('merge')}>
+        </Button>
+        <Button onClick={() => onAction('merge')}>
           合并Event
-        </button>
-        <button className="btn" onClick={() => onAction('split')}>
+        </Button>
+        <Button onClick={() => onAction('split')}>
           拆分Event
-        </button>
-        <button className="btn" onClick={() => onAction('relate')}>
+        </Button>
+        <Button onClick={() => onAction('relate')}>
           管理关联
-        </button>
+        </Button>
       </div>
 
       <h2>事实依据</h2>
@@ -233,9 +235,9 @@ function EventDetail({
             <small className="muted">{item.sourceType === 'x_trend' ? 'X热搜榜快照' : item.sourceType}</small>
           </span>
           {item.url ? (
-            <a className="btn mini" href={item.url} target="_blank" rel="noreferrer">
-              打开来源 ↗
-            </a>
+            <Button size="small" href={item.url} target="_blank" rel="noreferrer">
+              打开来源
+            </Button>
           ) : null}
         </div>
       ))}

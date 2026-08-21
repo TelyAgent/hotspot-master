@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Alert, Avatar, Button, Empty, Pagination, Select, Space, Statistic, Table, Tag } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import { ExportOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import type { TaskItem } from '../../data/types'
 import { Head } from '../../components/ui'
@@ -15,6 +18,16 @@ const SUMMARY: [string, string][] = [
   ['今日完成', '17'],
 ]
 
+function statusColor(status: string) {
+  if (status === '异常') return 'error'
+  if (status.includes('待')) return 'warning'
+  return 'success'
+}
+
+function riskColor(risk: string) {
+  return risk === '中' || risk === '高' ? 'warning' : 'success'
+}
+
 export default function Tasks() {
   const { taskEvent, taskRole, taskStatus, taskRisk, set, toast, openModal, closeModal } =
     useApp()
@@ -28,6 +41,51 @@ export default function Tasks() {
   })
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  const columns: ColumnsType<TaskItem> = [
+    {
+      title: 'ID',
+      dataIndex: 'code',
+      width: 96,
+    },
+    {
+      title: '账号任务',
+      dataIndex: 'account',
+      width: 220,
+      render: (_value, record) => (
+        <Space size={8}>
+          <Avatar className={styles.accountIcon}>{record.account.slice(0, 2)}</Avatar>
+          <span>
+            <b>{record.account}</b>
+            <br />
+            <small className="muted">{record.role}</small>
+          </span>
+        </Space>
+      ),
+    },
+    {
+      title: '关联Event',
+      dataIndex: 'event',
+      ellipsis: true,
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      width: 110,
+      render: (value: string) => <Tag color={statusColor(value)}>{value}</Tag>,
+    },
+    {
+      title: '风险',
+      dataIndex: 'risk',
+      width: 90,
+      render: (value: string) => <Tag color={riskColor(value)}>{value}</Tag>,
+    },
+    {
+      title: '时间',
+      dataIndex: 'time',
+      width: 110,
+    },
+  ]
 
   const regenerateAndReload = async (t: TaskItem, instruction?: string) => {
     try {
@@ -85,130 +143,92 @@ export default function Tasks() {
       <Head
         title="内容发布"
         desc="完成各账号候选内容的AI调整、人工发布、URL回填与发布异常处理。"
-        actions={<button className="btn">导出任务</button>}
+        actions={<Button icon={<ExportOutlined />}>导出任务</Button>}
       />
 
       <section className={styles.summaryGrid}>
         {SUMMARY.map((x) => (
           <div className={styles.summaryCell} key={x[0]}>
-            <span className="small">{x[0]}</span>
-            <strong>{x[1]}</strong>
+            <Statistic title={x[0]} value={x[1]} />
           </div>
         ))}
       </section>
 
       <section className="card">
-        <div className="filters">
-          <select
-            className="filter"
+        <Space className="filters" size={8} wrap>
+          <Select
+            style={{ minWidth: 180 }}
             value={taskEvent}
-            onChange={(e) => {
-              set({ taskEvent: e.target.value })
+            options={[
+              { value: '全部', label: 'Event：全部' },
+              ...facets.events.map((x) => ({ value: x, label: x })),
+            ]}
+            onChange={(value) => {
+              set({ taskEvent: value })
               setPage(1)
             }}
-          >
-            <option value="全部">Event：全部</option>
-            {facets.events.map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
-          <select
-            className="filter"
+          />
+          <Select
+            style={{ minWidth: 170 }}
             value={taskRole}
-            onChange={(e) => {
-              set({ taskRole: e.target.value })
+            options={[
+              { value: '全部', label: '账号：全部' },
+              ...accounts.map((x) => ({ value: x, label: x })),
+            ]}
+            onChange={(value) => {
+              set({ taskRole: value })
               setPage(1)
             }}
-          >
-            <option value="全部">账号：全部</option>
-            {accounts.map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
-          <select
-            className="filter"
+          />
+          <Select
+            style={{ minWidth: 150 }}
             value={taskStatus}
-            onChange={(e) => {
-              set({ taskStatus: e.target.value })
+            options={[
+              { value: '全部', label: '状态：全部' },
+              ...facets.statuses.map((x) => ({ value: x, label: x })),
+            ]}
+            onChange={(value) => {
+              set({ taskStatus: value })
               setPage(1)
             }}
-          >
-            <option value="全部">状态：全部</option>
-            {facets.statuses.map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
-          <select
-            className="filter"
+          />
+          <Select
+            style={{ minWidth: 140 }}
             value={taskRisk}
-            onChange={(e) => {
-              set({ taskRisk: e.target.value })
+            options={[
+              { value: '全部', label: '风险：全部' },
+              ...facets.risks.map((x) => ({ value: x, label: x })),
+            ]}
+            onChange={(value) => {
+              set({ taskRisk: value })
               setPage(1)
             }}
-          >
-            <option value="全部">风险：全部</option>
-            {facets.risks.map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
+          />
           <span className="small">共 {total} 条任务</span>
-        </div>
+        </Space>
 
-        <div className={styles.taskHead} style={{ marginTop: 14 }}>
-          <span>ID</span>
-          <span>账号任务</span>
-          <span>关联Event</span>
-          <span>状态</span>
-          <span>风险</span>
-          <span>时间</span>
-        </div>
-        {loading && <div className="note">正在加载任务…</div>}
-        {error && <div className="note warning">加载失败：{error}</div>}
-        {tasks.map((x) => (
-          <div className={styles.taskRow} key={x.id} onClick={() => openTaskModal(x)}>
-            <span>{x.code}</span>
-            <div className={styles.account}>
-              <span className={styles.accountIcon}>{x.account.slice(0, 2)}</span>
-              <span>
-                <b>{x.account}</b>
-                <br />
-                <small className="muted">{x.role}</small>
-              </span>
-            </div>
-            <span>{x.event}</span>
-            <span className={`pill ${x.status === '异常' ? 'red' : x.status.includes('待') ? 'orange' : 'green'}`}>
-              {x.status}
-            </span>
-            <span className={`pill ${x.risk === '中' ? 'orange' : 'green'}`}>{x.risk}</span>
-            <span>{x.time}</span>
-          </div>
-        ))}
-        {!loading && !error && tasks.length === 0 && (
-          <div className="note">当前条件下没有任务。</div>
-        )}
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 10,
-            marginTop: 12,
-          }}
-        >
-          <button className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            上一页
-          </button>
-          <span className="small">
-            第 {page} / {totalPages} 页
-          </span>
-          <button
-            className="btn"
-            disabled={page >= totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            下一页
-          </button>
+        {error ? <Alert style={{ marginTop: 14 }} type="error" message={`加载失败：${error}`} showIcon /> : null}
+        <Table
+          className={styles.taskTable}
+          rowKey="id"
+          columns={columns}
+          dataSource={tasks}
+          loading={loading}
+          pagination={false}
+          locale={{ emptyText: <Empty description="当前条件下没有任务" /> }}
+          onRow={(record) => ({
+            onClick: () => openTaskModal(record),
+          })}
+        />
+        <div className={styles.paginationBar}>
+          <span className="small">第 {page} / {totalPages} 页</span>
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            showSizeChanger={false}
+            onChange={setPage}
+          />
         </div>
       </section>
     </>

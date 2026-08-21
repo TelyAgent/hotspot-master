@@ -84,19 +84,42 @@ h3 {
 
 /* ---------- app shell ---------- */
 .app {
-  display: grid;
-  grid-template-columns: 224px minmax(940px, 1fr);
   min-height: 100vh;
+  background: var(--bg);
+}
+
+.app-sider {
+  position: sticky !important;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+  border-right: 1px solid var(--line);
+  z-index: 4;
+}
+
+.app-main {
+  min-width: 940px;
+  background: var(--bg);
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 62px;
+  padding: 0;
+  background: transparent;
+  line-height: normal;
+}
+
+.app-content {
+  background: var(--bg);
 }
 
 .side {
-  position: sticky;
-  top: 0;
   height: 100vh;
   background: #fff;
-  border-right: 1px solid var(--line);
   padding: 20px 12px;
-  z-index: 4;
 }
 
 .brand {
@@ -122,6 +145,69 @@ h3 {
   font-weight: 500;
   color: var(--muted);
   font-size: 10px;
+}
+
+.side-menu.ant-menu {
+  border-inline-end: 0;
+  background: transparent;
+}
+
+.side-menu .ant-menu-item-group-title {
+  padding: 14px 10px 6px;
+  color: #869295;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.side-menu .ant-menu-item {
+  height: 48px;
+  margin: 2px 0;
+  padding-inline: 11px 10px !important;
+  border-radius: 0;
+  color: #526165;
+  line-height: 1.2;
+}
+
+.side-menu .ant-menu-item:hover {
+  background: #f2f7f6;
+  color: var(--ink);
+}
+
+.side-menu .ant-menu-item-selected {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.side-menu .ant-menu-item-selected::after {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  border-inline-end: 3px solid var(--g);
+}
+
+.side-menu .ant-menu-item-icon {
+  color: inherit;
+  font-size: 15px;
+}
+
+.nav-label {
+  display: grid;
+  gap: 2px;
+}
+
+.nav-label b {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nav-label small {
+  color: #8a9699;
+  font-size: 10px;
+}
+
+.side-menu .ant-menu-item-selected .nav-label small {
+  color: var(--g);
 }
 
 .group {
@@ -167,9 +253,6 @@ h3 {
 
 .top {
   height: 62px;
-  position: sticky;
-  top: 0;
-  z-index: 3;
   background: #fffffff5;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -177,6 +260,14 @@ h3 {
   justify-content: space-between;
   padding: 0 28px;
   backdrop-filter: blur(10px);
+}
+
+.top-breadcrumb {
+  font-size: 12px;
+}
+
+.top-status {
+  font-size: 12px;
 }
 
 .top-right,
@@ -379,46 +470,9 @@ h3 {
 }
 
 /* ---------- modal ---------- */
-.modal-wrap {
-  position: fixed;
-  inset: 0;
-  background: #0c1f1f73;
-  z-index: 20;
-  place-items: center;
-  padding: 20px;
-  display: grid;
-}
-
-.modal {
-  width: min(760px, 100%);
-  max-height: 88vh;
-  overflow: auto;
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-
-.modal.large {
-  width: min(960px, 100%);
-}
-
-.modal-head,
-.modal-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 17px;
-  border-bottom: 1px solid var(--line);
-}
-
-.modal-foot {
-  justify-content: flex-end;
-  gap: 8px;
-  border-top: 1px solid var(--line);
-  border-bottom: 0;
-}
-
 .modal-body {
-  padding: 17px;
+  max-height: 72vh;
+  overflow: auto;
 }
 
 /* ---------- toast ---------- */

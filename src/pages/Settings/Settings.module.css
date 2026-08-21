@@ -10,6 +10,28 @@
   padding: 7px;
 }
 
+.settingsMenu {
+  border-inline-end: 0 !important;
+}
+
+.settingsMenu :global(.ant-menu-item) {
+  border-radius: 0;
+  margin-inline: 0;
+  width: 100%;
+}
+
+.settingsMenu :global(.ant-menu-item-selected) {
+  background: var(--soft);
+  color: var(--g);
+  font-weight: 700;
+}
+
+.settingsMenu :global(.ant-menu-item-selected::after) {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  border-inline-end: 3px solid var(--g);
+}
+
 .settingTab {
   width: 100%;
   border: 0;

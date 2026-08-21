@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { Alert, Button, Card, Empty, Input, Space } from 'antd'
+import { CopyOutlined, DownOutlined, LinkOutlined, ReloadOutlined, UpOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import type { TaskItem } from '../../data/types'
 import styles from './Tasks.module.css'
@@ -70,9 +72,12 @@ export default function TaskDetailModal({
             {task.account} · {task.event}
           </h2>
         </div>
-        <button className="btn" onClick={() => setShowEvidence((value) => !value)}>
-          Event依据 {showEvidence ? '↑' : '↓'}
-        </button>
+        <Button
+          icon={showEvidence ? <UpOutlined /> : <DownOutlined />}
+          onClick={() => setShowEvidence((value) => !value)}
+        >
+          Event依据
+        </Button>
       </div>
 
       {showEvidence && (
@@ -95,14 +100,14 @@ export default function TaskDetailModal({
                   ) : null}
                 </span>
                 {item.url ? (
-                  <a className="btn mini" href={item.url} target="_blank" rel="noreferrer">
+                  <Button size="small" icon={<LinkOutlined />} href={item.url} target="_blank" rel="noreferrer">
                     打开来源
-                  </a>
+                  </Button>
                 ) : null}
               </div>
             ))
           ) : (
-            <div className="note">暂无事实依据。</div>
+            <Empty description="暂无事实依据" />
           )}
         </section>
       )}
@@ -111,77 +116,87 @@ export default function TaskDetailModal({
         <>
           <div className={styles.candidateGrid}>
             {task.copies.map((c, i) => (
-              <article
+              <Card
                 key={i}
                 className={styles.candidate}
-              >
-                <b>候选{String.fromCharCode(65 + i)}</b>
-                <div className={styles.copy}>{c}</div>
-                <div className={styles.candidateActions}>
-                  <button
-                    className="btn"
+                title={`候选${String.fromCharCode(65 + i)}`}
+                actions={[
+                  <Button
+                    key="copy"
+                    type="link"
+                    icon={<CopyOutlined />}
                     onClick={() => toast('内容已复制，请前往X人工发布')}
                   >
                     复制
-                  </button>
-                </div>
-              </article>
+                  </Button>,
+                ]}
+              >
+                <div className={styles.copy}>{c}</div>
+              </Card>
             ))}
           </div>
 
           <div className={styles.taskTools}>
             <div className={styles.toolBox}>
               <h3>与AI调整</h3>
-              <textarea
+              <Input.TextArea
+                rows={5}
                 placeholder="补充本轮生成要求"
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
-              ></textarea>
-              <button
-                className="btn primary"
-                disabled={regenerating}
+              />
+              <Button
+                type="primary"
+                icon={<ReloadOutlined />}
+                loading={regenerating}
                 onClick={() => handleRegenerate(true)}
               >
                 {regenerating ? '生成中…' : '重新生成3条'}
-              </button>
+              </Button>
             </div>
             <div className={styles.toolBox}>
               <h3>发布回填</h3>
-              <input
+              <Input
                 placeholder="X发布URL"
                 value={publishUrl}
                 onChange={(e) => setPublishUrl(e.target.value)}
               />
-              <button
-                className="btn primary"
-                disabled={publishing}
+              <Button
+                type="primary"
+                loading={publishing}
                 onClick={handlePublish}
               >
                 {publishing ? '提交中…' : '提交回填'}
-              </button>
+              </Button>
               <span className="small">用于后续自动跟踪帖子发布效果。</span>
             </div>
           </div>
         </>
       ) : (
-        <div className={`note ${task.status === '异常' ? 'warning' : ''}`}>
-          <b>
-            {regenerating
+        <Alert
+          type={task.status === '异常' ? 'warning' : 'info'}
+          message={
+            regenerating
               ? '正在自动生成3条候选'
               : task.status === '异常'
                 ? '重试3次后生成失败'
-                : '暂无候选内容'}
-          </b>
-          <br />
-          <button
-            className="btn primary"
-            style={{ marginTop: 8 }}
-            disabled={regenerating}
-            onClick={() => handleRegenerate(false)}
-          >
-            {regenerating ? '生成中…' : '重新运行'}
-          </button>
-        </div>
+                : '暂无候选内容'
+          }
+          action={
+            <Space>
+              <Button
+                type="primary"
+                size="small"
+                icon={<ReloadOutlined />}
+                loading={regenerating}
+                onClick={() => handleRegenerate(false)}
+              >
+                {regenerating ? '生成中…' : '重新运行'}
+              </Button>
+            </Space>
+          }
+          showIcon
+        />
       )}
     </div>
   )

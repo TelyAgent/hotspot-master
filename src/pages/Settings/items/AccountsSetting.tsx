@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { Alert, Empty, Input, Spin } from 'antd'
 import { useApp } from '../../../context/AppContext'
 import { useSettings } from '../../../hooks/useSettings'
 import type { SettingItem } from '../../../api/settings'
@@ -26,11 +27,13 @@ const FIELDS: ConfigField[] = [
 export default function AccountsSetting() {
   const { openModal, closeModal, toast } = useApp()
   const { items, loading, error, reload, update } = useSettings('accounts')
+  const formRef = useRef<AccountConfigFormHandle>(null)
 
   const openConfig = (item: SettingItem) => {
     openModal(
       `配置 · ${item.name}`,
       <AccountConfigForm
+        ref={formRef}
         item={item}
         onSave={async (payload) => {
           await update(item.id, payload)
@@ -40,6 +43,14 @@ export default function AccountsSetting() {
         }}
       />,
       false,
+      'default',
+      {
+        label: '保存',
+        onConfirm: async () => {
+          const ok = await formRef.current?.save()
+          if (!ok) toast('请输入账号类型')
+        },
+      },
     )
   }
 
@@ -55,11 +66,11 @@ export default function AccountsSetting() {
       </div>
 
       {loading ? (
-        <div className="note">正在加载账号配置…</div>
+        <Spin tip="正在加载账号配置…" />
       ) : error ? (
-        <div className="note warning">加载失败：{error}</div>
+        <Alert type="error" message={`加载失败：${error}`} showIcon />
       ) : items.length === 0 ? (
-        <div className="note">暂无运营账号配置</div>
+        <Empty description="暂无运营账号配置" />
       ) : (
         <div className={styles.accountList}>
           {items.map((item) => (
@@ -74,22 +85,24 @@ export default function AccountsSetting() {
         </div>
       )}
 
-      <div className="note">
-        <b>这个分区承担什么作用？</b>
-        <br />
-        一个自动响应 Event 会先进入三条基础生产线；其余人设账号再按各自 Skill 判断参与、观察或跳过。
-      </div>
+      <Alert
+        style={{ marginTop: 12 }}
+        message="这个分区承担什么作用？"
+        description="一个自动响应 Event 会先进入三条基础生产线；其余人设账号再按各自 Skill 判断参与、观察或跳过。"
+        showIcon
+      />
     </section>
   )
 }
 
-function AccountConfigForm({
-  item,
-  onSave,
-}: {
+interface AccountConfigFormHandle {
+  save: () => Promise<boolean>
+}
+
+const AccountConfigForm = forwardRef<AccountConfigFormHandle, {
   item: SettingItem
   onSave: (payload: { name: string; fields: Record<string, string> }) => Promise<void>
-}) {
+}>(function AccountConfigForm({ item, onSave }, ref) {
   const nameField = FIELDS[0]
   const restFields = FIELDS.slice(1)
   const [name, setName] = useState(String(item.name ?? ''))
@@ -102,12 +115,24 @@ function AccountConfigForm({
     return next
   })
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: async () => {
+        if (!name.trim()) return false
+        await onSave({ name: name.trim(), fields: values })
+        return true
+      },
+    }),
+    [name, onSave, values],
+  )
+
   return (
     <div>
       <div className="form-grid">
         <div className="field">
           <label>{nameField.label}</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         {restFields.map((field) => (
           <ConfigFieldInput
@@ -118,11 +143,6 @@ function AccountConfigForm({
           />
         ))}
       </div>
-      <div className="actions right">
-        <button className="btn primary" onClick={() => onSave({ name: name.trim(), fields: values })}>
-          保存
-        </button>
-      </div>
     </div>
   )
-}
+})

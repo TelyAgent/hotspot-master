@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Alert, Button, Empty, Spin } from 'antd'
+import { ExportOutlined } from '@ant-design/icons'
 import { getAudit } from '../../../api/settings'
 import type { SettingAudit } from '../../../api/settings'
 import { settingHelp } from '../../../data/settings'
@@ -24,14 +26,14 @@ export default function AuditSetting() {
             <h2>审计记录</h2>
             <p className="small">查看谁在什么时间修改了什么对象，以及修改前后版本。</p>
           </div>
-          <button className="btn">导出审计</button>
+          <Button icon={<ExportOutlined />}>导出审计</Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="note">正在加载…</div>
+        <Spin tip="正在加载…" />
       ) : records.length === 0 ? (
-        <div className="note">暂无审计记录</div>
+        <Empty description="暂无审计记录" />
       ) : (
         records.map((r) => (
           <SettingRow
@@ -46,11 +48,7 @@ export default function AuditSetting() {
         ))
       )}
 
-      <div className="note">
-        <b>这个分区承担什么作用？</b>
-        <br />
-        {settingHelp.audit}
-      </div>
+      <Alert style={{ marginTop: 12 }} message="这个分区承担什么作用？" description={settingHelp.audit} showIcon />
     </section>
   )
 }

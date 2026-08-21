@@ -1,18 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { Button, Modal as AntModal } from 'antd'
 import { useApp } from '../context/AppContext'
 
 export default function Modal() {
-  const { modal, closeModal, toast } = useApp()
+  const { modal, closeModal } = useApp()
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (!modal) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [modal, closeModal])
 
   if (!modal) return null
 
@@ -26,53 +18,30 @@ export default function Modal() {
     }
   }
 
+  const footer = modal.confirm ? (
+    <>
+      <Button onClick={closeModal}>取消</Button>
+      <Button type="primary" loading={submitting} onClick={handleConfirm}>
+        {submitting ? '保存中…' : modal.confirm.label}
+      </Button>
+    </>
+  ) : modal.readonly ? (
+    <Button type="primary" onClick={closeModal}>
+      关闭
+    </Button>
+  ) : null
+
   return (
-    <div
-      className="modal-wrap"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) closeModal()
-      }}
+    <AntModal
+      open
+      title={modal.title}
+      width={modal.size === 'large' ? 960 : 760}
+      centered
+      destroyOnHidden
+      onCancel={closeModal}
+      footer={footer}
     >
-      <div className={`modal ${modal.size === 'large' ? 'large' : ''}`}>
-        <div className="modal-head">
-          <b>{modal.title}</b>
-          <button className="btn link" onClick={closeModal}>
-            关闭
-          </button>
-        </div>
-        <div className="modal-body">{modal.body}</div>
-        <div className="modal-foot">
-          {modal.confirm ? (
-            <>
-              <button className="btn" onClick={closeModal}>
-                取消
-              </button>
-              <button className="btn primary" disabled={submitting} onClick={handleConfirm}>
-                {submitting ? '保存中…' : modal.confirm.label}
-              </button>
-            </>
-          ) : modal.readonly ? (
-            <button className="btn primary" onClick={closeModal}>
-              关闭
-            </button>
-          ) : (
-            <>
-              <button className="btn" onClick={closeModal}>
-                取消
-              </button>
-              <button
-                className="btn primary"
-                onClick={() => {
-                  closeModal()
-                  toast('已保存为草稿并写入版本记录')
-                }}
-              >
-                保存为草稿
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+      <div className="modal-body">{modal.body}</div>
+    </AntModal>
   )
 }

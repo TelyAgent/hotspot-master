@@ -29,6 +29,25 @@
   color: #cde8e4;
 }
 
+.stat :global(.ant-statistic-title) {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.stat :global(.ant-statistic-content) {
+  color: var(--ink);
+  font-size: 27px;
+  font-weight: 750;
+}
+
+.stat:first-child :global(.ant-statistic-title) {
+  color: #cde8e4;
+}
+
+.stat:first-child :global(.ant-statistic-content) {
+  color: #fff;
+}
+
 .stat strong {
   display: block;
   font-size: 27px;

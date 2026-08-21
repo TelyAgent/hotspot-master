@@ -1,3 +1,5 @@
+import { Alert, Button, Empty, Tag } from 'antd'
+import { BulbOutlined, FileTextOutlined } from '@ant-design/icons'
 import type { ExpressionBoundary, FutureEvent } from '../../api/futureEvents'
 import {
   BOUNDARY_LABEL,
@@ -42,9 +44,9 @@ export default function FutureDetail({
         <br />
         <small>
           表达边界：
-          <span className={`pill ${BOUNDARY_TONE[event.expressionBoundary]}`}>
+          <Tag color={BOUNDARY_TONE[event.expressionBoundary] === 'red' ? 'error' : BOUNDARY_TONE[event.expressionBoundary] === 'green' ? 'success' : 'warning'}>
             {BOUNDARY_LABEL[event.expressionBoundary]}
-          </span>
+          </Tag>
         </small>
       </div>
 
@@ -58,14 +60,7 @@ export default function FutureDetail({
       </div>
 
       <h2>Action Score 分解</h2>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 8,
-          marginBottom: 16,
-        }}
-      >
+      <div className={styles.scoreBreakdown}>
         {[
           ['影响力', a.impact.scope + a.impact.relevance + a.impact.outcomeImportance, '/30'],
           ['证据可靠度', a.evidence, '/20'],
@@ -73,19 +68,18 @@ export default function FutureDetail({
           ['时间紧迫度', a.timeUrgency, '/10'],
           ['内容可执行性', a.contentReadiness, '/10'],
         ].map(([label, value, max]) => (
-          <div key={label} style={{ background: '#f4f7f7', padding: 8 }}>
-            <small className="muted">{label}</small>
-            <br />
-            <b>
+          <div key={label} className={styles.scoreItem}>
+            <span>{label}</span>
+            <strong>
               {value}
-              {max}
-            </b>
+              <small>{max}</small>
+            </strong>
           </div>
         ))}
       </div>
 
       <h2>证据与来源</h2>
-      {event.evidence.length === 0 && <div className="note">暂无证据记录。</div>}
+      {event.evidence.length === 0 && <Empty description="暂无证据记录" />}
       {event.evidence.map((s) => (
         <div className={styles.sourceRow} key={s.id}>
           <a href={s.url} target="_blank" rel="noreferrer">
@@ -108,25 +102,29 @@ export default function FutureDetail({
         <span>事件进行</span>
         <span>结果跟进</span>
       </div>
-      <div className="note">
-        监测 {event.windows.monitoring ? event.windows.monitoring.join(' ~ ') : '—'} · 预热{' '}
-        {event.windows.preheat ? event.windows.preheat.join(' ~ ') : '—'}
-      </div>
+      <Alert
+        className={styles.windowAlert}
+        message={`监测 ${event.windows.monitoring ? event.windows.monitoring.join(' ~ ') : '—'} · 预热 ${
+          event.windows.preheat ? event.windows.preheat.join(' ~ ') : '—'
+        }`}
+        showIcon
+      />
 
       {event.relatedEventId && (
-        <div className="note">关联 Event：{event.relatedEventId}</div>
+        <Alert style={{ marginTop: 8 }} message={`关联 Event：${event.relatedEventId}`} showIcon />
       )}
 
-      <button
-        className="btn primary"
+      <Button
+        type="primary"
+        icon={<FileTextOutlined />}
         style={{ width: '100%', marginBottom: 8 }}
         onClick={onGenerate}
       >
         生成内容
-      </button>
-      <button className="btn" style={{ width: '100%' }} onClick={onCampaign}>
+      </Button>
+      <Button icon={<BulbOutlined />} style={{ width: '100%' }} onClick={onCampaign}>
         生成营销方案
-      </button>
+      </Button>
     </aside>
   )
 }

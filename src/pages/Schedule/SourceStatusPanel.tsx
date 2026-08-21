@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Alert, Button, Empty, Spin, Tag } from 'antd'
 import { useApp } from '../../context/AppContext'
 import { useSourceSyncStatus } from '../../hooks/useSourceSyncStatus'
 import { resyncSource } from '../../api/futureEvents'
@@ -14,10 +15,10 @@ const STATUS_LABEL: Record<SourceSyncStatus['status'], string> = {
 }
 
 const STATUS_TONE: Record<SourceSyncStatus['status'], string> = {
-  ok: 'green',
-  error: 'red',
-  disabled: 'orange',
-  pending: 'orange',
+  ok: 'success',
+  error: 'error',
+  disabled: 'warning',
+  pending: 'warning',
 }
 
 export default function SourceStatusPanel() {
@@ -47,26 +48,25 @@ export default function SourceStatusPanel() {
       </div>
 
       {loading ? (
-        <div className="note">正在加载来源状态…</div>
+        <Spin tip="正在加载来源状态…" />
       ) : error ? (
-        <div className="note warning">加载失败：{error}</div>
+        <Alert type="error" message={`加载失败：${error}`} showIcon />
       ) : sources.length === 0 ? (
-        <div className="note">暂无来源状态。</div>
+        <Empty description="暂无来源状态" />
       ) : (
         <div className={styles.sourceList}>
           {sources.map((s) => (
             <div className={styles.sourceRow} key={s.source}>
               <div className={styles.sourceRowMain}>
                 <b>{SOURCE_LABEL[s.source]}</b>
-                <span className={`pill ${STATUS_TONE[s.status]}`}>{STATUS_LABEL[s.status]}</span>
+                <Tag color={STATUS_TONE[s.status]}>{STATUS_LABEL[s.status]}</Tag>
                 {s.status !== 'disabled' && (
-                  <button
-                    className="btn"
+                  <Button
                     onClick={() => onResync(s)}
-                    disabled={syncing === s.source}
+                    loading={syncing === s.source}
                   >
                     {syncing === s.source ? '同步中…' : s.status === 'error' ? '重新同步' : '立即同步'}
-                  </button>
+                  </Button>
                 )}
               </div>
               <small className="muted">

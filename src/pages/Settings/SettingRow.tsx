@@ -1,11 +1,12 @@
+import { Button, Tag } from 'antd'
 import styles from './Settings.module.css'
 
 const statusTone = (s: string) =>
   s === '异常'
-    ? 'red'
+    ? 'error'
     : s.includes('启用') || s.includes('正常') || s.includes('已配置')
-      ? 'green'
-      : 'orange'
+      ? 'success'
+      : 'warning'
 
 export function SettingRow({
   name,
@@ -32,10 +33,10 @@ export function SettingRow({
         <small className="muted">{desc}</small>
       </span>
       {middle ? <span>{middle}</span> : null}
-      {status ? <span className={`pill ${statusTone(status)}`}>{status}</span> : null}
-      <button className="btn link" onClick={onEdit}>
-        {actionLabel} →
-      </button>
+      {status ? <Tag color={statusTone(status)}>{status}</Tag> : null}
+      <Button type="link" onClick={onEdit}>
+        {actionLabel}
+      </Button>
     </div>
   )
 }

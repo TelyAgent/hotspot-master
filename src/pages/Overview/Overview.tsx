@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Alert, Button, Empty, Progress, Select, Statistic, Tag } from 'antd'
+import { ProfileOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { Head } from '../../components/ui'
 import { useOverview } from '../../hooks/useOverview'
@@ -52,28 +54,22 @@ export default function Overview() {
         desc="先看运营结果，再处理待办、异常、任务进度与当前热点。"
         actions={
           <>
-            <select
-              className="filter"
+            <Select
+              style={{ minWidth: 130 }}
               value={range}
-              onChange={(e) => setRange(e.target.value as OverviewRange)}
-            >
-              {RANGES.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <button className="btn primary" onClick={() => go('tasks')}>
+              options={RANGES.map(([value, label]) => ({ value, label }))}
+              onChange={setRange}
+            />
+            <Button type="primary" icon={<ProfileOutlined />} onClick={() => go('tasks')}>
               进入内容发布
-            </button>
+            </Button>
           </>
         }
       />
 
       <section className={styles.stats}>
         <div className={styles.stat}>
-          <label>48小时表现良好率</label>
-          <strong>{loading ? '…' : formatPercent(stats?.wellPerformingRate)}</strong>
+          <Statistic title="48小时表现良好率" value={loading ? '…' : formatPercent(stats?.wellPerformingRate)} />
           <span className="small">
             {loading ? '加载中' : `${stats?.wellPerformingCount ?? 0}/${stats?.publishedCount ?? 0} 条达到1,000+浏览`}
           </span>
@@ -87,8 +83,7 @@ export default function Overview() {
           ] as [string, string, string][]
         ).map((x, i) => (
           <div className={styles.stat} key={i}>
-            <label>{x[0]}</label>
-            <strong>{x[1]}</strong>
+            <Statistic title={x[0]} value={x[1]} />
             <span className={styles.delta}>{x[2]}</span>
           </div>
         ))}
@@ -101,22 +96,24 @@ export default function Overview() {
               <h2>结果趋势</h2>
               <p className="small">浏览、互动与发布数量变化</p>
             </div>
-            <span className="pill green">{RANGES.find(([value]) => value === range)?.[1]}</span>
+            <Tag color="success">{RANGES.find(([value]) => value === range)?.[1]}</Tag>
           </div>
-          {error && <div className="note warning">加载失败：{error}</div>}
+          {error && <Alert type="error" message={`加载失败：${error}`} showIcon />}
           {(data?.trend ?? []).map((point) => (
             <div className={styles.trendRow} key={point.date}>
               <span>{point.date.slice(5)}</span>
-              <span className={styles.progressTrack}>
-                <i style={{ width: `${Math.round((((point.views ?? 0) + point.interactions) / maxTrendValue) * 100)}%` }}></i>
-              </span>
+              <Progress
+                percent={Math.round((((point.views ?? 0) + point.interactions) / maxTrendValue) * 100)}
+                showInfo={false}
+                size="small"
+              />
               <small className="muted">
                 {formatCompact(point.views)}浏览 · {formatCompact(point.interactions)}互动 · {point.publishedCount}条
               </small>
             </div>
           ))}
           {!loading && !error && (data?.trend.length ?? 0) === 0 && (
-            <div className="note">暂无趋势数据</div>
+            <Empty description="暂无趋势数据" />
           )}
         </section>
 
@@ -126,21 +123,17 @@ export default function Overview() {
               <h2>账号表现</h2>
               <p className="small">用于判断账号负载与内容效果</p>
             </div>
-            <button className="btn link" onClick={() => go('insights')}>
-              查看复盘 →
-            </button>
+            <Button type="link" onClick={() => go('insights')}>查看复盘</Button>
           </div>
           {(data?.accountPerformance ?? []).map((account) => (
             <div className={styles.accountPerformance} key={account.accountId}>
               <b>{account.name}</b>
-              <span className={styles.miniBar}>
-                <i style={{ width: `${account.score}%` }}></i>
-              </span>
+              <Progress percent={account.score} showInfo={false} size="small" />
               <strong>{formatPercent(account.wellPerformingRate)}</strong>
             </div>
           ))}
           {!loading && (data?.accountPerformance.length ?? 0) === 0 && (
-            <div className="note">暂无账号表现数据</div>
+            <Empty description="暂无账号表现数据" />
           )}
         </section>
       </div>
@@ -152,7 +145,7 @@ export default function Overview() {
               <h2>需要人工处理</h2>
               <p className="small">只呈现自动链路无法自行完成的工作</p>
             </div>
-            <span className="pill orange">{data?.manualItems.length ?? 0}项</span>
+            <Tag color="warning">{data?.manualItems.length ?? 0}项</Tag>
           </div>
           {(data?.manualItems ?? []).map((item) => (
             <div className={styles.attention} key={`${item.taskId ?? item.eventId}-${item.description}`}>
@@ -162,13 +155,13 @@ export default function Overview() {
                 <br />
                 <small className="muted">{item.description}</small>
               </span>
-              <button className="btn mini" onClick={() => go(item.actionPage)}>
+              <Button size="small" onClick={() => go(item.actionPage)}>
                 处理
-              </button>
+              </Button>
             </div>
           ))}
           {!loading && (data?.manualItems.length ?? 0) === 0 && (
-            <div className="note">暂无需要人工处理的事项</div>
+            <Empty description="暂无需要人工处理的事项" />
           )}
         </section>
 
@@ -190,13 +183,13 @@ export default function Overview() {
                 <br />
                 <small className="muted">{item.description}</small>
               </span>
-              <button className="btn mini" onClick={() => go(item.actionPage)}>
+              <Button size="small" onClick={() => go(item.actionPage)}>
                 查看
-              </button>
+              </Button>
             </div>
           ))}
           {!loading && (data?.anomalies.length ?? 0) === 0 && (
-            <div className="note">暂无链路异常</div>
+            <Empty description="暂无链路异常" />
           )}
         </section>
       </div>
@@ -206,9 +199,7 @@ export default function Overview() {
           <h2>进行中的任务组</h2>
           <p className="small">按Event查看账号任务的整体推进情况</p>
         </div>
-        <button className="btn link" onClick={() => go('tasks')}>
-          查看全部发布任务 →
-        </button>
+        <Button type="link" onClick={() => go('tasks')}>查看全部发布任务</Button>
       </div>
       <section className="card">
         <div className={styles.taskProgress}>
@@ -221,14 +212,12 @@ export default function Overview() {
           <div className={styles.taskProgress} key={group.eventId}>
             <b>{group.eventTitle}</b>
             <span>{group.taskCount}个账号任务</span>
-            <span className={styles.progressTrack}>
-              <i style={{ width: `${group.progressPercent}%` }}></i>
-            </span>
-            <span className={`pill ${group.progressPercent >= 100 ? 'green' : 'orange'}`}>{group.statusLabel}</span>
+            <Progress percent={group.progressPercent} showInfo={false} size="small" />
+            <Tag color={group.progressPercent >= 100 ? 'success' : 'warning'}>{group.statusLabel}</Tag>
           </div>
         ))}
         {!loading && (data?.taskGroups.length ?? 0) === 0 && (
-          <div className="note">暂无进行中的任务组</div>
+          <Empty description="暂无进行中的任务组" />
         )}
       </section>
 
@@ -237,11 +226,9 @@ export default function Overview() {
           <h2>当前榜单重点</h2>
           <p className="small">快速了解当前热度；完整Top30与聚合信息在热点监测</p>
         </div>
-        <button className="btn link" onClick={() => go('monitor')}>
-          查看Top30 →
-        </button>
+        <Button type="link" onClick={() => go('monitor')}>查看Top30</Button>
       </div>
-      {trending.error && <div className="note warning">热点榜单加载失败：{trending.error}</div>}
+      {trending.error && <Alert type="error" message={`热点榜单加载失败：${trending.error}`} showIcon />}
       <div className="three grid">
         {(trending.data?.items ?? []).slice(0, 3).map((x) => (
           <div className={styles.topic} key={x.rank}>
@@ -253,7 +240,7 @@ export default function Overview() {
           </div>
         ))}
         {!trending.loading && !trending.error && (trending.data?.items.length ?? 0) === 0 && (
-          <div className="note">暂无榜单数据</div>
+          <Empty description="暂无榜单数据" />
         )}
       </div>
     </>

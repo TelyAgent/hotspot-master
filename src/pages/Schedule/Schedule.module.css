@@ -21,6 +21,17 @@
   border: 0;
 }
 
+.futureKpi :global(.ant-statistic-title) {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.futureKpi :global(.ant-statistic-content) {
+  color: var(--g);
+  font-size: 23px;
+  font-weight: 750;
+}
+
 .futureKpi strong {
   display: block;
   font-size: 23px;
@@ -278,6 +289,45 @@
 .futureDetailScore strong {
   font-size: 22px;
   color: var(--g);
+}
+
+.scoreBreakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.scoreItem {
+  min-width: 0;
+  background: #f4f7f7;
+  padding: 8px;
+}
+
+.scoreItem span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.scoreItem strong {
+  display: block;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.4;
+  margin-top: 3px;
+}
+
+.scoreItem small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 1px;
+}
+
+.windowAlert {
+  margin: 10px 0 12px;
 }
 
 .sourceRow {

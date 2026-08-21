@@ -1,4 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
+import { Button, FloatButton, Input, Spin } from 'antd'
+import { RobotOutlined, SendOutlined } from '@ant-design/icons'
 import {
   executeAssistantTool,
   sendAssistantMessage,
@@ -81,15 +83,12 @@ export default function AssistantChatFloat() {
 
   if (!open) {
     return (
-      <button
-        type="button"
+      <FloatButton
         className={styles.launcher}
         onClick={() => setOpen(true)}
-        aria-label="打开 AI 助手"
-        title="AI 助手"
-      >
-        AI
-      </button>
+        tooltip="AI 助手"
+        icon={<RobotOutlined />}
+      />
     )
   }
 
@@ -100,9 +99,9 @@ export default function AssistantChatFloat() {
           <b>AI 助手</b>
           <span className="small">当前页面：{app.page}</span>
         </div>
-        <button type="button" className="btn mini" onClick={() => setOpen(false)}>
+        <Button size="small" onClick={() => setOpen(false)}>
           收起
-        </button>
+        </Button>
       </header>
 
       <div className={styles.messages}>
@@ -121,34 +120,35 @@ export default function AssistantChatFloat() {
                 {message.proposedActions.map((action) => (
                   <div key={action.id} className={styles.proposedAction}>
                     <span>{action.summary}</span>
-                    <button
-                      type="button"
-                      className="btn mini"
-                      disabled={executingActionId != null}
+                    <Button
+                      size="small"
+                      loading={executingActionId === action.id}
+                      disabled={executingActionId != null && executingActionId !== action.id}
                       onClick={() => executeAction(action)}
                     >
                       {executingActionId === action.id ? '应用中...' : '确认应用'}
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
             ) : null}
           </div>
         ))}
-        {sending ? <div className={`${styles.message} ${styles.assistant}`}>正在回复...</div> : null}
+        {sending ? <div className={`${styles.message} ${styles.assistant}`}><Spin size="small" /> 正在回复...</div> : null}
       </div>
 
       <form className={styles.composer} onSubmit={send}>
-        <textarea
+        <Input.TextArea
+          rows={3}
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder="输入消息"
         />
         <div className={styles.actions}>
           <span className="small">上下文会随请求发送</span>
-          <button type="submit" className="btn primary" disabled={sending || !input.trim()}>
+          <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={sending} disabled={!input.trim()}>
             发送
-          </button>
+          </Button>
         </div>
       </form>
     </section>

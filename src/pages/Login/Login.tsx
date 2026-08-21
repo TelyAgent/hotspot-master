@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Alert, Button, Input } from 'antd'
+import { LoginOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import styles from './Login.module.css'
 
@@ -45,7 +47,7 @@ export default function Login() {
 
         <div className="field" style={{ marginTop: 20 }}>
           <label>用户名</label>
-          <input
+          <Input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="请输入用户名"
@@ -55,8 +57,7 @@ export default function Login() {
 
         <div className="field" style={{ marginTop: 12 }}>
           <label>密码</label>
-          <input
-            type="password"
+          <Input.Password
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="请输入密码"
@@ -64,18 +65,17 @@ export default function Login() {
         </div>
 
         {error && (
-          <div className="note warning" style={{ marginTop: 12 }}>
-            {error}
-          </div>
+          <Alert type="warning" message={error} showIcon style={{ marginTop: 12 }} />
         )}
 
-        <button
-          type="submit"
-          className="btn primary"
+        <Button
+          type="primary"
+          htmlType="submit"
+          icon={<LoginOutlined />}
           style={{ width: '100%', marginTop: 16, padding: '10px 0' }}
         >
           登录
-        </button>
+        </Button>
 
         <p className="small" style={{ marginTop: 14, textAlign: 'center' }}>
           演示环境 · 任意用户名与密码即可登录

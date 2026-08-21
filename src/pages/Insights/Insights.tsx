@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Alert, Button, Card, Empty, List, Select, Statistic, Tag } from 'antd'
 import { Head } from '../../components/ui'
 import { useInsights } from '../../hooks/useInsights'
 import styles from './Insights.module.css'
@@ -46,90 +47,75 @@ export default function Insights() {
         title="复盘优化"
         desc="查看内容效果、风险版本与异常原因。"
         actions={
-          <select
-            className="filter"
+          <Select
+            style={{ minWidth: 140 }}
             value={range}
-            onChange={(e) => setRange(e.target.value)}
-          >
-            {RANGES.map(([v, label]) => (
-              <option key={v} value={v}>
-                {label}
-              </option>
-            ))}
-          </select>
+            options={RANGES.map(([value, label]) => ({ value, label }))}
+            onChange={setRange}
+          />
         }
       />
 
       <div className="four grid">
-        <div className="card">
-          <span className="small">追踪中帖子</span>
-          <strong style={{ fontSize: 25, display: 'block' }}>
-            {loading ? '…' : stats?.trackingPosts ?? 0}
-          </strong>
-        </div>
-        <div className="card">
-          <span className="small">48h表现良好率</span>
-          <strong style={{ fontSize: 25, display: 'block' }}>
-            {loading ? '…' : formatPercent(stats?.wellPerformingRate)}
-          </strong>
-        </div>
-        <div className="card">
-          <span className="small">平均互动率</span>
-          <strong style={{ fontSize: 25, display: 'block' }}>
-            {loading ? '…' : formatPercent(stats?.avgInteractionRate)}
-          </strong>
-        </div>
-        <div className="card">
-          <span className="small">追踪异常</span>
-          <strong style={{ fontSize: 25, display: 'block' }}>
-            {loading ? '…' : stats?.trackingErrorPosts ?? 0}
-          </strong>
-        </div>
+        <Card>
+          <Statistic title="追踪中帖子" value={loading ? '…' : stats?.trackingPosts ?? 0} />
+        </Card>
+        <Card>
+          <Statistic title="48h表现良好率" value={loading ? '…' : formatPercent(stats?.wellPerformingRate)} />
+        </Card>
+        <Card>
+          <Statistic title="平均互动率" value={loading ? '…' : formatPercent(stats?.avgInteractionRate)} />
+        </Card>
+        <Card>
+          <Statistic title="追踪异常" value={loading ? '…' : stats?.trackingErrorPosts ?? 0} />
+        </Card>
       </div>
 
-      {error && <div className="note warning">加载失败：{error}</div>}
+      {error && <Alert style={{ marginTop: 14 }} type="error" message={`加载失败：${error}`} showIcon />}
 
       <div className="two grid" style={{ marginTop: 14 }}>
         <section className="card">
           <h2>账号表现</h2>
-          {accounts.map((a) => (
-            <div className={styles.settingRow} key={a.accountId}>
-              <b>{a.name}</b>
-              <span>{a.publishedPosts}条发布</span>
-              <span>{formatViews(a.avgViews)}平均浏览</span>
-              <span>
-                {formatNumber(a.avgLikes)}赞 / {formatNumber(a.avgReplies)}回复 / {formatNumber(a.avgReposts)}转发
-              </span>
-              <span className="pill green">{formatPercent(a.wellPerformingRate)}</span>
-            </div>
-          ))}
-          {!loading && accounts.length === 0 && (
-            <div className="note">暂无账号表现数据</div>
-          )}
+          <List
+            dataSource={accounts}
+            locale={{ emptyText: loading ? '加载中' : <Empty description="暂无账号表现数据" /> }}
+            renderItem={(a) => (
+              <List.Item className={styles.settingRow}>
+                <b>{a.name}</b>
+                <span>{a.publishedPosts}条发布</span>
+                <span>{formatViews(a.avgViews)}平均浏览</span>
+                <span>
+                  {formatNumber(a.avgLikes)}赞 / {formatNumber(a.avgReplies)}回复 / {formatNumber(a.avgReposts)}转发
+                </span>
+                <Tag color="success">{formatPercent(a.wellPerformingRate)}</Tag>
+              </List.Item>
+            )}
+          />
         </section>
 
         <section className="card">
           <h2>追踪异常线索</h2>
-          {trackingIssues.map((issue) => (
-            <div className={styles.attention} key={issue.publicationRecordId}>
-              <i className={styles.severity}></i>
-              <span>
-                <b>{issue.accountName}</b>
-                <br />
-                <small>{issue.lastTrackingError}</small>
-                <br />
-                <small>
-                  失败 {issue.trackingFailureCount} 次 · {formatTime(issue.lastTrackingErrorAt)}
-                </small>
-              </span>
-              <a className="btn mini" href={issue.url} target="_blank" rel="noreferrer">
-                原帖
-              </a>
-            </div>
-          ))}
-          {!loading && trackingIssues.length === 0 && (
-            <div className="note">暂无追踪异常</div>
-          )}
+          <List
+            dataSource={trackingIssues}
+            locale={{ emptyText: loading ? '加载中' : <Empty description="暂无追踪异常" /> }}
+            renderItem={(issue) => (
+              <List.Item className={styles.attention}>
+                <i className={styles.severity}></i>
+                <span>
+                  <b>{issue.accountName}</b>
+                  <br />
+                  <small>{issue.lastTrackingError}</small>
+                  <br />
+                  <small>
+                    失败 {issue.trackingFailureCount} 次 · {formatTime(issue.lastTrackingErrorAt)}
+                  </small>
+                </span>
+                <Button size="small" href={issue.url} target="_blank" rel="noreferrer">
+                  原帖
+                </Button>
+              </List.Item>
+            )}
+          />
         </section>
       </div>
     </>

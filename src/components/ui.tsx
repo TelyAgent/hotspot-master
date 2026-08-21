@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Flex, Space, Typography } from 'antd'
 import styles from './ui.module.css'
 
 export function Head({
@@ -11,13 +12,19 @@ export function Head({
   actions?: ReactNode
 }) {
   return (
-    <div className="head">
+    <Flex className="head" align="flex-end" justify="space-between" gap={16} wrap>
       <div>
-        <h1>{title}</h1>
-        <div className="muted">{desc}</div>
+        <Typography.Title level={1} className={styles.headTitle}>
+          {title}
+        </Typography.Title>
+        <Typography.Text type="secondary">{desc}</Typography.Text>
       </div>
-      <div className="actions">{actions}</div>
-    </div>
+      {actions ? (
+        <Space className="actions" size={8} wrap>
+          {actions}
+        </Space>
+      ) : null}
+    </Flex>
   )
 }
 
