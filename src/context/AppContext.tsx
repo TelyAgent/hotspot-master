@@ -135,8 +135,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
 
   const path = location.pathname.replace(/^\/+/, '')
-  const page: PageId = (PAGE_IDS as string[]).includes(path)
-    ? (path as PageId)
+  const topPath = path.split('/')[0] || 'overview'
+  const page: PageId = (PAGE_IDS as string[]).includes(topPath)
+    ? (topPath as PageId)
     : 'overview'
 
   const set = (patch: Partial<AppState>) =>

@@ -9,7 +9,10 @@ import {
   ProfileOutlined,
   SettingOutlined,
   ThunderboltOutlined,
+  XOutlined,
+  YoutubeOutlined,
 } from '@ant-design/icons'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { NAV_ITEMS } from '../data/labels'
 import type { PageId } from '../data/types'
@@ -35,16 +38,40 @@ function navLabel(label: string, sub: string) {
 
 export default function Sidebar() {
   const { page, go } = useApp()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const monitorKey = location.pathname.startsWith('/monitor/youtube') ? 'monitor-youtube' : 'monitor-twitter'
+  const selectedKey = page === 'monitor' ? monitorKey : page
 
   const items: MenuProps['items'] = [
     {
       type: 'group',
       label: '运营工作区',
-      children: NAV_ITEMS.map((item) => ({
-        key: item.page,
-        icon: NAV_ICONS[item.page],
-        label: navLabel(item.label, item.sub),
-      })),
+      children: NAV_ITEMS.map((item) =>
+        item.page === 'monitor'
+          ? {
+              key: 'monitor',
+              icon: NAV_ICONS.monitor,
+              label: navLabel(item.label, item.sub),
+              children: [
+                {
+                  key: 'monitor-twitter',
+                  icon: <XOutlined />,
+                  label: navLabel('Twitter', 'X Trends'),
+                },
+                {
+                  key: 'monitor-youtube',
+                  icon: <YoutubeOutlined />,
+                  label: navLabel('YouTube', 'Video Trends'),
+                },
+              ],
+            }
+          : {
+              key: item.page,
+              icon: NAV_ICONS[item.page],
+              label: navLabel(item.label, item.sub),
+            },
+      ),
     },
     {
       type: 'group',
@@ -71,9 +98,21 @@ export default function Sidebar() {
       <Menu
         className="side-menu"
         mode="inline"
-        selectedKeys={[page]}
+        selectedKeys={[selectedKey]}
+        defaultOpenKeys={['monitor']}
         items={items}
-        onClick={({ key }) => go(key as PageId)}
+        onClick={({ key }) => {
+          if (key === 'monitor-twitter') {
+            go('monitor')
+            return
+          }
+          if (key === 'monitor-youtube') {
+            navigate('/monitor/youtube')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+          }
+          if (key !== 'monitor') go(key as PageId)
+        }}
       />
     </aside>
   )

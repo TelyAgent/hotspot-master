@@ -161,7 +161,8 @@ h3 {
   text-transform: uppercase;
 }
 
-.side-menu .ant-menu-item {
+.side-menu .ant-menu-item,
+.side-menu .ant-menu-submenu-title {
   height: 48px;
   margin: 2px 0;
   padding-inline: 11px 10px !important;
@@ -170,7 +171,8 @@ h3 {
   line-height: 1.2;
 }
 
-.side-menu .ant-menu-item:hover {
+.side-menu .ant-menu-item:hover,
+.side-menu .ant-menu-submenu-title:hover {
   background: #f2f7f6;
   color: var(--ink);
 }
@@ -189,6 +191,10 @@ h3 {
 .side-menu .ant-menu-item-icon {
   color: inherit;
   font-size: 15px;
+}
+
+.side-menu .ant-menu-submenu-arrow {
+  color: var(--muted);
 }
 
 .nav-label {

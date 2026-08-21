@@ -17,6 +17,7 @@ import AssistantChatFloat from './components/AssistantChatFloat'
 import Login from './pages/Login/Login'
 import Overview from './pages/Overview/Overview'
 import Monitor from './pages/Monitor/Monitor'
+import YouTubeMonitor from './pages/Monitor/YouTubeMonitor'
 import Events from './pages/Events/Events'
 import Schedule from './pages/Schedule/Schedule'
 import Tasks from './pages/Tasks/Tasks'
@@ -97,6 +98,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/overview" replace />} />
                 <Route path="/overview" element={<Overview />} />
                 <Route path="/monitor" element={<Monitor />} />
+                <Route path="/monitor/youtube" element={<YouTubeMonitor />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/future" element={<Schedule />} />
                 <Route path="/tasks" element={<Tasks />} />
