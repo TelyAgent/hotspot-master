@@ -84,6 +84,95 @@
   padding: 16px;
 }
 
+.youtubeNotice {
+  margin-bottom: 14px;
+}
+
+.youtubeStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.youtubeStats :global(.ant-statistic) {
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.youtubeStats :global(.ant-statistic-content) {
+  color: var(--g);
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.youtubeRunCard {
+  margin-bottom: 14px;
+}
+
+.youtubeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.youtubeVideoCard {
+  min-width: 0;
+}
+
+.youtubeVideoTop {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.youtubeVideoTop img,
+.youtubeThumbFallback {
+  width: 160px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #edf2f2;
+}
+
+.youtubeVideoTop h4 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.youtubeTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.youtubeMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0;
+  color: var(--muted);
+}
+
+.youtubeAnalysis {
+  display: grid;
+  gap: 10px;
+}
+
+.youtubeAnalysis section {
+  padding-top: 10px;
+  border-top: 1px solid var(--line2);
+}
+
+.youtubeAnalysis p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .topicDetailBreadcrumb {
   display: flex;
   align-items: center;
@@ -158,6 +247,20 @@
 @media (max-width: 1180px) {
   .contentModule {
     grid-template-columns: 1fr;
+  }
+
+  .youtubeStats,
+  .youtubeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .youtubeVideoTop {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+
+  .youtubeVideoTop img,
+  .youtubeThumbFallback {
+    width: 120px;
   }
 
   .topicDetailSummary {

@@ -39,5 +39,10 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     throw new ApiError(response.status, message)
   }
 
-  return (await response.json()) as T
+  const text = await response.text()
+  if (!text) {
+    return null as T
+  }
+
+  return JSON.parse(text) as T
 }

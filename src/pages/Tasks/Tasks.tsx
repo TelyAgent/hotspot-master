@@ -46,12 +46,12 @@ export default function Tasks() {
     {
       title: 'ID',
       dataIndex: 'code',
-      width: 96,
+      width: 120,
     },
     {
       title: '账号任务',
       dataIndex: 'account',
-      width: 220,
+      width: 280,
       render: (_value, record) => (
         <Space size={8}>
           <Avatar className={styles.accountIcon}>{record.account.slice(0, 2)}</Avatar>
