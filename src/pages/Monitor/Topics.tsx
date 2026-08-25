@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, Button, Collapse, Empty, Spin, Statistic, Tag } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
-import { refreshTopicCircleTopics } from '../../api/topicCircle'
+import { getTopicCircleTopicPosts, refreshTopicCircleTopics } from '../../api/topicCircle'
 import type { TopicCircleTopicItem, TopicCircleTopicPost } from '../../api/topicCircle'
 import { useTopicCircleMonitorTopics } from '../../hooks/useTopicCircleMonitorTopics'
 import { useTopicCirclePipelineStatus } from '../../hooks/useTopicCirclePipelineStatus'
@@ -200,19 +200,47 @@ function TopicTrendLabel({ topic }: { topic: TopicCircleTopicItem }) {
 }
 
 function TopicPostPanel({ topic }: { topic: TopicCircleTopicItem }) {
-  const uniqueAuthors = Array.from(new Set(topic.posts.map((post) => post.authorHandle).filter(Boolean)))
+  const [posts, setPosts] = useState<TopicCircleTopicPost[]>(topic.posts)
+  const [loading, setLoading] = useState(topic.posts.length === 0)
+  const [error, setError] = useState<string | null>(null)
+  const uniqueAuthors = Array.from(new Set(posts.map((post) => post.authorHandle).filter(Boolean)))
+
+  useEffect(() => {
+    let cancelled = false
+
+    setLoading(true)
+    setError(null)
+    getTopicCircleTopicPosts(topic)
+      .then((items) => {
+        if (!cancelled) setPosts(items)
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setError(error instanceof Error ? error.message : '关联帖子加载失败')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [topic])
 
   return (
     <div className={styles.topicPostPanel}>
       <div className={styles.topicPostSummary}>
         <span>讨论账号：{uniqueAuthors.length ? uniqueAuthors.join('、') : '—'}</span>
-        <span>相关帖子：{topic.posts.length} 条</span>
+        <span>相关帖子：{posts.length} 条</span>
       </div>
-      {topic.posts.length === 0 ? (
+      {loading ? (
+        <Spin tip="正在加载关联帖子…" />
+      ) : error ? (
+        <Alert type="error" message={`关联帖子加载失败：${error}`} showIcon />
+      ) : posts.length === 0 ? (
         <Empty description="暂无关联帖子" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <div className={styles.topicPostList}>
-          {topic.posts.map((post) => (
+          {posts.map((post) => (
             <TopicPostItem key={`${topic.id}-${post.postId}`} post={post} />
           ))}
         </div>

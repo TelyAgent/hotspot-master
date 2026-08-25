@@ -60,8 +60,8 @@ export default function Overview() {
               options={RANGES.map(([value, label]) => ({ value, label }))}
               onChange={setRange}
             />
-            <Button type="primary" icon={<ProfileOutlined />} onClick={() => go('tasks')}>
-              进入内容发布
+            <Button type="primary" icon={<ProfileOutlined />} onClick={() => go('events')}>
+              进入热点运营
             </Button>
           </>
         }
@@ -148,7 +148,7 @@ export default function Overview() {
             <Tag color="warning">{data?.manualItems.length ?? 0}项</Tag>
           </div>
           {(data?.manualItems ?? []).map((item) => (
-            <div className={styles.attention} key={`${item.taskId ?? item.eventId}-${item.description}`}>
+            <div className={styles.attention} key={`${item.eventId ?? item.title}-${item.description}`}>
               <i className={`${styles.severity} ${item.severity === 'critical' ? styles.red : ''}`}></i>
               <span>
                 <b>{item.title}</b>
@@ -193,33 +193,6 @@ export default function Overview() {
           )}
         </section>
       </div>
-
-      <div className="section">
-        <div>
-          <h2>进行中的任务组</h2>
-          <p className="small">按Event查看账号任务的整体推进情况</p>
-        </div>
-        <Button type="link" onClick={() => go('tasks')}>查看全部发布任务</Button>
-      </div>
-      <section className="card">
-        <div className={styles.taskProgress}>
-          <span>关联Event</span>
-          <span>账号任务</span>
-          <span>进度</span>
-          <span>状态</span>
-        </div>
-        {(data?.taskGroups ?? []).map((group) => (
-          <div className={styles.taskProgress} key={group.eventId}>
-            <b>{group.eventTitle}</b>
-            <span>{group.taskCount}个账号任务</span>
-            <Progress percent={group.progressPercent} showInfo={false} size="small" />
-            <Tag color={group.progressPercent >= 100 ? 'success' : 'warning'}>{group.statusLabel}</Tag>
-          </div>
-        ))}
-        {!loading && (data?.taskGroups.length ?? 0) === 0 && (
-          <Empty description="暂无进行中的任务组" />
-        )}
-      </section>
 
       <div className="section">
         <div>

@@ -237,12 +237,185 @@
   display: grid;
 }
 
+.topicWatchCollapse {
+  background: #fff;
+}
+
+.topicWatchCollapse :global(.ant-collapse-item) {
+  border-color: var(--line2);
+}
+
+.topicWatchCollapse :global(.ant-collapse-header) {
+  align-items: center !important;
+}
+
+.topicWatchLabel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.topicWatchLabel strong {
+  display: block;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.topicWatchLabel span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.topicWatchMeta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.topicWatchDetail {
+  display: grid;
+  gap: 14px;
+}
+
+.topicWatchInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.topicWatchInfoGrid p {
+  margin: 4px 0 0;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.topicWatchSubsection {
+  border-top: 1px solid var(--line2);
+  padding-top: 12px;
+}
+
+.topicWatchSubsection h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.topicAccountTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.topicRuleItem {
+  display: grid;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line2);
+}
+
+.topicRuleItem:first-of-type {
+  border-top: 0;
+}
+
+.topicRuleItem span,
+.topicRuleItem small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.rulePackEditor {
+  display: grid;
+  gap: 14px;
+}
+
+.rulePackState {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.rulePackEditor textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.rulePackTestBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ruleDocList {
+  display: grid;
+  gap: 10px;
+}
+
+.ruleDocItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line2);
+}
+
+.ruleDocItem:first-child {
+  border-top: 0;
+}
+
+.ruleDocTitle {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ruleDocTitle strong {
+  color: var(--ink);
+}
+
+.ruleDocTitle span,
+.ruleDocMeta span {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ruleDocMeta {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-width: 0;
+}
+
 @media (max-width: 1180px) {
   .settingsLayout {
     grid-template-columns: 1fr;
   }
 
   .workflowMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .topicWatchLabel,
+  .topicWatchInfoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .topicWatchMeta {
+    justify-content: flex-start;
+  }
+
+  .rulePackTestBar {
+    grid-template-columns: 1fr;
+  }
+
+  .ruleDocItem {
     grid-template-columns: 1fr;
   }
 }

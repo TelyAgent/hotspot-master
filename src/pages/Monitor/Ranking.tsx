@@ -1,5 +1,7 @@
 import { Alert, Button, Empty, Select, Tag } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
+import { refreshMonitor } from '../../api/monitor'
 import type { TrendingResponse } from '../../api/types'
 import styles from './Monitor.module.css'
 
@@ -16,13 +18,19 @@ export default function Ranking({
   loading,
   error,
   regions,
+  collectedLabel,
+  isMock,
+  onReload,
 }: {
   data: TrendingResponse | null
   loading: boolean
   error: string | null
   regions: string[]
+  collectedLabel: string
+  isMock: boolean
+  onReload: () => void
 }) {
-  const { region, set, go, ensureEventForTrend } = useApp()
+  const { region, set, go, ensureEventForTrend, toast } = useApp()
 
   const rows: RankingRow[] = (data?.items ?? []).map((item) => ({
     rank: item.rank,
@@ -33,8 +41,34 @@ export default function Ranking({
     heat: item.heat,
   }))
 
+  const handleRefresh = () => {
+    toast('已发起热搜榜立即采集')
+    refreshMonitor()
+      .then((result) => {
+        if (result.status === 'failed') {
+          toast(result.error ? `采集失败：${result.error}` : '采集失败')
+          return
+        }
+
+        toast(result.message)
+        onReload()
+      })
+      .catch((error: unknown) => {
+        toast(error instanceof Error ? error.message : '采集请求失败')
+      })
+  }
+
   return (
     <>
+      <div className={styles.topicToolbar}>
+        <span className="small">
+          热搜榜每 2 小时自动采集；最近成功采集 {collectedLabel}
+          {isMock ? '（模拟）' : ''}
+        </span>
+        <Button type="primary" icon={<ReloadOutlined />} onClick={handleRefresh}>
+          立即采集
+        </Button>
+      </div>
       <section className="card">
         <div className="card-head">
           <div className="filters">

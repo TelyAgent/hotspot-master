@@ -5,10 +5,9 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import type { EventItem, PageId, TaskItem } from '../data/types'
+import type { EventItem, PageId } from '../data/types'
 import type { SettingId } from '../data/settings'
 import { initialEvents } from '../data/events'
-import { initialTasks } from '../data/tasks'
 import { normalizedTrendName } from '../data/trends'
 import { PAGE_LABELS } from '../data/labels'
 
@@ -17,11 +16,6 @@ export interface AppState {
   region: string
   eventStatus: string
   event: string
-  task: string
-  taskEvent: string
-  taskRole: string
-  taskStatus: string
-  taskRisk: string
   candidate: number | null
   setting: SettingId
   campaignVersion: number
@@ -50,7 +44,6 @@ interface AppContextValue extends AppState {
   user: string | null
   isAuthenticated: boolean
   events: EventItem[]
-  tasks: TaskItem[]
   modal: ModalState | null
   toastState: ToastState | null
 
@@ -72,7 +65,6 @@ interface AppContextValue extends AppState {
     region: string,
     rank?: number | string,
   ) => EventItem
-  addPreheatTasks: (title: string) => string
 }
 
 const defaultState: AppState = {
@@ -80,11 +72,6 @@ const defaultState: AppState = {
   region: 'Worldwide',
   eventStatus: '全部',
   event: 'e1',
-  task: 't1',
-  taskEvent: '全部',
-  taskRole: '全部',
-  taskStatus: '全部',
-  taskRisk: '全部',
   candidate: null,
   setting: 'twitter',
   campaignVersion: 1,
@@ -114,7 +101,6 @@ const AUTH_STORAGE_KEY = 'hotspot-monitor.user'
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState)
   const [events, setEvents] = useState<EventItem[]>(initialEvents)
-  const [tasks, setTasks] = useState<TaskItem[]>(initialTasks)
   const [modal, setModal] = useState<ModalState | null>(null)
   const [toastState, setToastState] = useState<ToastState | null>(null)
   const [user, setUser] = useState<string | null>(
@@ -199,38 +185,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return event
   }
 
-  const addPreheatTasks = (title: string): string => {
-    const existing = tasks.find((t) => t.event === title)
-    if (existing) return existing.id
-
-    const base = tasks.length + 1080
-    const newTasks: TaskItem[] = [
-      ['PredX Flash', '快讯型'],
-      ['PredX Explain', '解释翻译型'],
-      ['PredX Markets', '产品承接型'],
-    ].map(([account, role], i) => ({
-      id: 'pre' + (base + i),
-      code: 'T-' + (base + i),
-      event: title,
-      account,
-      role,
-      status: '生成中',
-      risk: '普通',
-      time: '刚刚创建',
-      copies: [],
-    }))
-
-    setTasks((prev) => [...prev, ...newTasks])
-    return newTasks[0].id
-  }
-
   const value: AppContextValue = {
     ...state,
     page,
     user,
     isAuthenticated: user != null,
     events,
-    tasks,
     modal,
     toastState,
     set,
@@ -241,7 +201,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     openModal,
     closeModal,
     ensureEventForTrend,
-    addPreheatTasks,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

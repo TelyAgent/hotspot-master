@@ -2,6 +2,7 @@ import { request } from './client'
 
 /** 确认状态（Confirmation Level） */
 export type ConfirmationLevel =
+  | 'candidate'
   | 'fixed'
   | 'confirmed'
   | 'expected'
@@ -25,13 +26,20 @@ export type ExpressionBoundary =
   | 'blocked'
 
 /** 首版来源类型 */
-export type FutureSourceType = 'opm' | 'bea' | 'bls' | 'fomc' | 'manual'
+export type FutureSourceType =
+  | 'opm'
+  | 'bea'
+  | 'bls'
+  | 'fomc'
+  | 'manual'
+  | 'future_event_candidate'
 
 /** 首次进入方式（entry_mode） */
 export type EntryMode =
   | 'trend_trigger'
   | 'scheduled_manual_response'
   | 'scheduled_auto_response'
+  | 'candidate'
 
 export interface EvidenceRecord {
   id: string
@@ -98,13 +106,18 @@ export interface FutureEvent {
   updatedAt: string
 }
 
-export interface SourceSyncStatus {
-  source: FutureSourceType
-  enabled: boolean
-  lastSyncAt: string | null
+export interface FutureEventSourcePlanStatus {
+  mode: 'source_plan'
   status: 'ok' | 'error' | 'disabled' | 'pending'
-  nextSyncAt: string | null
   message?: string
+  activePlan: {
+    id: string
+    version: number
+    sourceCount: number
+    reason?: string | null
+  } | null
+  lastSyncAt?: string | null
+  nextSyncAt?: string | null
 }
 
 export interface FutureEventListParams {
@@ -159,9 +172,9 @@ export function getFutureEventHeat(id: string): Promise<FutureEventHeat> {
   return request<FutureEventHeat>(`/future-events/${id}/heat`)
 }
 
-/** 各来源同步状态（CAP-1 / AC-16） */
-export function getSourceSyncStatus(): Promise<SourceSyncStatus[]> {
-  return request<SourceSyncStatus[]>('/future-events/sources/status')
+/** 未来事件来源计划同步状态 */
+export function getSourceSyncStatus(): Promise<FutureEventSourcePlanStatus> {
+  return request<FutureEventSourcePlanStatus>('/future-events/sources/status')
 }
 
 /** 人工导入未来事件（来源链接必填，默认 needs_verification） */
@@ -186,16 +199,6 @@ export function updateFutureEvent(
 
 export function deleteFutureEvent(id: string): Promise<{ status: string }> {
   return request<{ status: string }>(`/future-events/${id}`, { method: 'DELETE' })
-}
-
-/** 重新同步某个来源（局部恢复） */
-export function resyncSource(
-  source: FutureSourceType,
-): Promise<{ status: string }> {
-  return request<{ status: string }>(
-    `/future-events/sources/${source}/resync`,
-    { method: 'POST' },
-  )
 }
 
 /** 运营排期手动响应：创建/复用 scheduled_manual_response Event 并进入下游 */

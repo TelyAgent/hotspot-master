@@ -107,6 +107,13 @@
   margin-top: 8px;
 }
 
+.activeOperationTask {
+  background: var(--soft);
+  border-left: 3px solid var(--g);
+  cursor: pointer;
+  padding-left: 12px !important;
+}
+
 @media (max-width: 1180px) {
   .events {
     height: auto;

@@ -124,7 +124,7 @@ export default function Schedule() {
       .then((r) => {
         toast(`已创建排期人工响应 Event ${r.eventId}`)
         closeModal()
-        go('tasks')
+        go('events')
       })
       .catch((err: unknown) => toast(err instanceof Error ? err.message : '创建响应失败'))
   }

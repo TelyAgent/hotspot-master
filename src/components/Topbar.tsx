@@ -33,7 +33,7 @@ export default function Topbar() {
         <Typography.Text type="secondary" className="top-status">
           自动响应链路正常
         </Typography.Text>
-        <Button size="small" icon={<ProfileOutlined />} onClick={() => go('tasks')}>
+        <Button size="small" icon={<ProfileOutlined />} onClick={() => go('events')}>
           待处理 5
         </Button>
         <Tooltip title={user ?? ''}>

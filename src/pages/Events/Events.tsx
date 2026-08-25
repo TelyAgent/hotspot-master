@@ -2,13 +2,20 @@ import { useEffect, useState } from 'react'
 import { Alert, Button, Empty, Input, List, Pagination, Select, Space, Tag, Typography } from 'antd'
 import { CheckCircleOutlined, ProfileOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
-import type { EventItem } from '../../data/types'
+import type { EventItem, TaskItem } from '../../data/types'
 import { Head } from '../../components/ui'
 import { useEvents } from '../../hooks/useEvents'
+import {
+  generateHotspotPosts,
+  getHotspotDrafts,
+  publishHotspotPost,
+  type HotspotDraft,
+} from '../../api/hotspotOperation'
+import HotspotOperationDetail from './HotspotOperationDetail'
 import { CorrectModal, MergeModal, RelateModal, SplitModal } from './EventModals'
 import styles from './Events.module.css'
 
-const STATUS_OPTIONS = ['内容生成中', '待发布', '处理异常', '已完成']
+const STATUS_OPTIONS = ['待发布', '处理异常', '已完成']
 
 function eventStatusColor(status: string) {
   if (status === '处理异常') return 'error'
@@ -21,7 +28,7 @@ function verifyColor(verify: string) {
 }
 
 export default function Events() {
-  const { eventStatus, event, set, go, openModal } = useApp()
+  const { eventStatus, event, set, openModal } = useApp()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [q, setQ] = useState('')
@@ -78,9 +85,6 @@ export default function Events() {
                 setPage(1)
               }}
             />
-            <Button icon={<CheckCircleOutlined />} onClick={() => set({ eventStatus: '已完成' })}>
-              已完成事件库
-            </Button>
           </>
         }
       />
@@ -140,7 +144,7 @@ export default function Events() {
         </aside>
 
         {current ? (
-          <EventDetail e={current} onAction={handleAction} onGoTasks={() => go('tasks')} />
+          <EventDetail e={current} onAction={handleAction} />
         ) : (
           <section className={styles.eventDetail}>请选择其他状态。</section>
         )}
@@ -152,13 +156,16 @@ export default function Events() {
 function EventDetail({
   e,
   onAction,
-  onGoTasks,
 }: {
   e: EventItem
   onAction: (type: string) => void
-  onGoTasks: () => void
 }) {
+  const { openModal } = useApp()
   const evidence = e.evidence ?? e.urls.map((url) => ({ sourceType: 'x_post', claim: url, url }))
+
+  const openHotspotOperation = () => {
+    openModal('热点运营', <HotspotOperationModal event={e} />, true, 'large')
+  }
 
   return (
     <section className={styles.eventDetail}>
@@ -170,8 +177,8 @@ function EventDetail({
             <Tag color={verifyColor(e.verify)}>{e.verify}</Tag>
           </div>
         </div>
-        <Button type="primary" icon={<ProfileOutlined />} onClick={onGoTasks}>
-          查看内容任务
+        <Button type="primary" icon={<ProfileOutlined />} onClick={openHotspotOperation}>
+          热点运营
         </Button>
       </div>
 
@@ -279,4 +286,97 @@ function EventDetail({
       )}
     </section>
   )
+}
+
+function HotspotOperationModal({ event }: { event: EventItem }) {
+  const { toast, closeModal } = useApp()
+  const [task, setTask] = useState<TaskItem | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    setError(null)
+    getHotspotDrafts(event.id)
+      .then((response) => {
+        if (!alive) return
+        setTask(mapHotspotDraftsToTask(event, response.contentTaskId, response.drafts))
+      })
+      .catch((e: unknown) => {
+        if (!alive) return
+        setError(e instanceof Error ? e.message : '加载热点运营任务失败')
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [event.id, event.title])
+
+  const regenerateAndReload = async (instruction?: string) => {
+    try {
+      const response = await generateHotspotPosts(event.id, instruction)
+      setTask(mapHotspotDraftsToTask(event, response.contentTaskId, response.drafts))
+      toast('已重新生成 3 条候选')
+    } catch {
+      toast('重新生成失败，请稍后重试')
+    }
+  }
+
+  const publishAndReload = async (url: string, candidateId: string, accountName?: string) => {
+    try {
+      await publishHotspotPost(event.id, candidateId, url, accountName ?? '')
+      toast('发布已记录，开始追踪')
+      closeModal()
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '回填失败')
+    }
+  }
+
+  if (loading) {
+    return <div className="note">正在加载热点运营内容…</div>
+  }
+
+  if (error) {
+    return <Alert type="error" message={`加载失败：${error}`} showIcon />
+  }
+
+  if (!task) {
+    return <Empty description="当前热点还没有可运营内容" />
+  }
+
+  return (
+    <HotspotOperationDetail
+      task={task}
+      onRegenerate={(instruction) => regenerateAndReload(instruction)}
+      onPublish={(url, candidateId, accountName) => publishAndReload(url, candidateId, accountName)}
+    />
+  )
+}
+
+function mapHotspotDraftsToTask(
+  event: EventItem,
+  contentTaskId: string,
+  drafts: HotspotDraft[],
+): TaskItem {
+  const sortedDrafts = [...drafts].sort((a, b) => a.version - b.version).slice(-3)
+
+  return {
+    id: contentTaskId,
+    eventId: event.id,
+    code: 'HOTSPOT',
+    event: event.title,
+    eventSummary: event.summary,
+    eventEvidence: event.evidence ?? event.urls.map((url) => ({ sourceType: 'x_post', claim: url, url })),
+    account: '热点运营',
+    role: '事件帖子候选',
+    status: sortedDrafts.length ? '待发布' : '待生成',
+    risk: event.verify === '存在冲突' ? '中' : '普通',
+    time: '当前事件',
+    copies: sortedDrafts.map((draft) => draft.body),
+    candidateIds: sortedDrafts.map((draft) => draft.id),
+  }
 }

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getSourceSyncStatus } from '../api/futureEvents'
-import type { SourceSyncStatus } from '../api/futureEvents'
+import type { FutureEventSourcePlanStatus } from '../api/futureEvents'
 
 export function useSourceSyncStatus() {
-  const [sources, setSources] = useState<SourceSyncStatus[]>([])
+  const [sourceStatus, setSourceStatus] = useState<FutureEventSourcePlanStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -11,7 +11,7 @@ export function useSourceSyncStatus() {
     setLoading(true)
     setError(null)
     getSourceSyncStatus()
-      .then(setSources)
+      .then(setSourceStatus)
       .catch((e: unknown) =>
         setError(e instanceof Error ? e.message : '加载来源状态失败'),
       )
@@ -22,5 +22,5 @@ export function useSourceSyncStatus() {
     reload()
   }, [reload])
 
-  return { sources, loading, error, reload }
+  return { sourceStatus, loading, error, reload }
 }

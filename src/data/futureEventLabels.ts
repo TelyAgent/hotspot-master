@@ -6,6 +6,7 @@ import type {
 } from '../api/futureEvents'
 
 export const CONFIRMATION_LABEL: Record<ConfirmationLevel, string> = {
+  candidate: '候选事件',
   fixed: '周期固定',
   confirmed: '官方已确认',
   expected: '可靠预期',
@@ -35,6 +36,7 @@ export const SOURCE_LABEL: Record<FutureSourceType, string> = {
   bls: 'BLS 发布',
   fomc: 'FOMC 会议',
   manual: '人工导入',
+  future_event_candidate: '候选事件',
 }
 
 export interface ScoreBand {

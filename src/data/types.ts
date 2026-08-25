@@ -3,7 +3,6 @@ export type PageId =
   | 'monitor'
   | 'events'
   | 'future'
-  | 'tasks'
   | 'insights'
   | 'settings'
 

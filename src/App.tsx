@@ -20,7 +20,6 @@ import Monitor from './pages/Monitor/Monitor'
 import YouTubeMonitor from './pages/Monitor/YouTubeMonitor'
 import Events from './pages/Events/Events'
 import Schedule from './pages/Schedule/Schedule'
-import Tasks from './pages/Tasks/Tasks'
 import Insights from './pages/Insights/Insights'
 import Settings from './pages/Settings/Settings'
 
@@ -101,7 +100,6 @@ export default function App() {
                 <Route path="/monitor/youtube" element={<YouTubeMonitor />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/future" element={<Schedule />} />
-                <Route path="/tasks" element={<Tasks />} />
                 <Route path="/insights" element={<Insights />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>

@@ -1,12 +1,18 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { Alert, Button, Checkbox, Empty, Input, InputNumber, Select, Spin } from 'antd'
-import { EyeOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, RobotOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
+import { Alert, Button, Checkbox, Collapse, Empty, Input, InputNumber, Select, Spin, Tag } from 'antd'
+import { EyeOutlined, HistoryOutlined, RobotOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
   updatePlatformCollectionConfig,
   type PlatformCollectionConfig,
-  type TopicTrackingConfig,
 } from '../../../api/collectionConfig'
+import {
+  getTopicWatchConfigs,
+  updateActiveTopicMonitoringPlan,
+  updateTopicWatchConfig,
+  type TopicMonitoringPlanConfig,
+  type TopicWatchConfig,
+} from '../../../api/topicWatchConfig'
 import {
   activateWorkflowVersion as activateWorkflowVersionRequest,
   createWorkflowDraft,
@@ -19,7 +25,6 @@ import {
   type WorkflowVersion,
 } from '../../../api/workflow'
 import { useApp } from '../../../context/AppContext'
-import { SettingRow } from '../SettingRow'
 import styles from '../Settings.module.css'
 
 const REGION_OPTIONS = ['global', 'United States', 'United Kingdom', 'Japan', 'Korea']
@@ -53,8 +58,8 @@ const TOPIC_EVENT_WORKFLOW: WorkflowUiConfig = {
 }
 
 export default function TwitterSetting() {
-  const { openModal, closeModal, toast } = useApp()
-  const formRef = useRef<TopicConfigFormHandle>(null)
+  const { openModal, toast } = useApp()
+  const topicWatchFormRef = useRef<TopicWatchEditFormHandle>(null)
   const workflowDraftRef = useRef<WorkflowDraftFormHandle>(null)
   const [config, setConfig] = useState<PlatformCollectionConfig | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,13 +69,12 @@ export default function TwitterSetting() {
   const [frequencyMs, setFrequencyMs] = useState(2 * 60 * 60 * 1000)
   const [trendLimit, setTrendLimit] = useState('30')
   const [workflowId, setWorkflowId] = useState('x-trend-event-formation')
-  const [topics, setTopics] = useState<TopicTrackingConfig[]>([])
+  const [topicWatches, setTopicWatches] = useState<TopicWatchConfig[]>([])
 
   const frequencyLabel = useMemo(
     () => FREQUENCY_OPTIONS.find((item) => item.value === frequencyMs)?.label ?? `${Math.round(frequencyMs / 3600000)} 小时`,
     [frequencyMs],
   )
-
   useEffect(() => {
     let mounted = true
 
@@ -78,20 +82,24 @@ export default function TwitterSetting() {
       setLoading(true)
       setError(null)
       try {
-        const nextConfig = await getPlatformCollectionConfig('x')
+        const [nextConfig, nextTopicWatches] = await Promise.all([
+          getPlatformCollectionConfig('x'),
+          getTopicWatchConfigs(),
+        ])
         if (!mounted) return
         setConfig(nextConfig)
         setRegions(nextConfig.variables.regions?.length ? nextConfig.variables.regions : nextConfig.defaultRegions)
         setFrequencyMs(resolveTrendIntervalMs(nextConfig))
         setTrendLimit(String(nextConfig.variables.defaultTrendLimit ?? 30))
         setWorkflowId(nextConfig.variables.trendEventWorkflowId ?? 'x-trend-event-formation')
-        setTopics(normalizeTopicConfigs(nextConfig))
+        setTopicWatches(nextTopicWatches)
       } catch (e) {
         if (!mounted) return
         setError(e instanceof Error ? e.message : '加载 Twitter 配置失败')
       } finally {
         if (mounted) setLoading(false)
       }
+
     }
 
     void load()
@@ -115,17 +123,12 @@ export default function TwitterSetting() {
     }
     setSaving(true)
     try {
-      const flattened = flattenTopicConfigs(topics)
       const nextVariables = {
         ...config.variables,
         regions,
         defaultTrendLimit: nextTrendLimit,
         trendCollectionIntervalMs: frequencyMs,
         trendEventWorkflowId: workflowId,
-        topicConfigs: topics,
-        topicKeywords: flattened.topicKeywords,
-        topicNegativeKeywords: flattened.topicNegativeKeywords,
-        monitoredAccounts: flattened.monitoredAccounts,
       }
       const nextConfig = await updatePlatformCollectionConfig('x', {
         defaultRegions: regions,
@@ -140,31 +143,38 @@ export default function TwitterSetting() {
     }
   }
 
-  const openTopicConfig = (topic?: TopicTrackingConfig, index?: number) => {
+  const reloadTopicWatches = async () => {
+    setTopicWatches(await getTopicWatchConfigs())
+  }
+
+  const openTopicWatchEditor = (topic: TopicWatchConfig) => {
     openModal(
-      `${topic ? '配置' : '新增'} · 重点主题`,
-      <TopicConfigForm
-        ref={formRef}
-        topic={topic}
-        defaultPostLimit={config?.variables.defaultPostLimit ?? 30}
-      />,
+      `编辑重点主题 · ${topic.name}`,
+      <TopicWatchEditForm ref={topicWatchFormRef} topic={topic} />,
       false,
       'large',
       {
         label: '保存',
-        onConfirm: () => {
-          const next = formRef.current?.snapshot()
-          if (!next) {
+        onConfirm: async () => {
+          const snapshot = topicWatchFormRef.current?.snapshot()
+          if (!snapshot) {
             toast('请输入主题名称')
             return
           }
-          setTopics((prev) => {
-            if (typeof index === 'number') {
-              return prev.map((item, i) => (i === index ? next : item))
-            }
-            return [...prev, next]
-          })
-          closeModal()
+          openModal(`编辑重点主题 · ${topic.name}`, <div className="note">正在保存重点主题配置…</div>, true, 'large')
+          try {
+            await updateTopicWatchConfig(topic.id, snapshot.topic)
+            await updateActiveTopicMonitoringPlan(topic.id, snapshot.plan)
+            await reloadTopicWatches()
+            toast('重点主题配置已保存')
+          } catch (e) {
+            openModal(
+              `编辑重点主题 · ${topic.name}`,
+              <div className="note warning">{e instanceof Error ? e.message : '保存重点主题配置失败'}</div>,
+              true,
+              'large',
+            )
+          }
         },
       },
     )
@@ -497,7 +507,7 @@ export default function TwitterSetting() {
           <div className={styles.blockHeader}>
             <div>
               <h3>重点主题追踪配置</h3>
-              <p className="small">点击主题行配置语义、正反例、账号和主题圈工作流。</p>
+              <p className="small">沿用旧版主题圈配置；账号、规则和证据要求来自 v2 TopicWatch 监控计划。</p>
             </div>
             <div className={styles.inlineActions}>
               <Button icon={<RobotOutlined />} onClick={() => openWorkflowDraftDialog(TOPIC_EVENT_WORKFLOW)}>
@@ -506,87 +516,148 @@ export default function TwitterSetting() {
               <Button icon={<EyeOutlined />} onClick={() => openWorkflowDocument(TOPIC_EVENT_WORKFLOW)}>
                 查看工作流
               </Button>
-              <Button icon={<PlusOutlined />} onClick={() => openTopicConfig()}>
-                新增主题
-              </Button>
             </div>
           </div>
-          {topics.length === 0 ? (
+          {topicWatches.length === 0 ? (
             <Empty description="暂无重点主题配置" />
           ) : (
-            topics.map((topic, index) => (
-              <SettingRow
-                key={topic.id}
-                name={topic.name}
-                desc={`${topic.keywords.length} 个关键词 / ${topic.accounts.length} 个关注账号`}
-                status={topic.enabled ? '启用' : '停用'}
-                middle={topic.workflowId}
-                actionLabel="配置/修改"
-                onEdit={() => openTopicConfig(topic, index)}
-              />
-            ))
+            <Collapse
+              className={styles.topicWatchCollapse}
+              items={topicWatches.map((topic) => ({
+                key: topic.id,
+                label: <TopicWatchLabel topic={topic} />,
+                extra: (
+                  <div className={styles.inlineActions} onClick={(event) => event.stopPropagation()}>
+                    <Button size="small" onClick={() => openTopicWatchEditor(topic)}>
+                      编辑
+                    </Button>
+                  </div>
+                ),
+                children: <TopicWatchDetail topic={topic} />,
+              }))}
+            />
           )}
         </section>
+
       </div>
     </section>
   )
 }
 
-function lines(value: string) {
-  return value
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean)
+function TopicWatchLabel({ topic }: { topic: TopicWatchConfig }) {
+  const plan = topic.monitoringPlans?.[0]
+  const accountCount = getTopicAccounts(topic).length
+  const refreshText = formatRefreshPolicy(plan?.refreshPolicy)
+
+  return (
+    <div className={styles.topicWatchLabel}>
+      <div>
+        <strong>{topic.name}</strong>
+        <span>{topic.description || topic.watchIntent}</span>
+      </div>
+      <div className={styles.topicWatchMeta}>
+        <Tag color={topic.status === 'active' ? 'success' : 'default'}>
+          {topic.status === 'active' ? '启用' : topic.status}
+        </Tag>
+        <span>{accountCount} 个账号</span>
+        <span>{refreshText}</span>
+      </div>
+    </div>
+  )
 }
 
-function normalizeTopicConfigs(config: PlatformCollectionConfig): TopicTrackingConfig[] {
-  const configured = config.variables.topicConfigs
-  if (configured?.length) {
-    return configured.map((topic) => ({
-      ...topic,
-      keywords: topic.keywords ?? [],
-      positiveExamples: topic.positiveExamples ?? [],
-      negativeExamples: topic.negativeExamples ?? [],
-      accounts: topic.accounts ?? [],
-      action: topic.action || '立即自动响应',
-      collectionFrequency: topic.collectionFrequency || '每 3 小时',
-      workflowId: topic.workflowId || 'x-topic-circle-event-formation',
-      defaultPostLimit: topic.defaultPostLimit ?? config.variables.defaultPostLimit ?? 30,
-    }))
-  }
+function TopicWatchDetail({ topic }: { topic: TopicWatchConfig }) {
+  const plan = topic.monitoringPlans?.[0]
+  const accounts = getTopicAccounts(topic)
+  const triggerRules = plan?.triggerRules ?? []
+  const evidenceRequirements = plan?.evidenceRequirements ?? []
 
-  const hasLegacyTopic =
-    (config.variables.topicKeywords?.length ?? 0) > 0 ||
-    (config.variables.topicNegativeKeywords?.length ?? 0) > 0 ||
-    (config.variables.monitoredAccounts?.length ?? 0) > 0
+  return (
+    <div className={styles.topicWatchDetail}>
+      <div className={styles.topicWatchInfoGrid}>
+        <div>
+          <span className="small">监控意图</span>
+          <p>{topic.watchIntent || '—'}</p>
+        </div>
+        <div>
+          <span className="small">采集策略</span>
+          <p>{topic.collectionPolicy || '—'}</p>
+        </div>
+        <div>
+          <span className="small">触发策略</span>
+          <p>{topic.triggerPolicy || '—'}</p>
+        </div>
+        <div>
+          <span className="small">排除规则</span>
+          <p>{topic.exclusionPolicy || '—'}</p>
+        </div>
+      </div>
 
-  if (!hasLegacyTopic) return []
+      <div className={styles.topicWatchSubsection}>
+        <h4>监控账号</h4>
+        <div className={styles.topicAccountTags}>
+          {accounts.length === 0 ? (
+            <span className="small">暂无账号</span>
+          ) : (
+            accounts.map((account) => <Tag key={account}>@{account}</Tag>)
+          )}
+        </div>
+      </div>
 
-  return [
-    {
-      id: 'topic-default',
-      name: '默认重点主题',
-      enabled: true,
-      keywords: config.variables.topicKeywords ?? [],
-      positiveExamples: [],
-      negativeExamples: config.variables.topicNegativeKeywords ?? [],
-      action: '立即自动响应',
-      accounts: config.variables.monitoredAccounts ?? [],
-      collectionFrequency: '每 3 小时',
-      workflowId: 'x-topic-circle-event-formation',
-      defaultPostLimit: config.variables.defaultPostLimit ?? 30,
-    },
-  ]
+      <div className={styles.topicWatchSubsection}>
+        <h4>触发规则</h4>
+        {triggerRules.length === 0 ? (
+          <p className="small">暂无触发规则</p>
+        ) : (
+          triggerRules.map((rule, index) => (
+            <div key={rule.ruleId ?? index} className={styles.topicRuleItem}>
+              <strong>{rule.ruleId ?? `rule-${index + 1}`}</strong>
+              <span>{rule.description ?? '—'}</span>
+              {rule.positiveExamples?.length ? (
+                <small>正例：{rule.positiveExamples.join('；')}</small>
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className={styles.topicWatchSubsection}>
+        <h4>证据要求</h4>
+        {evidenceRequirements.length === 0 ? (
+          <p className="small">暂无证据要求</p>
+        ) : (
+          evidenceRequirements.map((item, index) => (
+            <div key={`${item.sourceType ?? 'source'}-${index}`} className={styles.topicRuleItem}>
+              <strong>{item.sourceType ?? '未知来源'}</strong>
+              <span>{item.requiredFields?.length ? item.requiredFields.join('、') : '未限定字段'}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
 }
 
-function flattenTopicConfigs(topics: TopicTrackingConfig[]) {
-  const enabledTopics = topics.filter((topic) => topic.enabled)
+function getTopicAccounts(topic: TopicWatchConfig) {
+  const sources = topic.monitoringPlans?.[0]?.sources ?? []
+  return sources
+    .filter((source) => source.platform === 'x' && source.sourceType === 'account' && source.handle)
+    .map((source) => String(source.handle).replace(/^@/, ''))
+}
 
-  return {
-    topicKeywords: unique(enabledTopics.flatMap((topic) => topic.keywords)),
-    topicNegativeKeywords: unique(enabledTopics.flatMap((topic) => topic.negativeExamples)),
-    monitoredAccounts: unique(enabledTopics.flatMap((topic) => topic.accounts)),
-  }
+function formatRefreshPolicy(policy: TopicMonitoringPlanConfig['refreshPolicy']) {
+  if (!policy) return '未配置频率'
+  const interval = typeof policy.intervalMinutes === 'number' ? policy.intervalMinutes : undefined
+  const lookback = typeof policy.lookbackMinutes === 'number' ? policy.lookbackMinutes : undefined
+  if (interval && lookback) return `每 ${formatMinutes(interval)} / 回看 ${formatMinutes(lookback)}`
+  if (interval) return `每 ${formatMinutes(interval)}`
+  if (lookback) return `回看 ${formatMinutes(lookback)}`
+  return '已配置刷新策略'
+}
+
+function formatMinutes(value: number) {
+  if (value % 60 === 0) return `${value / 60} 小时`
+  return `${value} 分钟`
 }
 
 function resolveTrendIntervalMs(config: PlatformCollectionConfig) {
@@ -638,25 +709,15 @@ function formatDateTime(value: string) {
   return new Date(value).toLocaleString('zh-CN', { hour12: false })
 }
 
-function unique(values: string[]) {
-  return Array.from(new Set(values.map((item) => item.trim()).filter(Boolean)))
-}
-
-function createTopicId(name: string) {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-    .replace(/^-|-$/g, '')
-
-  return `topic-${slug || 'custom'}-${Date.now()}`
-}
-
-interface TopicConfigFormHandle {
-  snapshot: () => TopicTrackingConfig | null
-}
-
 interface WorkflowDraftFormHandle {
   snapshot: () => string | null
+}
+
+interface TopicWatchEditFormHandle {
+  snapshot: () => null | {
+    topic: Parameters<typeof updateTopicWatchConfig>[1]
+    plan: Parameters<typeof updateActiveTopicMonitoringPlan>[1]
+  }
 }
 
 const WorkflowDraftForm = forwardRef<WorkflowDraftFormHandle>((_, ref) => {
@@ -687,141 +748,196 @@ const WorkflowDraftForm = forwardRef<WorkflowDraftFormHandle>((_, ref) => {
 
 WorkflowDraftForm.displayName = 'WorkflowDraftForm'
 
-const TopicConfigForm = forwardRef<
-  TopicConfigFormHandle,
-  {
-    topic?: TopicTrackingConfig
-    defaultPostLimit: number
-  }
->(({ topic, defaultPostLimit }, ref) => {
-  const [name, setName] = useState(topic?.name ?? '')
-  const [enabled, setEnabled] = useState(topic?.enabled ?? true)
-  const [keywords, setKeywords] = useState((topic?.keywords ?? []).join('\n'))
-  const [positiveExamples, setPositiveExamples] = useState((topic?.positiveExamples ?? []).join('\n'))
-  const [negativeExamples, setNegativeExamples] = useState((topic?.negativeExamples ?? []).join('\n'))
-  const [accounts, setAccounts] = useState<string[]>(topic?.accounts?.length ? topic.accounts : [''])
-  const [postLimit, setPostLimit] = useState(String(topic?.defaultPostLimit ?? defaultPostLimit))
+const TopicWatchEditForm = forwardRef<
+  TopicWatchEditFormHandle,
+  { topic: TopicWatchConfig }
+>(({ topic }, ref) => {
+  const plan = topic.monitoringPlans?.[0]
+  const [name, setName] = useState(topic.name)
+  const [description, setDescription] = useState(topic.description)
+  const [status, setStatus] = useState(topic.status)
+  const [watchIntent, setWatchIntent] = useState(topic.watchIntent)
+  const [collectionPolicy, setCollectionPolicy] = useState(topic.collectionPolicy)
+  const [triggerPolicy, setTriggerPolicy] = useState(topic.triggerPolicy)
+  const [evidencePolicy, setEvidencePolicy] = useState(topic.evidencePolicy)
+  const [exclusionPolicy, setExclusionPolicy] = useState(topic.exclusionPolicy ?? '')
+  const [domains, setDomains] = useState(topic.domains.join('\n'))
+  const [accounts, setAccounts] = useState(getTopicAccounts(topic).join('\n'))
+  const [intervalMinutes, setIntervalMinutes] = useState(plan?.refreshPolicy?.intervalMinutes ?? 180)
+  const [lookbackMinutes, setLookbackMinutes] = useState(plan?.refreshPolicy?.lookbackMinutes ?? 180)
+  const [triggerRules, setTriggerRules] = useState(formatTriggerRules(plan?.triggerRules ?? []))
+  const [evidenceRequirements, setEvidenceRequirements] = useState(formatEvidenceRequirements(plan?.evidenceRequirements ?? []))
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      snapshot: () => {
-        const trimmedName = name.trim()
-        if (!trimmedName) return null
+  useImperativeHandle(ref, () => ({
+    snapshot: () => {
+      const trimmedName = name.trim()
+      if (!trimmedName) return null
+      const handles = textLines(accounts)
 
-        return {
-          id: topic?.id ?? createTopicId(trimmedName),
+      return {
+        topic: {
           name: trimmedName,
-          enabled,
-          keywords: lines(keywords),
-          positiveExamples: lines(positiveExamples),
-          negativeExamples: lines(negativeExamples),
-          action: topic?.action ?? '立即自动响应',
-          accounts: accounts.map((account) => account.trim()).filter(Boolean),
-          collectionFrequency: topic?.collectionFrequency ?? '每 3 小时',
-          workflowId: topic?.workflowId ?? 'x-topic-circle-event-formation',
-          defaultPostLimit: Number(postLimit) || defaultPostLimit,
-        }
-      },
-    }),
-    [
-      accounts,
-      defaultPostLimit,
-      enabled,
-      keywords,
-      name,
-      negativeExamples,
-      positiveExamples,
-      postLimit,
-      topic,
-    ],
-  )
+          description: description.trim(),
+          domains: textLines(domains),
+          watchIntent: watchIntent.trim(),
+          collectionPolicy: collectionPolicy.trim(),
+          triggerPolicy: triggerPolicy.trim(),
+          evidencePolicy: evidencePolicy.trim(),
+          exclusionPolicy: exclusionPolicy.trim() || null,
+          status,
+        },
+        plan: {
+          sources: handles.map((handle) => ({
+            platform: 'x',
+            sourceType: 'account',
+            handle: handle.replace(/^@/, ''),
+            includeReplies: true,
+            includeQuotes: true,
+            includeReposts: false,
+            maxPages: 5,
+          })),
+          refreshPolicy: {
+            ...(plan?.refreshPolicy ?? {}),
+            intervalMinutes,
+            lookbackMinutes,
+          },
+          triggerRules: parseTriggerRules(triggerRules),
+          evidenceRequirements: parseEvidenceRequirements(evidenceRequirements),
+          reason: '运营人员在 Twitter 配置页手动修改重点主题配置。',
+        },
+      }
+    },
+  }), [
+    accounts,
+    collectionPolicy,
+    description,
+    domains,
+    evidencePolicy,
+    evidenceRequirements,
+    exclusionPolicy,
+    intervalMinutes,
+    lookbackMinutes,
+    name,
+    plan?.refreshPolicy,
+    status,
+    triggerPolicy,
+    triggerRules,
+    watchIntent,
+  ])
 
   return (
-    <div>
+    <div className={styles.topicForm}>
       <div className="form-grid">
         <div className="field">
           <label>主题名称</label>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="field">
-          <label>启用状态</label>
+          <label>状态</label>
           <Select
-            value={enabled ? '启用' : '停用'}
+            value={status}
             options={[
-              { value: '启用', label: '启用' },
-              { value: '停用', label: '停用' },
+              { value: 'active', label: '启用' },
+              { value: 'paused', label: '停用' },
             ]}
-            onChange={(value) => setEnabled(value === '启用')}
+            onChange={setStatus}
           />
         </div>
         <div className="field">
-          <label>语义关键词</label>
-          <Input.TextArea value={keywords} onChange={(e) => setKeywords(e.target.value)} />
+          <label>描述</label>
+          <Input.TextArea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
         <div className="field">
-          <label>正例 Event</label>
-          <Input.TextArea value={positiveExamples} onChange={(e) => setPositiveExamples(e.target.value)} />
+          <label>领域/关键词</label>
+          <Input.TextArea rows={3} value={domains} onChange={(e) => setDomains(e.target.value)} />
         </div>
         <div className="field">
-          <label>反例 Event</label>
-          <Input.TextArea value={negativeExamples} onChange={(e) => setNegativeExamples(e.target.value)} />
+          <label>监控意图</label>
+          <Input.TextArea rows={3} value={watchIntent} onChange={(e) => setWatchIntent(e.target.value)} />
         </div>
         <div className="field">
-          <label>单次帖子上限</label>
-          <InputNumber min={1} value={Number(postLimit)} onChange={(value) => setPostLimit(String(value ?? ''))} style={{ width: '100%' }} />
+          <label>采集策略</label>
+          <Input.TextArea rows={3} value={collectionPolicy} onChange={(e) => setCollectionPolicy(e.target.value)} />
         </div>
-        <AccountListInput value={accounts} onChange={setAccounts} />
+        <div className="field">
+          <label>触发策略</label>
+          <Input.TextArea rows={3} value={triggerPolicy} onChange={(e) => setTriggerPolicy(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>证据策略</label>
+          <Input.TextArea rows={3} value={evidencePolicy} onChange={(e) => setEvidencePolicy(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>排除规则</label>
+          <Input.TextArea rows={3} value={exclusionPolicy} onChange={(e) => setExclusionPolicy(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>监控账号</label>
+          <Input.TextArea rows={6} value={accounts} onChange={(e) => setAccounts(e.target.value)} placeholder="@OpenAI&#10;@TechCrunch" />
+        </div>
+        <div className="field">
+          <label>采集间隔（分钟）</label>
+          <InputNumber min={10} value={intervalMinutes} onChange={(value) => setIntervalMinutes(Number(value ?? 180))} style={{ width: '100%' }} />
+        </div>
+        <div className="field">
+          <label>回看窗口（分钟）</label>
+          <InputNumber min={10} value={lookbackMinutes} onChange={(value) => setLookbackMinutes(Number(value ?? 180))} style={{ width: '100%' }} />
+        </div>
+        <div className="field">
+          <label>触发规则</label>
+          <Input.TextArea rows={5} value={triggerRules} onChange={(e) => setTriggerRules(e.target.value)} />
+        </div>
+        <div className="field">
+          <label>证据要求</label>
+          <Input.TextArea rows={5} value={evidenceRequirements} onChange={(e) => setEvidenceRequirements(e.target.value)} />
+        </div>
       </div>
-      <Alert
-        style={{ marginTop: 12 }}
-        message="保存影响"
-        description="保存后会更新 Twitter 平台变量；榜单语义命中和主题圈账号追踪会读取这些字段。"
-        showIcon
-      />
+      <Alert message="保存后会更新当前 active 监控计划；不会创建新版本。" showIcon />
     </div>
   )
 })
 
-function AccountListInput({
-  value,
-  onChange,
-}: {
-  value: string[]
-  onChange: (value: string[]) => void
-}) {
-  const update = (index: number, account: string) => {
-    onChange(value.map((item, i) => (i === index ? account : item)))
-  }
+TopicWatchEditForm.displayName = 'TopicWatchEditForm'
 
-  const add = () => onChange([...value, ''])
+function textLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
 
-  const remove = (index: number) => {
-    const next = value.filter((_, i) => i !== index)
-    onChange(next.length ? next : [''])
-  }
+function formatTriggerRules(rules: NonNullable<TopicMonitoringPlanConfig['triggerRules']>) {
+  return rules
+    .map((rule) => {
+      const examples = rule.positiveExamples?.length ? ` | 正例：${rule.positiveExamples.join('；')}` : ''
+      return `${rule.ruleId ?? 'rule'} | ${rule.description ?? ''}${examples}`
+    })
+    .join('\n')
+}
 
-  return (
-    <div className="field">
-      <label>关注账号</label>
-      <div>
-        {value.map((account, index) => (
-          <div key={index} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-            <Input
-              value={account}
-              onChange={(e) => update(index, e.target.value)}
-              placeholder="@handle"
-              style={{ flex: 1 }}
-            />
-            <Button onClick={() => remove(index)}>
-              ×
-            </Button>
-          </div>
-        ))}
-        <Button icon={<PlusOutlined />} onClick={add}>
-          + 添加账号
-        </Button>
-      </div>
-    </div>
-  )
+function parseTriggerRules(value: string) {
+  return textLines(value).map((line, index) => {
+    const [ruleId, description = '', examples = ''] = line.split('|').map((item) => item.trim())
+    return {
+      ruleId: ruleId || `rule-${index + 1}`,
+      description,
+      positiveExamples: examples.replace(/^正例：/, '').split('；').map((item) => item.trim()).filter(Boolean),
+    }
+  })
+}
+
+function formatEvidenceRequirements(requirements: NonNullable<TopicMonitoringPlanConfig['evidenceRequirements']>) {
+  return requirements
+    .map((item) => `${item.sourceType ?? 'x_account_post'} | ${(item.requiredFields ?? []).join('、')}`)
+    .join('\n')
+}
+
+function parseEvidenceRequirements(value: string) {
+  return textLines(value).map((line) => {
+    const [sourceType, fields = ''] = line.split('|').map((item) => item.trim())
+    return {
+      sourceType: sourceType || 'x_account_post',
+      requiredFields: fields.split(/[、,，]/).map((item) => item.trim()).filter(Boolean),
+    }
+  })
 }

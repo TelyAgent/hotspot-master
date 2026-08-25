@@ -32,9 +32,8 @@ export interface OverviewManualItem {
   severity: 'normal' | 'warning' | 'critical'
   title: string
   description: string
-  taskId?: string
   eventId?: string
-  actionPage: 'tasks' | 'events' | 'insights'
+  actionPage: 'events' | 'insights'
 }
 
 export interface OverviewAnomaly {
@@ -42,16 +41,7 @@ export interface OverviewAnomaly {
   type: string
   count: number
   description: string
-  actionPage: 'tasks' | 'insights'
-}
-
-export interface OverviewTaskGroup {
-  eventId: string
-  eventTitle: string
-  taskCount: number
-  completedCount: number
-  progressPercent: number
-  statusLabel: string
+  actionPage: 'events' | 'insights'
 }
 
 export interface OverviewResponse {
@@ -61,7 +51,6 @@ export interface OverviewResponse {
   accountPerformance: OverviewAccountPerformance[]
   manualItems: OverviewManualItem[]
   anomalies: OverviewAnomaly[]
-  taskGroups: OverviewTaskGroup[]
 }
 
 export function getOverview(range: OverviewRange): Promise<OverviewResponse> {

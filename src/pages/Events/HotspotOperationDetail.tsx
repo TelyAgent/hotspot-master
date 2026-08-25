@@ -3,22 +3,23 @@ import { Alert, Button, Card, Empty, Input, Space } from 'antd'
 import { CopyOutlined, DownOutlined, LinkOutlined, ReloadOutlined, UpOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import type { TaskItem } from '../../data/types'
-import styles from './Tasks.module.css'
+import styles from './HotspotOperationDetail.module.css'
 
-export default function TaskDetailModal({
+export default function HotspotOperationDetail({
   task,
   onRegenerate,
   onPublish,
 }: {
   task: TaskItem
   onRegenerate: (instruction?: string) => Promise<void>
-  onPublish: (url: string, candidateId: string) => Promise<void>
+  onPublish: (url: string, candidateId: string, accountName?: string) => Promise<void>
 }) {
   const { toast } = useApp()
   const [instruction, setInstruction] = useState('')
   const [regenerating, setRegenerating] = useState(false)
   const autoGenerateStarted = useRef(false)
   const [showEvidence, setShowEvidence] = useState(false)
+  const [publishAccount, setPublishAccount] = useState('')
   const [publishUrl, setPublishUrl] = useState('')
   const [publishing, setPublishing] = useState(false)
 
@@ -39,13 +40,17 @@ export default function TaskDetailModal({
       toast('找不到可关联的候选内容，请重新生成后再回填')
       return
     }
+    if (!publishAccount.trim()) {
+      toast('请填写发布账号')
+      return
+    }
     if (!publishUrl.trim()) {
       toast('请填写发布 URL')
       return
     }
     setPublishing(true)
     try {
-      await onPublish(publishUrl.trim(), candidateId)
+      await onPublish(publishUrl.trim(), candidateId, publishAccount.trim())
     } catch {
       // 错误已在 onPublish 内 toast
     } finally {
@@ -115,11 +120,11 @@ export default function TaskDetailModal({
       {task.copies.length ? (
         <>
           <div className={styles.candidateGrid}>
-            {task.copies.map((c, i) => (
+            {task.copies.map((copy, index) => (
               <Card
-                key={i}
+                key={index}
                 className={styles.candidate}
-                title={`候选${String.fromCharCode(65 + i)}`}
+                title={`候选${String.fromCharCode(65 + index)}`}
                 actions={[
                   <Button
                     key="copy"
@@ -131,12 +136,12 @@ export default function TaskDetailModal({
                   </Button>,
                 ]}
               >
-                <div className={styles.copy}>{c}</div>
+                <div className={styles.copy}>{copy}</div>
               </Card>
             ))}
           </div>
 
-          <div className={styles.taskTools}>
+          <div className={styles.operationTools}>
             <div className={styles.toolBox}>
               <h3>与AI调整</h3>
               <Input.TextArea
@@ -156,6 +161,11 @@ export default function TaskDetailModal({
             </div>
             <div className={styles.toolBox}>
               <h3>发布回填</h3>
+              <Input
+                placeholder="发布账号，如 @PredX"
+                value={publishAccount}
+                onChange={(e) => setPublishAccount(e.target.value)}
+              />
               <Input
                 placeholder="X发布URL"
                 value={publishUrl}

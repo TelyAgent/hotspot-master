@@ -1,7 +1,7 @@
 import { Alert, Button, Card, Empty, Skeleton, Space, Statistic, Tag, Typography, message } from 'antd'
-import { ReloadOutlined, YoutubeOutlined } from '@ant-design/icons'
+import { ReloadOutlined, SyncOutlined, YoutubeOutlined } from '@ant-design/icons'
 import { useEffect, useMemo, useState } from 'react'
-import { fetchLatestYoutubeRun, fetchYoutubeBoard, runYoutubeCollection } from '../../api/youtube'
+import { analyzeYoutubeVideo, fetchLatestYoutubeRun, fetchYoutubeBoard, runYoutubeCollection } from '../../api/youtube'
 import type { YoutubeBoardVideo, YoutubeRun } from '../../api/youtube'
 import { Head } from '../../components/ui'
 import styles from './Monitor.module.css'
@@ -11,12 +11,13 @@ export default function YouTubeMonitor() {
   const [videos, setVideos] = useState<YoutubeBoardVideo[]>([])
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
+  const [analyzingVideoId, setAnalyzingVideoId] = useState<string | null>(null)
 
   const stats = useMemo(
     () => ({
       activeVideos: videos.length,
       analyzedVideos: videos.filter((item) => item.analysis).length,
-      missingTranscript: videos.filter((item) => item.transcriptStatus === 'transcript_unavailable').length,
+      missingTranscript: videos.filter((item) => item.transcriptStatus === 'content_unavailable').length,
     }),
     [videos],
   )
@@ -49,6 +50,20 @@ export default function YouTubeMonitor() {
       message.error(error instanceof Error ? error.message : '启动 YouTube 采集失败')
     } finally {
       setRunning(false)
+    }
+  }
+
+  async function handleAnalyzeVideo(videoId: string) {
+    setAnalyzingVideoId(videoId)
+    try {
+      await analyzeYoutubeVideo(videoId)
+      message.success('视频拆解已完成')
+      await load()
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '视频拆解失败')
+      await load()
+    } finally {
+      setAnalyzingVideoId(null)
     }
   }
 
@@ -102,7 +117,12 @@ export default function YouTubeMonitor() {
       ) : (
         <div className={styles.youtubeGrid}>
           {videos.map((video) => (
-            <YoutubeVideoCard key={video.videoId} video={video} />
+            <YoutubeVideoCard
+              key={video.videoId}
+              video={video}
+              analyzing={analyzingVideoId === video.videoId}
+              onAnalyze={handleAnalyzeVideo}
+            />
           ))}
         </div>
       )}
@@ -110,7 +130,17 @@ export default function YouTubeMonitor() {
   )
 }
 
-function YoutubeVideoCard({ video }: { video: YoutubeBoardVideo }) {
+function YoutubeVideoCard({
+  video,
+  analyzing,
+  onAnalyze,
+}: {
+  video: YoutubeBoardVideo
+  analyzing: boolean
+  onAnalyze: (videoId: string) => void
+}) {
+  const canManualAnalyze = !video.analysis && isFailedAnalysis(video)
+
   return (
     <Card className={styles.youtubeVideoCard}>
       <div className={styles.youtubeVideoTop}>
@@ -151,12 +181,32 @@ function YoutubeVideoCard({ video }: { video: YoutubeBoardVideo }) {
         </div>
       ) : (
         <Alert
-          message={video.transcriptStatus === 'transcript_unavailable' ? '字幕不可用，未生成拆解' : '等待字幕拆解'}
+          message={getAnalysisMessage(video)}
+          action={
+            canManualAnalyze ? (
+              <Button size="small" type="primary" icon={<SyncOutlined />} loading={analyzing} onClick={() => onAnalyze(video.videoId)}>
+                手动拆解
+              </Button>
+            ) : null
+          }
           showIcon
         />
       )}
     </Card>
   )
+}
+
+function isFailedAnalysis(video: YoutubeBoardVideo) {
+  return video.analysisStatus === 'analysis_failed' || video.analysisStatus === 'content_unavailable'
+}
+
+function getAnalysisMessage(video: YoutubeBoardVideo) {
+  if (video.analysisStatus === 'analysis_failed') return '拆解失败，可手动重试'
+  if (video.analysisStatus === 'content_unavailable' || video.transcriptStatus === 'content_unavailable') {
+    return '字幕不可用，可稍后手动重试'
+  }
+  if (video.analysisStatus === 'running') return '正在拆解'
+  return '等待字幕拆解'
 }
 
 function AnalysisBlock({ title, items }: { title: string; items: string[] }) {

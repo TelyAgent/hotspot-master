@@ -6,7 +6,6 @@ import {
   CalendarOutlined,
   FileSearchOutlined,
   LineChartOutlined,
-  ProfileOutlined,
   SettingOutlined,
   ThunderboltOutlined,
   XOutlined,
@@ -22,7 +21,6 @@ const NAV_ICONS: Record<PageId, ReactNode> = {
   monitor: <ThunderboltOutlined />,
   future: <CalendarOutlined />,
   events: <FileSearchOutlined />,
-  tasks: <ProfileOutlined />,
   insights: <LineChartOutlined />,
   settings: <SettingOutlined />,
 }

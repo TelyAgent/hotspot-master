@@ -50,30 +50,111 @@ export interface CollectionJobConfig {
   }
 }
 
-export function getPlatformCollectionConfig(platform: 'x') {
-  return request<PlatformCollectionConfig>(`/collection/platforms/${platform}/config`)
+interface XTrendCollectionConfig {
+  regions: string[]
+  limit: number
+  collectionIntervalMs: number
 }
 
-export function updatePlatformCollectionConfig(
+const REGION_WOEIDS: Record<string, number> = {
+  global: 1,
+  Worldwide: 1,
+  'United States': 23424977,
+  'United Kingdom': 23424975,
+  Japan: 23424856,
+  Korea: 23424868,
+}
+
+export async function getPlatformCollectionConfig(platform: 'x') {
+  assertXPlatform(platform)
+  const config = await request<XTrendCollectionConfig>('/project-config/x-trends')
+  return toPlatformCollectionConfig(config)
+}
+
+export async function updatePlatformCollectionConfig(
   platform: 'x',
   data: Partial<Pick<PlatformCollectionConfig, 'enabled' | 'defaultRegions' | 'variables'>>,
 ) {
-  return request<PlatformCollectionConfig>(`/collection/platforms/${platform}/config`, {
+  assertXPlatform(platform)
+  const config = await request<XTrendCollectionConfig>('/project-config/x-trends', {
     method: 'PATCH',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      regions: data.variables?.regions ?? data.defaultRegions,
+      limit: data.variables?.defaultTrendLimit,
+      collectionIntervalMs: data.variables?.trendCollectionIntervalMs,
+    }),
   })
+  return toPlatformCollectionConfig(config)
 }
 
-export function getPlatformCollectionJobs(platform: 'x') {
-  return request<CollectionJobConfig[]>(`/collection/platforms/${platform}/jobs`)
+export async function getPlatformCollectionJobs(platform: 'x') {
+  assertXPlatform(platform)
+  const config = await request<XTrendCollectionConfig>('/project-config/x-trends')
+  return [
+    {
+      id: 'x-trends-default',
+      platform: 'x' as const,
+      name: 'X 目标地区热搜榜',
+      toolName: 'x.trends.list',
+      sourceType: 'trend',
+      enabled: true,
+      schedule: {
+        type: 'interval' as const,
+        value: String(config.collectionIntervalMs),
+      },
+    },
+  ]
 }
 
-export function updateCollectionJobConfig(
+export async function updateCollectionJobConfig(
   jobId: string,
   data: Partial<Pick<CollectionJobConfig, 'enabled' | 'schedule'>>,
 ) {
-  return request<CollectionJobConfig>(`/collection/jobs/${jobId}/config`, {
+  const config = await request<XTrendCollectionConfig>('/project-config/x-trends', {
     method: 'PATCH',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      collectionIntervalMs:
+        data.schedule?.type === 'interval'
+          ? Number(data.schedule.value)
+          : undefined,
+    }),
   })
+  return {
+    id: jobId,
+    platform: 'x',
+    name: 'X 目标地区热搜榜',
+    toolName: 'x.trends.list',
+    sourceType: 'trend',
+    enabled: data.enabled ?? true,
+    schedule: {
+      type: 'interval',
+      value: String(config.collectionIntervalMs),
+    },
+  }
+}
+
+function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCollectionConfig {
+  return {
+    id: 'x-default',
+    platform: 'x',
+    connectorId: 'x-twitterapi-io',
+    displayName: 'X / twitterapi.io',
+    enabled: true,
+    defaultTimezone: 'Asia/Shanghai',
+    defaultRegions: config.regions,
+    variables: {
+      regions: config.regions,
+      regionWoeids: REGION_WOEIDS,
+      trendCollectionIntervalMs: config.collectionIntervalMs,
+      defaultTrendLimit: config.limit,
+      trendEventWorkflowId: 'x-trend-event-formation',
+      defaultPostLimit: 3,
+    },
+  }
+}
+
+function assertXPlatform(platform: 'x') {
+  if (platform !== 'x') {
+    throw new Error(`不支持的平台：${platform}`)
+  }
 }

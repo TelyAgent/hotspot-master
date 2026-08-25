@@ -1,22 +1,16 @@
 import { useEffect } from 'react'
-import { Button, Tabs } from 'antd'
-import { ReloadOutlined } from '@ant-design/icons'
+import { Tabs } from 'antd'
 import { useApp } from '../../context/AppContext'
 import { Head } from '../../components/ui'
-import { refreshMonitor } from '../../api/monitor'
 import { useTrending } from '../../hooks/useTrending'
 import { useTrendRegions } from '../../hooks/useTrendRegions'
 import Ranking from './Ranking'
 import Topics from './Topics'
-import Regions from './Regions'
-import HotContent from './HotContent'
 import styles from './Monitor.module.css'
 
 const SUBTABS = [
   ['ranking', '热搜排行榜'],
   ['topics', '重点主题追踪'],
-  ['regions', '跨区聚合'],
-  ['content', '热点内容'],
 ] as const
 
 function formatCollectedAt(iso?: string): string {
@@ -29,7 +23,7 @@ function formatCollectedAt(iso?: string): string {
 }
 
 export default function Monitor() {
-  const { mt, toast, set, region } = useApp()
+  const { mt, set, region } = useApp()
   const trendRegions = useTrendRegions()
   const { data, loading, error, reload } = useTrending(region)
 
@@ -39,39 +33,11 @@ export default function Monitor() {
     }
   }, [region, set, trendRegions.loading, trendRegions.regions])
 
-  const handleRefresh = () => {
-    toast('已发起五个榜单的立即采集')
-    refreshMonitor()
-      .then((result) => {
-        if (result.status === 'failed') {
-          toast(result.error ? `采集失败：${result.error}` : '采集失败')
-          return
-        }
-
-        toast(result.message)
-        reload()
-      })
-      .catch((error: unknown) => {
-        toast(error instanceof Error ? error.message : '采集请求失败')
-      })
-  }
-
   return (
     <>
       <Head
         title="热点监测"
         desc="完整呈现和聚合各地区排行榜；是否进入响应由事件库承接。"
-        actions={
-          <>
-            <Button>
-              最近成功采集 {formatCollectedAt(data?.collectedAt)}
-              {data?.source === 'mock' ? '（模拟）' : ''}
-            </Button>
-            <Button type="primary" icon={<ReloadOutlined />} onClick={handleRefresh}>
-              立即采集
-            </Button>
-          </>
-        }
       />
       <Tabs
         className={styles.subtabs}
@@ -85,13 +51,22 @@ export default function Monitor() {
           loading={loading || trendRegions.loading}
           error={error ?? trendRegions.error}
           regions={trendRegions.regions}
+          collectedLabel={formatCollectedAt(data?.collectedAt)}
+          isMock={data?.source === 'mock'}
+          onReload={reload}
         />
       ) : mt === 'topics' ? (
         <Topics />
-      ) : mt === 'regions' ? (
-        <Regions />
       ) : (
-        <HotContent />
+        <Ranking
+          data={data}
+          loading={loading || trendRegions.loading}
+          error={error ?? trendRegions.error}
+          regions={trendRegions.regions}
+          collectedLabel={formatCollectedAt(data?.collectedAt)}
+          isMock={data?.source === 'mock'}
+          onReload={reload}
+        />
       )}
     </>
   )

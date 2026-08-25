@@ -67,3 +67,7 @@ export function fetchLatestYoutubeRun(): Promise<YoutubeRun | null> {
 export function runYoutubeCollection(): Promise<YoutubeRun> {
   return request('/youtube/run', { method: 'POST' })
 }
+
+export function analyzeYoutubeVideo(videoId: string): Promise<unknown> {
+  return request(`/youtube/videos/${encodeURIComponent(videoId)}/analyze`, { method: 'POST' })
+}
