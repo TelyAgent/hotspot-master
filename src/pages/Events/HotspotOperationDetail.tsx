@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Button, Card, Empty, Input, Space } from 'antd'
-import { CopyOutlined, DownOutlined, LinkOutlined, ReloadOutlined, UpOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Empty, Input, Space, Tag, Typography } from 'antd'
+import {
+  CopyOutlined,
+  DownOutlined,
+  LinkOutlined,
+  ReloadOutlined,
+  SendOutlined,
+  UpOutlined,
+} from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import type { TaskItem } from '../../data/types'
 import styles from './HotspotOperationDetail.module.css'
@@ -32,6 +39,11 @@ export default function HotspotOperationDetail({
     } finally {
       setRegenerating(false)
     }
+  }
+
+  const copyCandidate = (copy: string) => {
+    void navigator.clipboard?.writeText(copy)
+    toast('内容已复制，请前往 X 人工发布')
   }
 
   const handlePublish = async () => {
@@ -67,23 +79,27 @@ export default function HotspotOperationDetail({
   }, [task.id, task.copies.length])
 
   return (
-    <div>
-      <div className="card-head">
+    <div className={styles.operationDetail}>
+      <section className={styles.hero}>
         <div>
-          <span className="small">
-            {task.code} · {task.role}
-          </span>
-          <h2 style={{ margin: 0 }}>
-            {task.account} · {task.event}
-          </h2>
+          <div className={styles.heroMeta}>
+            <Tag className={styles.statusTag}>{task.status}</Tag>
+            <span>{task.code}</span>
+            <span>{task.role}</span>
+          </div>
+          <Typography.Title level={3}>{task.event}</Typography.Title>
+          <Typography.Paragraph>{task.eventSummary || task.event}</Typography.Paragraph>
         </div>
-        <Button
-          icon={showEvidence ? <UpOutlined /> : <DownOutlined />}
-          onClick={() => setShowEvidence((value) => !value)}
-        >
-          Event依据
-        </Button>
-      </div>
+        <div className={styles.heroActions}>
+          <span>面向账号：{task.account}</span>
+          <Button
+            icon={showEvidence ? <UpOutlined /> : <DownOutlined />}
+            onClick={() => setShowEvidence((value) => !value)}
+          >
+            Event 依据
+          </Button>
+        </div>
+      </section>
 
       {showEvidence && (
         <section className={styles.evidencePanel}>
@@ -119,31 +135,40 @@ export default function HotspotOperationDetail({
 
       {task.copies.length ? (
         <>
-          <div className={styles.candidateGrid}>
+          <section className={styles.candidateSection}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <b>发布候选</b>
+                <span>根据当前热点上下文生成 3 条可发布文案。</span>
+              </div>
+              <Tag className={styles.countTag}>{task.copies.length} 条</Tag>
+            </div>
             {task.copies.map((copy, index) => (
               <Card
                 key={index}
                 className={styles.candidate}
-                title={`候选${String.fromCharCode(65 + index)}`}
-                actions={[
+                title={`候选 ${String.fromCharCode('A'.charCodeAt(0) + index)}`}
+                extra={
                   <Button
-                    key="copy"
-                    type="link"
+                    type="text"
                     icon={<CopyOutlined />}
-                    onClick={() => toast('内容已复制，请前往X人工发布')}
+                    onClick={() => copyCandidate(copy)}
                   >
                     复制
-                  </Button>,
-                ]}
+                  </Button>
+                }
               >
                 <div className={styles.copy}>{copy}</div>
               </Card>
             ))}
-          </div>
+          </section>
 
           <div className={styles.operationTools}>
             <div className={styles.toolBox}>
-              <h3>与AI调整</h3>
+              <div>
+                <h3>与 AI 调整</h3>
+                <p>补充语气、角度或禁用表达后，重新生成一组候选。</p>
+              </div>
               <Input.TextArea
                 rows={5}
                 placeholder="补充本轮生成要求"
@@ -160,7 +185,10 @@ export default function HotspotOperationDetail({
               </Button>
             </div>
             <div className={styles.toolBox}>
-              <h3>发布回填</h3>
+              <div>
+                <h3>发布回填</h3>
+                <p>记录发布账号和帖子链接，用于后续效果追踪。</p>
+              </div>
               <Input
                 placeholder="发布账号，如 @PredX"
                 value={publishAccount}
@@ -173,12 +201,12 @@ export default function HotspotOperationDetail({
               />
               <Button
                 type="primary"
+                icon={<SendOutlined />}
                 loading={publishing}
                 onClick={handlePublish}
               >
                 {publishing ? '提交中…' : '提交回填'}
               </Button>
-              <span className="small">用于后续自动跟踪帖子发布效果。</span>
             </div>
           </div>
         </>
