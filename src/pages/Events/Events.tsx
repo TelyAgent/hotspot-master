@@ -10,11 +10,14 @@ import {
   publishHotspotPost,
   type HotspotDraft,
 } from '../../api/hotspotOperation'
+import { getEventMergeDetail } from '../../api/eventMerge'
+import type { EventMergeDetail } from '../../data/types'
+import EventIdentityDecisionCard from './EventIdentityDecisionCard'
 import HotspotOperationDetail from './HotspotOperationDetail'
 import { CorrectModal } from './EventModals'
 import styles from './Events.module.css'
 
-type DetailTab = 'overview' | 'facts' | 'timeline' | 'sources' | 'merge'
+type DetailTab = 'overview' | 'facts' | 'timeline' | 'merge'
 
 const STANDARD_FILTERS = [
   '全部',
@@ -35,7 +38,6 @@ const DETAIL_TABS: { key: DetailTab; label: string }[] = [
   { key: 'overview', label: '完整上下文' },
   { key: 'facts', label: '事实与证据' },
   { key: 'timeline', label: '时间与发展' },
-  { key: 'sources', label: '来源子包' },
   { key: 'merge', label: '关联与聚合' },
 ]
 
@@ -72,7 +74,7 @@ export default function Events() {
     active: eventViews.length,
     multiSource: eventViews.filter((item) => item.sources.length > 1).length,
     candidate: eventViews.filter((item) => item.status === '内容生成中' || item.verify === '存在冲突').length,
-    review: eventViews.filter((item) => item.verify === '存在冲突').length,
+    conflict: eventViews.filter((item) => item.verify === '存在冲突').length,
   }
 
   const openHotspotOperation = (event: EventItem) => {
@@ -80,7 +82,7 @@ export default function Events() {
   }
 
   const copyContext = (event: EventView) => {
-    const text = JSON.stringify(createPackObject(event), null, 2)
+    const text = createPackText(event)
     void navigator.clipboard?.writeText(text)
     toast('完整 Context Pack 已复制')
   }
@@ -128,7 +130,7 @@ export default function Events() {
         <KpiBox value={metrics.active} label="活跃 Event" />
         <KpiBox value={metrics.multiSource} label="多来源 Event" />
         <KpiBox value={metrics.candidate} label="Candidate" />
-        <KpiBox value={metrics.review} label="待人工复核" />
+        <KpiBox value={metrics.conflict} label="冲突/待核实" />
       </div>
 
       <div className={styles.eventToolbar}>
@@ -313,18 +315,19 @@ function EventDetailPage({
       {tab === 'overview' ? <OverviewTab event={event} /> : null}
       {tab === 'facts' ? <FactsTab event={event} /> : null}
       {tab === 'timeline' ? <TimelineTab event={event} /> : null}
-      {tab === 'sources' ? <SourcesTab event={event} /> : null}
       {tab === 'merge' ? <MergeTab event={event} /> : null}
 
-      <section className={styles.detailPanel}>
-        <div className={styles.between}>
-          <div>
-            <b>下游读取规则</b>
-            <span className={styles.meta}>复制内容包含 Fact、Evidence、表达边界、来源上下文与响应规则；AI 不得直接读取 Event Card。</span>
+      {tab === 'overview' ? (
+        <section className={styles.detailPanel}>
+          <div className={styles.between}>
+            <div>
+              <b>下游读取规则</b>
+              <span className={styles.meta}>复制内容包含 Fact、Evidence、表达边界、来源上下文与响应规则；AI 不得直接读取 Event Card。</span>
+            </div>
+            <Button type="primary" onClick={onCopy}>复制完整上下文</Button>
           </div>
-          <Button type="primary" onClick={onCopy}>复制完整上下文</Button>
-        </div>
-      </section>
+        </section>
+      ) : null}
     </div>
   )
 }
@@ -350,32 +353,18 @@ function OverviewTab({ event }: { event: EventView }) {
         <span className={styles.meta}>{event.pack} · 受影响：evidence_records / event_development</span>
       </section>
 
-      <div className={styles.detailGrid}>
-        <section className={styles.detailPanel}>
-          <div className={styles.between}>
-            <h2>事件核心</h2>
-            <Pill label="已通过结构校验" />
-          </div>
-          <KeyValue label="事实摘要" value={event.summary} />
-          <KeyValue label="主体" value={inferSubject(event.title)} />
-          <KeyValue label="核心动作" value={inferAction(event)} />
-          <KeyValue label="具体对象" value={event.title} />
-          <KeyValue label="事件类型" value={event.trigger} />
-          <KeyValue label="事实发生时间" value={event.time} />
-        </section>
-        <section className={styles.detailPanel}>
-          <h2>事件发展</h2>
-          <KeyValue label="当前状态" value={event.state} />
-          <KeyValue label="判断依据" value={(event.evidence ?? []).length ? `EV-${String(event.evidence?.length).padStart(3, '0')}` : '待补充'} />
-          <div className={styles.nextBox}>
-            <b>下一观察点</b>
-            <ol>
-              <li>是否出现新的第一方确认</li>
-              <li>是否有补充证据改变事实边界</li>
-            </ol>
-          </div>
-        </section>
-      </div>
+      <section className={styles.detailPanel}>
+        <div className={styles.between}>
+          <h2>事件核心</h2>
+          <Pill label="已通过结构校验" />
+        </div>
+        <KeyValue label="事实摘要" value={event.summary} />
+        <KeyValue label="主体" value={inferSubject(event.title)} />
+        <KeyValue label="核心动作" value={inferAction(event)} />
+        <KeyValue label="具体对象" value={event.title} />
+        <KeyValue label="事件类型" value={event.trigger} />
+        <KeyValue label="事实发生时间" value={event.time} />
+      </section>
 
       <section className={styles.detailPanel}>
         <div className={styles.between}>
@@ -391,6 +380,10 @@ function OverviewTab({ event }: { event: EventView }) {
           <ContractCell label="development.state" value={event.state} />
         </div>
       </section>
+
+      <FactsTab event={event} />
+      <TimelineTab event={event} />
+      <MergeTab event={event} />
     </>
   )
 }
@@ -398,19 +391,7 @@ function OverviewTab({ event }: { event: EventView }) {
 function FactsTab({ event }: { event: EventView }) {
   const evidence = event.evidence ?? []
   return (
-    <div className={styles.detailGrid}>
-      <section className={styles.detailPanel}>
-        <h2>Fact 列表</h2>
-        <p className={styles.meta}>每条 Fact 都是可独立核验的陈述。</p>
-        <button className={`${styles.factRowButton} ${styles.activeFact}`} type="button">
-          <div className={styles.between}>
-            <b>F-1 · core_fact</b>
-            <Pill label={event.fact === '高' ? '已确认' : '待确认'} />
-          </div>
-          <p>{event.summary}</p>
-          <span>{evidence.length} 条 Evidence · 更新 {event.time}</span>
-        </button>
-      </section>
+    <>
       <section className={styles.detailPanel}>
         <div className={styles.between}>
           <div>
@@ -438,7 +419,7 @@ function FactsTab({ event }: { event: EventView }) {
           <div className="note">暂无可解析 Evidence。</div>
         )}
       </section>
-    </div>
+    </>
   )
 }
 
@@ -458,50 +439,72 @@ function TimelineTab({ event }: { event: EventView }) {
   )
 }
 
-function SourcesTab({ event }: { event: EventView }) {
-  return (
-    <section className={styles.detailPanel}>
-      <div className={styles.between}>
-        <div>
-          <h2>来源子包与原始 Signal</h2>
-          <p className={styles.meta}>每个子包是同一来源路径的结构化集合；展开后可直接进入原帖、榜单或官方排期页面。</p>
-        </div>
-        <SourceMarks sources={event.sources} />
-      </div>
-      {event.sources.map((source, index) => (
-        <details className={styles.signalPackage} key={source} open={index === 0}>
-          <summary>
-            <div>
-              <b>{source} Source Package</b>
-              <span>SP-{source.replace(/\s/g, '-').toUpperCase()}-{event.id.slice(0, 6)} · {event.triggers.length} 个触发条件</span>
-            </div>
-            <Pill label="已纳入" />
-          </summary>
-          <div className={styles.signalList}>
-            <p>命中 {event.triggers[index] || '来源触发规则'}，原始数据、榜单或帖子快照已保存。</p>
-            <div className={styles.tagrow}>{event.triggers.slice(0, 4).map((item) => <Pill key={item} label={item} />)}</div>
-          </div>
-        </details>
-      ))}
-    </section>
-  )
-}
-
 function MergeTab({ event }: { event: EventView }) {
+  const [detail, setDetail] = useState<EventMergeDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    setError(null)
+    getEventMergeDetail(event.id)
+      .then((response) => {
+        if (alive) setDetail(response)
+      })
+      .catch((e: unknown) => {
+        if (alive) setError(e instanceof Error ? e.message : '加载事件聚合详情失败')
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [event.id])
+
+  if (loading) {
+    return <div className="note">正在加载事件聚合详情…</div>
+  }
+
+  if (error) {
+    return <Alert type="error" message={`加载失败：${error}`} showIcon />
+  }
+
   return (
-    <section className={styles.detailPanel}>
-      <h2>Event Identity Decision</h2>
-      <p className={styles.meta}>标题、关键词、语言、榜单地区、热度和同一人物不能单独作为合并依据。</p>
-      <div className={styles.mergeMatrix}>
-        {['主体', '核心动作', '具体对象', '时间与地点', '事件状态', '核心事实'].map((item) => (
-          <div key={item}>
-            <span>{item}</span>
-            <b>兼容</b>
+    <div className={styles.mergeStack}>
+      <EventIdentityDecisionCard decision={detail?.latestIdentityDecision} />
+      <section className={styles.detailPanel}>
+        <div className={styles.between}>
+          <div>
+            <h2>关联事件</h2>
+            <p className={styles.meta}>不是同一事件但存在后续、修正、反转等关系时，会保留为独立关联 Event。</p>
           </div>
-        ))}
-      </div>
-      <div className={styles.warning}>系统处理：自动合并或创建关联 Event 时，只追加来源上下文，不覆盖旧 Event。</div>
-    </section>
+          <Pill label={`${detail?.relations.length ?? 0} 条`} />
+        </div>
+        {detail?.relations.length ? (
+          <div className={styles.mergeRelationList}>
+            {detail.relations.map((relation) => (
+              <article key={relation.id}>
+                <div className={styles.between}>
+                  <b>{relationTypeName(relation.relationType)}</b>
+                  <span className={styles.meta}>{formatDateTime(relation.createdAt)}</span>
+                </div>
+                <p>{relation.reason}</p>
+                <div className={styles.mergeMetaStrip}>
+                  <span>{relation.fromEventId === event.id ? '当前 Event → 关联 Event' : '关联 Event → 当前 Event'}</span>
+                  <span>{relation.evidenceRefs.length} 条 Evidence</span>
+                  <span>{relation.createdBy === 'agent' ? 'Agent 判断' : relation.createdBy}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <Empty description="暂无关联事件" />
+        )}
+      </section>
+    </div>
   )
 }
 
@@ -512,6 +515,30 @@ function KeyValue({ label, value }: { label: string; value: string }) {
       <b>{value}</b>
     </div>
   )
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
+function relationTypeName(value: string) {
+  const names: Record<string, string> = {
+    follow_up: '后续进展',
+    official_result: '正式结果',
+    change: '状态变化',
+    correction: '事实更正',
+    reversal: '事实反转',
+    parent_child: '父子事件',
+  }
+  return names[value] ?? value
 }
 
 function Pill({ label }: { label: string }) {
@@ -552,7 +579,7 @@ function toEventView(event: EventItem, index: number): EventView {
     pack: `Context Pack v${Math.max(1, Math.min(index + 1, 9))}`,
     time: formatEventTime(event.trigger),
     entryMode: sources.includes('X 热搜') ? 'trend' : sources.includes('关注圈层') ? 'topic_watch' : sources.includes('Future Event') ? 'future_event' : 'unknown',
-    state: event.verify === '存在冲突' ? 'needs_review' : 'validated_active',
+    state: event.verify === '存在冲突' ? 'needs_attention' : 'validated_active',
   }
 }
 
@@ -638,12 +665,87 @@ function createPackObject(event: EventView) {
   }
 }
 
+function createPackText(event: EventView) {
+  const pack = createPackObject(event)
+  const evidence = event.evidence ?? []
+  const labels = event.labels ?? []
+
+  return [
+    '# 热点事件完整上下文',
+    '',
+    '## 事件基础信息',
+    `- Event ID：${pack.event_id}`,
+    `- Schema Version：${pack.schema_version}`,
+    `- Intake ID：${pack.intake_id}`,
+    `- 入口类型：${pack.entry_mode}`,
+    `- 当前状态：${pack.state}`,
+    `- 更新时间：${pack.updated_at}`,
+    `- 标题：${event.title}`,
+    `- 摘要：${event.summary}`,
+    '',
+    '## 事件核心',
+    `- 事实摘要：${event.summary}`,
+    `- 主体：${inferSubject(event.title)}`,
+    `- 核心动作：${inferAction(event)}`,
+    `- 具体对象：${event.title}`,
+    `- 事件类型：${event.trigger}`,
+    `- 事实发生时间：${event.time}`,
+    `- 事实可信度：${event.fact}`,
+    '',
+    '## 来源与触发',
+    listOrNone('来源', event.sources),
+    listOrNone('触发标签', event.triggers),
+    '',
+    '## 标签',
+    labels.length
+      ? labels
+          .map((label) =>
+            `- ${label.name || label.code}：${label.reason || '无说明'}（分类：${label.category || 'unknown'}，置信度：${label.confidence || 'unknown'}）`,
+          )
+          .join('\n')
+      : '- 暂无标签',
+    '',
+    '## Evidence',
+    evidence.length
+      ? evidence
+          .map((item, index) =>
+            [
+              `### EV-${String(index + 1).padStart(3, '0')}`,
+              `- 来源类型：${item.sourceType}`,
+              `- 证据陈述：${item.claim}`,
+              `- 原始链接：${item.url || '暂无'}`,
+            ].join('\n'),
+          )
+          .join('\n\n')
+      : '- 暂无可解析 Evidence',
+    '',
+    '## 时间与发展',
+    `- observed_at：${event.time}`,
+    `- fact_time：${event.time}`,
+    '- timezone：Asia/Shanghai',
+    '- event_window：当前观察窗口',
+    `- development.state：${event.state}`,
+    '- 下一观察点：是否出现新的第一方确认、官方更正或事实反转',
+    '',
+    '## 表达边界',
+    '- 可以引用已列出的事实摘要与 Evidence。',
+    '- 不要把热度、榜单排名、Signal 或讨论量直接表述为现实事实。',
+    '- 数据缺失、证据不足或存在冲突时，需要在内容中如实表达不确定性。',
+  ].join('\n')
+}
+
+function listOrNone(label: string, values: string[]) {
+  return values.length
+    ? values.map((value) => `- ${label}：${value}`).join('\n')
+    : `- ${label}：暂无`
+}
+
 function pillTone(label: string) {
   if (/Top 5|Fast|Spike|急升|高置信度/.test(label)) return 'hot'
   if (/Future|Upcoming|Schedule|Action|未来/.test(label)) return 'amber'
   if (/Circle|圈|Topic|Cross|关注/.test(label)) return 'purple'
   if (/确认|First-party|Event|validated|已纳入|已通过/.test(label)) return 'green'
-  if (/Candidate|待|冲突|review/.test(label)) return 'amber'
+  if (/Candidate|待|冲突/.test(label)) return 'amber'
   return 'cyan'
 }
 

@@ -517,6 +517,52 @@
   border-top: 1px solid var(--line2);
 }
 
+.mergeStack {
+  display: grid;
+  gap: 14px;
+}
+
+.mergeDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mergeRelationList {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.mergeRelationList article {
+  padding: 14px;
+  border: 1px solid #d7e2df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mergeRelationList p {
+  margin: 8px 0 10px;
+  color: #566864;
+  line-height: 1.55;
+}
+
+.mergeMetaStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mergeMetaStrip span {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f0f7f5;
+  color: #566864;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .mergeMatrix {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -551,6 +597,7 @@
 @media (max-width: 1180px) {
   .eventGrid,
   .detailGrid,
+  .mergeDetailGrid,
   .eventRuleStrip,
   .eventStats,
   .contractStrip,

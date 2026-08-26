@@ -47,6 +47,57 @@ export interface EventLabel {
   confidence?: string
 }
 
+export interface EventMergeDimensionResult {
+  dimension: string
+  label: string
+  score: number
+  result: 'compatible' | 'conflict' | 'uncertain' | string
+  comparison: string
+  evidenceRefs: string[]
+}
+
+export interface EventSourceContext {
+  id: string
+  mainEventId?: string | null
+  sourceEventId?: string | null
+  sourceType: string
+  triggerType: string
+  triggerRuleCode?: string | null
+  ruleVersion?: string | null
+  contextVersion: number
+  title: string
+  summary: string
+  evidenceRefs: string[]
+  signalRefs: string[]
+  triggeredAt: string
+}
+
+export interface EventMergeDetail {
+  eventId: string
+  contextVersion: number
+  sourceContexts: EventSourceContext[]
+  latestIdentityDecision?: {
+    mergeConfidence: number
+    decision: string
+    dimensionResults: EventMergeDimensionResult[]
+    conflictPoints: string[]
+    systemAction: string
+    reason: string
+  }
+  relations: EventRelation[]
+}
+
+export interface EventRelation {
+  id: string
+  fromEventId: string
+  toEventId: string
+  relationType: string
+  reason: string
+  evidenceRefs: string[]
+  createdBy: string
+  createdAt: string
+}
+
 export interface TaskItem {
   id: string
   eventId?: string
