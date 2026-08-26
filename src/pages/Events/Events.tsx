@@ -81,10 +81,14 @@ export default function Events() {
     openModal('热点运营', <HotspotOperationModal event={event} />, true, 'large')
   }
 
-  const copyContext = (event: EventView) => {
+  const copyContext = async (event: EventView) => {
     const text = createPackText(event)
-    void navigator.clipboard?.writeText(text)
-    toast('完整 Context Pack 已复制')
+    try {
+      await copyTextToClipboard(text)
+      toast('完整 Context Pack 已复制')
+    } catch {
+      toast('复制失败，请检查浏览器剪切板权限')
+    }
   }
 
   if (detailEvent) {
@@ -738,6 +742,36 @@ function listOrNone(label: string, values: string[]) {
   return values.length
     ? values.map((value) => `- ${label}：${value}`).join('\n')
     : `- ${label}：暂无`
+}
+
+async function copyTextToClipboard(text: string) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return
+    } catch {
+      // Fallback for browsers that expose Clipboard API but block it by permission.
+    }
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  textarea.style.top = '0'
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+
+  try {
+    const copied = document.execCommand('copy')
+    if (!copied) {
+      throw new Error('copy command failed')
+    }
+  } finally {
+    document.body.removeChild(textarea)
+  }
 }
 
 function pillTone(label: string) {
