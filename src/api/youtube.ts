@@ -38,16 +38,16 @@ export interface YoutubeBoardVideo {
       topic: string
       why_attractive: string
       traffic_judgment: string
-    }
+    } | null
     execution: {
       key_technique: string
       effect: string
-    }
+    } | null
     replication: {
       reusable_mechanism: string
       product_remix_topic: string
       product_entry: string
-    }
+    } | null
     limitations: string[]
   } | null
 }
