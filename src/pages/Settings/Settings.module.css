@@ -156,6 +156,10 @@
   gap: 14px;
 }
 
+.addTopicAccountButton {
+  margin-top: 10px;
+}
+
 .workflowVersionList {
   display: grid;
   gap: 8px;

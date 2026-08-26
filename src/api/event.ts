@@ -37,6 +37,7 @@ interface V2EvidenceResponse {
   text?: string | null
   url?: string | null
   author?: string | null
+  metadata?: unknown
 }
 
 /** 获取 v2 事件热点列表（分页 + 状态筛选 + 关键词搜索） */
@@ -81,6 +82,10 @@ export function mapV2EventToEventItem(
     id: item.id,
     title: item.title,
     summary: item.summary || '暂无摘要',
+    eventType: item.eventType,
+    confidence: item.confidence,
+    occurredAt: item.occurredAt ?? null,
+    rawStatus: item.status,
     status: mapEventStatus(item.status),
     verify,
     regions: '—',
@@ -135,6 +140,7 @@ function mapEvidenceRef(ref: string, evidence?: V2EvidenceResponse) {
     sourceType: evidence.sourceType,
     claim: isOpaqueId(claim) ? '证据详情待同步' : claim,
     url: evidence.url ?? undefined,
+    metadata: evidence.metadata,
   }
 }
 

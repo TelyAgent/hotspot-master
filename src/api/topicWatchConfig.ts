@@ -11,7 +11,19 @@ export interface TopicWatchConfig {
   evidencePolicy: string
   exclusionPolicy?: string | null
   status: string
+  accounts?: TopicWatchAccountConfig[]
   monitoringPlans?: TopicMonitoringPlanConfig[]
+}
+
+export interface TopicWatchAccountConfig {
+  id?: string
+  topicWatchId?: string
+  handle: string
+  primaryRole: string
+  singleTriggerPolicy: 'S1' | 'S2' | 'C' | string
+  authorityScope: string
+  status?: string
+  sortOrder?: number
 }
 
 export interface TopicMonitoringPlanConfig {
@@ -34,6 +46,9 @@ export interface TopicMonitoringSource {
   platform?: string
   sourceType?: string
   handle?: string
+  primaryRole?: string
+  singleTriggerPolicy?: 'S1' | 'S2' | 'C' | string
+  authorityScope?: string
   includeReplies?: boolean
   includeQuotes?: boolean
   includeReposts?: boolean
@@ -88,6 +103,10 @@ export interface UpdateTopicMonitoringPlanInput {
   reason: string
 }
 
+export interface UpdateTopicWatchAccountsInput {
+  accounts: TopicWatchAccountConfig[]
+}
+
 export function getTopicWatchConfigs() {
   return request<TopicWatchConfig[]>('/topic-watches')
 }
@@ -122,4 +141,11 @@ export function updateActiveTopicMonitoringPlan(
       body: JSON.stringify(input),
     },
   )
+}
+
+export function updateTopicWatchAccounts(id: string, input: UpdateTopicWatchAccountsInput) {
+  return request<TopicWatchAccountConfig[]>(`/topic-watches/${encodeURIComponent(id)}/accounts`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
 }

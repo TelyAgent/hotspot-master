@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { Alert, Button, Checkbox, Collapse, Empty, Input, InputNumber, Select, Spin, Tag } from 'antd'
-import { EyeOutlined, HistoryOutlined, RobotOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
+import { Alert, Button, Checkbox, Collapse, Empty, Form, Input, InputNumber, Select, Spin, Table, Tag } from 'antd'
+import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
   updatePlatformCollectionConfig,
@@ -9,21 +9,12 @@ import {
 import {
   getTopicWatchConfigs,
   updateActiveTopicMonitoringPlan,
+  updateTopicWatchAccounts,
   updateTopicWatchConfig,
+  type TopicWatchAccountConfig,
   type TopicMonitoringPlanConfig,
   type TopicWatchConfig,
 } from '../../../api/topicWatchConfig'
-import {
-  activateWorkflowVersion as activateWorkflowVersionRequest,
-  createWorkflowDraft,
-  getWorkflowAuditLogs,
-  getWorkflowDocument,
-  getWorkflowVersionDiff,
-  resetWorkflowToSystemDefault,
-  repairWorkflowVersion,
-  testWorkflowVersion,
-  type WorkflowVersion,
-} from '../../../api/workflow'
 import { useApp } from '../../../context/AppContext'
 import styles from '../Settings.module.css'
 
@@ -36,6 +27,12 @@ const FREQUENCY_OPTIONS = [
   { label: '每 6 小时', value: 6 * 60 * 60 * 1000 },
 ]
 
+const SINGLE_TRIGGER_POLICY_OPTIONS = [
+  { value: 'S1', label: 'S1 · 第一方权威' },
+  { value: 'S2', label: 'S2 · 核心人物/决策者' },
+  { value: 'C', label: 'C · 候选聚合' },
+]
+
 interface WorkflowUiConfig {
   id: string
   label: string
@@ -43,24 +40,41 @@ interface WorkflowUiConfig {
   fallbackSummary: string
 }
 
-const X_TREND_WORKFLOW: WorkflowUiConfig = {
-  id: 'x-trend-event-formation',
-  label: '榜单形成事件工作流',
-  loadingText: '正在加载榜单形成事件工作流文档…',
-  fallbackSummary: '系统预置榜单形成事件工作流',
+interface TopicWatchAccountDraft extends TopicWatchAccountConfig {
+  rowKey: string
 }
 
-const TOPIC_EVENT_WORKFLOW: WorkflowUiConfig = {
-  id: 'event-formation',
-  label: '主题追踪形成事件工作流',
-  loadingText: '正在加载主题追踪形成事件工作流文档…',
-  fallbackSummary: '系统预置主题追踪形成事件工作流',
-}
+const TOPIC_ACCOUNT_COLUMNS = [
+  {
+    title: '账号',
+    dataIndex: 'handle',
+    key: 'handle',
+    width: 150,
+    render: (value: string) => `@${String(value).replace(/^@/, '')}`,
+  },
+  {
+    title: '来源角色',
+    dataIndex: 'primaryRole',
+    key: 'primaryRole',
+    width: 170,
+  },
+  {
+    title: '单点权限',
+    dataIndex: 'singleTriggerPolicy',
+    key: 'singleTriggerPolicy',
+    width: 100,
+    render: (value: string) => <Tag color={formatSingleTriggerColor(value)}>{value}</Tag>,
+  },
+  {
+    title: '权威范围',
+    dataIndex: 'authorityScope',
+    key: 'authorityScope',
+  },
+]
 
 export default function TwitterSetting() {
   const { openModal, toast } = useApp()
   const topicWatchFormRef = useRef<TopicWatchEditFormHandle>(null)
-  const workflowDraftRef = useRef<WorkflowDraftFormHandle>(null)
   const [config, setConfig] = useState<PlatformCollectionConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -164,6 +178,7 @@ export default function TwitterSetting() {
           openModal(`编辑重点主题 · ${topic.name}`, <div className="note">正在保存重点主题配置…</div>, true, 'large')
           try {
             await updateTopicWatchConfig(topic.id, snapshot.topic)
+            await updateTopicWatchAccounts(topic.id, { accounts: snapshot.accounts })
             await updateActiveTopicMonitoringPlan(topic.id, snapshot.plan)
             await reloadTopicWatches()
             toast('重点主题配置已保存')
@@ -171,247 +186,6 @@ export default function TwitterSetting() {
             openModal(
               `编辑重点主题 · ${topic.name}`,
               <div className="note warning">{e instanceof Error ? e.message : '保存重点主题配置失败'}</div>,
-              true,
-              'large',
-            )
-          }
-        },
-      },
-    )
-  }
-
-  const openWorkflowDocument = async (workflow: WorkflowUiConfig = X_TREND_WORKFLOW) => {
-    openModal(workflow.label, <div className="note">{workflow.loadingText}</div>, true, 'large')
-    try {
-      const document = await getWorkflowDocument(workflow.id)
-      const active = document.activeVersion
-      openModal(
-        `${active.title || workflow.label} · ${active.version}`,
-        <div>
-          <div className={styles.workflowMeta}>
-            <span>当前来源</span>
-            <code>{formatWorkflowSource(active.source)} / {active.isDatabaseVersion ? '数据库版本' : '系统默认文件'}</code>
-            <span>当前状态</span>
-            <code>{active.status}</code>
-            <span>系统默认版本</span>
-            <code>{document.systemVersion.version}</code>
-            <span>历史版本</span>
-            <code>{document.history.length} 个</code>
-            <span>修改摘要</span>
-            <code>{active.changeSummary || workflow.fallbackSummary}</code>
-          </div>
-          <div className={styles.inlineActions}>
-            <Button icon={<HistoryOutlined />} onClick={() => openWorkflowAuditLogs(workflow)}>
-              审计记录
-            </Button>
-            <Button icon={<UndoOutlined />} onClick={() => resetWorkflowDefault(workflow)}>
-              重置默认
-            </Button>
-          </div>
-          {document.history.length > 0 && (
-            <div className={styles.workflowVersionList}>
-              <h4>历史版本</h4>
-              {document.history.map((version) => (
-                <div key={version.id} className={styles.workflowVersionItem}>
-                  <div>
-                    <strong>{version.version}</strong>
-                    <span>{formatWorkflowSource(version.source)} · {version.status}</span>
-                    <small>{version.changeSummary || '无修改摘要'}</small>
-                  </div>
-                  {version.id !== active.id && (
-                    <div className={styles.inlineActions}>
-                      <Button onClick={() => openWorkflowDiff(workflow, active, version)}>
-                        对比当前
-                      </Button>
-                      <Button onClick={() => activateWorkflowVersion(workflow, version)}>
-                        启用
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <pre className={styles.workflowDoc}>{active.markdown}</pre>
-        </div>,
-        true,
-        'large',
-      )
-    } catch (e) {
-      openModal(
-        workflow.label,
-        <div className="note warning">{e instanceof Error ? e.message : '加载工作流文档失败'}</div>,
-        true,
-        'large',
-      )
-    }
-  }
-
-  const activateWorkflowVersion = async (workflow: WorkflowUiConfig, version: WorkflowVersion) => {
-    openModal('启用工作流版本', <div className="note">正在启用 {workflow.label} 版本 {version.version}...</div>, true, 'large')
-    try {
-      await activateWorkflowVersionRequest(workflow.id, version.id)
-      toast('工作流版本已启用')
-      await openWorkflowDocument(workflow)
-    } catch (e) {
-      openModal(
-        '启用工作流版本',
-        <div className="note warning">{e instanceof Error ? e.message : '启用工作流版本失败'}</div>,
-        true,
-        'large',
-      )
-    }
-  }
-
-  const resetWorkflowDefault = async (workflow: WorkflowUiConfig) => {
-    openModal('重置工作流', <div className="note">正在将 {workflow.label} 重置为系统默认版本...</div>, true, 'large')
-    try {
-      await resetWorkflowToSystemDefault(workflow.id)
-      toast('已重置为系统默认工作流')
-      await openWorkflowDocument(workflow)
-    } catch (e) {
-      openModal(
-        '重置工作流',
-        <div className="note warning">{e instanceof Error ? e.message : '重置工作流失败'}</div>,
-        true,
-        'large',
-      )
-    }
-  }
-
-  const openWorkflowAuditLogs = async (workflow: WorkflowUiConfig) => {
-    openModal(`${workflow.label}审计记录`, <div className="note">正在加载审计记录…</div>, true, 'large')
-    try {
-      const result = await getWorkflowAuditLogs(workflow.id)
-      openModal(
-        `${workflow.label}审计记录`,
-        <div className={styles.workflowAuditList}>
-          {result.logs.length === 0 ? (
-            <div className="note">暂无审计记录</div>
-          ) : (
-            result.logs.map((log) => (
-              <div key={log.id} className={styles.workflowAuditItem}>
-                <strong>{formatWorkflowAction(log.action)}</strong>
-                <span>{log.actor} · {formatDateTime(log.createdAt)}</span>
-                <small>{log.summary || '无摘要'}</small>
-              </div>
-            ))
-          )}
-        </div>,
-        true,
-        'large',
-      )
-    } catch (e) {
-      openModal(
-        `${workflow.label}审计记录`,
-        <div className="note warning">{e instanceof Error ? e.message : '加载审计记录失败'}</div>,
-        true,
-        'large',
-      )
-    }
-  }
-
-  const openWorkflowDiff = async (workflow: WorkflowUiConfig, active: WorkflowVersion, version: WorkflowVersion) => {
-    openModal('工作流版本对比', <div className="note">正在生成版本差异…</div>, true, 'large')
-    try {
-      const diff = await getWorkflowVersionDiff(workflow.id, version.id, active.id)
-      openModal(
-        `${workflow.label}版本对比 · ${active.version} → ${version.version}`,
-        <div>
-          <div className={styles.workflowMeta}>
-            <span>新增</span>
-            <code>{diff.summary.added} 行</code>
-            <span>删除</span>
-            <code>{diff.summary.removed} 行</code>
-            <span>未变</span>
-            <code>{diff.summary.unchanged} 行</code>
-          </div>
-          <pre className={styles.workflowDiff}>
-            {diff.lines.map((line, index) => (
-              <span key={`${index}-${line.type}`} className={styles[`diff_${line.type}`]}>
-                {line.type === 'added' ? '+ ' : line.type === 'removed' ? '- ' : '  '}
-                {line.text || ' '}
-                {'\n'}
-              </span>
-            ))}
-          </pre>
-        </div>,
-        true,
-        'large',
-      )
-    } catch (e) {
-      openModal(
-        '工作流版本对比',
-        <div className="note warning">{e instanceof Error ? e.message : '生成版本差异失败'}</div>,
-        true,
-        'large',
-      )
-    }
-  }
-
-  const openWorkflowDraftDialog = (workflow: WorkflowUiConfig = X_TREND_WORKFLOW) => {
-    openModal(
-      `与 AI 一起修改${workflow.label}`,
-      <WorkflowDraftForm ref={workflowDraftRef} />,
-      false,
-      'large',
-      {
-        label: '生成草稿',
-        onConfirm: async () => {
-          const instruction = workflowDraftRef.current?.snapshot()
-          if (!instruction) {
-            toast('请输入你想调整的工作流要求')
-            return
-          }
-          openModal(`与 AI 一起修改${workflow.label}`, <div className="note">正在生成工作流草稿…</div>, true, 'large')
-          try {
-            let draft = (await createWorkflowDraft(workflow.id, instruction)).draftVersion
-            let repairCount = 0
-            openModal(`与 AI 一起修改${workflow.label}`, <div className="note">草稿已生成，正在运行短流程测试…</div>, true, 'large')
-            let testResult = await testWorkflowVersion(workflow.id, draft.id)
-            while (testResult.status === 'failed' && repairCount < 2) {
-              repairCount += 1
-              openModal(
-                `与 AI 一起修改${workflow.label}`,
-                <div className="note">短流程测试失败，正在让 AI 修复第 {repairCount} 次...</div>,
-                true,
-                'large',
-              )
-              draft = (await repairWorkflowVersion(workflow.id, draft.id)).draftVersion
-              testResult = await testWorkflowVersion(workflow.id, draft.id)
-            }
-            openModal(
-              `${draft.title} · 草稿 ${draft.version}`,
-              <div>
-                <div className={styles.workflowMeta}>
-                  <span>状态</span>
-                  <code>{draft.status}</code>
-                  <span>短流程测试</span>
-                  <code>{formatWorkflowTestStatus(testResult.status)}{testResult.errorMessage ? `：${testResult.errorMessage}` : ''}</code>
-                  <span>AI 自动修复</span>
-                  <code>{repairCount} 次</code>
-                  <span>来源</span>
-                  <code>{formatWorkflowSource(draft.source)}</code>
-                  <span>修改摘要</span>
-                  <code>{draft.changeSummary || '未返回摘要'}</code>
-                </div>
-                {testResult.status === 'passed' && (
-                  <div className={styles.inlineActions}>
-                    <Button type="primary" onClick={() => activateWorkflowVersion(workflow, draft)}>
-                      启用此版本
-                    </Button>
-                  </div>
-                )}
-                <pre className={styles.workflowDoc}>{draft.markdown}</pre>
-              </div>,
-              true,
-              'large',
-            )
-            toast(testResult.status === 'passed' ? '工作流草稿已通过短流程测试，尚未启用' : '工作流草稿测试失败，尚未启用')
-          } catch (e) {
-            openModal(
-              `与 AI 一起修改${workflow.label}`,
-              <div className="note warning">{e instanceof Error ? e.message : '生成工作流草稿失败'}</div>,
               true,
               'large',
             )
@@ -477,46 +251,21 @@ export default function TwitterSetting() {
               <Checkbox
                 key={region}
                 className={styles.checkItem}
-                  checked={regions.includes(region)}
-                  onChange={() => toggleRegion(region)}
+                checked={regions.includes(region)}
+                onChange={() => toggleRegion(region)}
               >
                 {region}
               </Checkbox>
             ))}
           </div>
         </section>
-
         <section className={styles.twitterBlock}>
           <div className={styles.blockHeader}>
             <div>
-              <h3>榜单形成事件的工作流</h3>
-              <p className="small">采集成功形成快照后自动触发。</p>
+              <h3>主题圈配置</h3>
+              <p className="small">保存后由服务端同步到主题圈采集任务。</p>
             </div>
-            <div className={styles.inlineActions}>
-              <Button icon={<RobotOutlined />} onClick={() => openWorkflowDraftDialog(X_TREND_WORKFLOW)}>
-                与 AI 一起修改
-              </Button>
-              <Button icon={<EyeOutlined />} onClick={() => openWorkflowDocument(X_TREND_WORKFLOW)}>
-                查看
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.twitterBlock}>
-          <div className={styles.blockHeader}>
-            <div>
-              <h3>重点主题追踪配置</h3>
-              <p className="small">沿用旧版主题圈配置；账号、规则和证据要求来自 v2 TopicWatch 监控计划。</p>
-            </div>
-            <div className={styles.inlineActions}>
-              <Button icon={<RobotOutlined />} onClick={() => openWorkflowDraftDialog(TOPIC_EVENT_WORKFLOW)}>
-                与 AI 一起修改
-              </Button>
-              <Button icon={<EyeOutlined />} onClick={() => openWorkflowDocument(TOPIC_EVENT_WORKFLOW)}>
-                查看工作流
-              </Button>
-            </div>
+            <span className="pill green">{frequencyLabel}</span>
           </div>
           {topicWatches.length === 0 ? (
             <Empty description="暂无重点主题配置" />
@@ -538,7 +287,6 @@ export default function TwitterSetting() {
             />
           )}
         </section>
-
       </div>
     </section>
   )
@@ -595,13 +343,13 @@ function TopicWatchDetail({ topic }: { topic: TopicWatchConfig }) {
 
       <div className={styles.topicWatchSubsection}>
         <h4>监控账号</h4>
-        <div className={styles.topicAccountTags}>
-          {accounts.length === 0 ? (
-            <span className="small">暂无账号</span>
-          ) : (
-            accounts.map((account) => <Tag key={account}>@{account}</Tag>)
-          )}
-        </div>
+        <Table
+          size="small"
+          rowKey={(account) => account.handle}
+          columns={TOPIC_ACCOUNT_COLUMNS}
+          dataSource={accounts}
+          pagination={false}
+        />
       </div>
 
       <div className={styles.topicWatchSubsection}>
@@ -639,10 +387,45 @@ function TopicWatchDetail({ topic }: { topic: TopicWatchConfig }) {
 }
 
 function getTopicAccounts(topic: TopicWatchConfig) {
+  if (topic.accounts?.length) {
+    return topic.accounts
+      .filter((account) => account.status !== 'archived')
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map(normalizeTopicAccount)
+  }
+
   const sources = topic.monitoringPlans?.[0]?.sources ?? []
   return sources
     .filter((source) => source.platform === 'x' && source.sourceType === 'account' && source.handle)
-    .map((source) => String(source.handle).replace(/^@/, ''))
+    .map((source, index) => normalizeTopicAccount({
+      handle: String(source.handle).replace(/^@/, ''),
+      primaryRole: source.primaryRole ?? '专业媒体、快速雷达、数据、分析、预测和观点账号',
+      singleTriggerPolicy: source.singleTriggerPolicy ?? 'C',
+      authorityScope: source.authorityScope ?? '按账号公开信息与帖子内容判断',
+      status: 'active',
+      sortOrder: index + 1,
+    }))
+}
+
+function normalizeTopicAccount(account: TopicWatchAccountConfig): TopicWatchAccountConfig {
+  return {
+    ...account,
+    handle: String(account.handle).replace(/^@/, ''),
+    primaryRole: account.primaryRole || '专业媒体、快速雷达、数据、分析、预测和观点账号',
+    singleTriggerPolicy: normalizeSingleTriggerPolicy(account.singleTriggerPolicy),
+    authorityScope: account.authorityScope || '按账号公开信息与帖子内容判断',
+    status: account.status ?? 'active',
+  }
+}
+
+function normalizeSingleTriggerPolicy(value: unknown): 'S1' | 'S2' | 'C' {
+  return value === 'S1' || value === 'S2' || value === 'C' ? value : 'C'
+}
+
+function formatSingleTriggerColor(value: string) {
+  if (value === 'S1') return 'green'
+  if (value === 'S2') return 'blue'
+  return 'default'
 }
 
 function formatRefreshPolicy(policy: TopicMonitoringPlanConfig['refreshPolicy']) {
@@ -716,6 +499,7 @@ interface WorkflowDraftFormHandle {
 interface TopicWatchEditFormHandle {
   snapshot: () => null | {
     topic: Parameters<typeof updateTopicWatchConfig>[1]
+    accounts: Parameters<typeof updateTopicWatchAccounts>[1]['accounts']
     plan: Parameters<typeof updateActiveTopicMonitoringPlan>[1]
   }
 }
@@ -762,17 +546,125 @@ const TopicWatchEditForm = forwardRef<
   const [evidencePolicy, setEvidencePolicy] = useState(topic.evidencePolicy)
   const [exclusionPolicy, setExclusionPolicy] = useState(topic.exclusionPolicy ?? '')
   const [domains, setDomains] = useState(topic.domains.join('\n'))
-  const [accounts, setAccounts] = useState(getTopicAccounts(topic).join('\n'))
-  const [intervalMinutes, setIntervalMinutes] = useState(plan?.refreshPolicy?.intervalMinutes ?? 180)
-  const [lookbackMinutes, setLookbackMinutes] = useState(plan?.refreshPolicy?.lookbackMinutes ?? 180)
+  const [accounts, setAccounts] = useState<TopicWatchAccountDraft[]>(() =>
+    getTopicAccounts(topic).map((account, index) => ({
+      ...account,
+      rowKey: account.id ?? `${account.handle}-${index}`,
+    })),
+  )
   const [triggerRules, setTriggerRules] = useState(formatTriggerRules(plan?.triggerRules ?? []))
   const [evidenceRequirements, setEvidenceRequirements] = useState(formatEvidenceRequirements(plan?.evidenceRequirements ?? []))
+
+  const updateAccount = (
+    rowKey: string,
+    patch: Partial<Pick<TopicWatchAccountDraft, 'handle' | 'primaryRole' | 'singleTriggerPolicy' | 'authorityScope'>>,
+  ) => {
+    setAccounts((prev) =>
+      prev.map((account) => (account.rowKey === rowKey ? { ...account, ...patch } : account)),
+    )
+  }
+
+  const removeAccount = (rowKey: string) => {
+    setAccounts((prev) => prev.filter((account) => account.rowKey !== rowKey))
+  }
+
+  const addAccount = () => {
+    setAccounts((prev) => [
+      ...prev,
+      {
+        rowKey: `new-${Date.now()}`,
+        handle: '',
+        primaryRole: '专业媒体、快速雷达、数据、分析、预测和观点账号',
+        singleTriggerPolicy: 'C',
+        authorityScope: '按账号公开信息与帖子内容判断',
+        status: 'active',
+        sortOrder: prev.length + 1,
+      },
+    ])
+  }
+
+  const accountColumns = [
+    {
+      title: '账号',
+      dataIndex: 'handle',
+      key: 'handle',
+      width: 160,
+      render: (_: unknown, record: TopicWatchAccountDraft) => (
+        <Input
+          addonBefore="@"
+          value={record.handle.replace(/^@/, '')}
+          onChange={(e) => updateAccount(record.rowKey, { handle: e.target.value.replace(/^@/, '') })}
+          placeholder="OpenAI"
+        />
+      ),
+    },
+    {
+      title: '来源角色',
+      dataIndex: 'primaryRole',
+      key: 'primaryRole',
+      width: 210,
+      render: (_: unknown, record: TopicWatchAccountDraft) => (
+        <Input
+          value={record.primaryRole}
+          onChange={(e) => updateAccount(record.rowKey, { primaryRole: e.target.value })}
+          placeholder="第一方权威账号"
+        />
+      ),
+    },
+    {
+      title: '单点权限',
+      dataIndex: 'singleTriggerPolicy',
+      key: 'singleTriggerPolicy',
+      width: 180,
+      render: (_: unknown, record: TopicWatchAccountDraft) => (
+        <Select
+          value={normalizeSingleTriggerPolicy(record.singleTriggerPolicy)}
+          options={SINGLE_TRIGGER_POLICY_OPTIONS}
+          onChange={(value) => updateAccount(record.rowKey, { singleTriggerPolicy: value })}
+          style={{ width: '100%' }}
+        />
+      ),
+    },
+    {
+      title: '权威范围',
+      dataIndex: 'authorityScope',
+      key: 'authorityScope',
+      render: (_: unknown, record: TopicWatchAccountDraft) => (
+        <Input.TextArea
+          value={record.authorityScope}
+          autoSize={{ minRows: 1, maxRows: 4 }}
+          onChange={(e) => updateAccount(record.rowKey, { authorityScope: e.target.value })}
+          placeholder="这个账号在哪些事实范围内可作为权威来源"
+        />
+      ),
+    },
+    {
+      title: '',
+      key: 'action',
+      width: 70,
+      render: (_: unknown, record: TopicWatchAccountDraft) => (
+        <Button
+          danger
+          type="text"
+          icon={<DeleteOutlined />}
+          aria-label="删除账号"
+          onClick={() => removeAccount(record.rowKey)}
+        />
+      ),
+    },
+  ]
 
   useImperativeHandle(ref, () => ({
     snapshot: () => {
       const trimmedName = name.trim()
       if (!trimmedName) return null
-      const handles = textLines(accounts)
+      const parsedAccounts = accounts
+        .map((account, index) => normalizeTopicAccount({
+          ...account,
+          handle: account.handle.replace(/^@/, '').trim(),
+          sortOrder: index + 1,
+        }))
+        .filter((account) => account.handle)
 
       return {
         topic: {
@@ -786,21 +678,21 @@ const TopicWatchEditForm = forwardRef<
           exclusionPolicy: exclusionPolicy.trim() || null,
           status,
         },
+        accounts: parsedAccounts,
         plan: {
-          sources: handles.map((handle) => ({
+          sources: parsedAccounts.map((account) => ({
             platform: 'x',
             sourceType: 'account',
-            handle: handle.replace(/^@/, ''),
+            handle: account.handle.replace(/^@/, ''),
+            primaryRole: account.primaryRole,
+            singleTriggerPolicy: account.singleTriggerPolicy,
+            authorityScope: account.authorityScope,
             includeReplies: true,
             includeQuotes: true,
             includeReposts: false,
             maxPages: 5,
           })),
-          refreshPolicy: {
-            ...(plan?.refreshPolicy ?? {}),
-            intervalMinutes,
-            lookbackMinutes,
-          },
+          refreshPolicy: plan?.refreshPolicy ?? {},
           triggerRules: parseTriggerRules(triggerRules),
           evidenceRequirements: parseEvidenceRequirements(evidenceRequirements),
           reason: '运营人员在 Twitter 配置页手动修改重点主题配置。',
@@ -815,8 +707,6 @@ const TopicWatchEditForm = forwardRef<
     evidencePolicy,
     evidenceRequirements,
     exclusionPolicy,
-    intervalMinutes,
-    lookbackMinutes,
     name,
     plan?.refreshPolicy,
     status,
@@ -827,13 +717,11 @@ const TopicWatchEditForm = forwardRef<
 
   return (
     <div className={styles.topicForm}>
-      <div className="form-grid">
-        <div className="field">
-          <label>主题名称</label>
+      <Form layout="vertical">
+        <Form.Item label="主题名称" required>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>状态</label>
+        </Form.Item>
+        <Form.Item label="状态">
           <Select
             value={status}
             options={[
@@ -842,56 +730,48 @@ const TopicWatchEditForm = forwardRef<
             ]}
             onChange={setStatus}
           />
-        </div>
-        <div className="field">
-          <label>描述</label>
+        </Form.Item>
+        <Form.Item label="描述">
           <Input.TextArea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>领域/关键词</label>
+        </Form.Item>
+        <Form.Item label="领域/关键词">
           <Input.TextArea rows={3} value={domains} onChange={(e) => setDomains(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>监控意图</label>
+        </Form.Item>
+        <Form.Item label="监控意图">
           <Input.TextArea rows={3} value={watchIntent} onChange={(e) => setWatchIntent(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>采集策略</label>
+        </Form.Item>
+        <Form.Item label="采集策略">
           <Input.TextArea rows={3} value={collectionPolicy} onChange={(e) => setCollectionPolicy(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>触发策略</label>
+        </Form.Item>
+        <Form.Item label="触发策略">
           <Input.TextArea rows={3} value={triggerPolicy} onChange={(e) => setTriggerPolicy(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>证据策略</label>
+        </Form.Item>
+        <Form.Item label="证据策略">
           <Input.TextArea rows={3} value={evidencePolicy} onChange={(e) => setEvidencePolicy(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>排除规则</label>
+        </Form.Item>
+        <Form.Item label="排除规则">
           <Input.TextArea rows={3} value={exclusionPolicy} onChange={(e) => setExclusionPolicy(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>监控账号</label>
-          <Input.TextArea rows={6} value={accounts} onChange={(e) => setAccounts(e.target.value)} placeholder="@OpenAI&#10;@TechCrunch" />
-        </div>
-        <div className="field">
-          <label>采集间隔（分钟）</label>
-          <InputNumber min={10} value={intervalMinutes} onChange={(value) => setIntervalMinutes(Number(value ?? 180))} style={{ width: '100%' }} />
-        </div>
-        <div className="field">
-          <label>回看窗口（分钟）</label>
-          <InputNumber min={10} value={lookbackMinutes} onChange={(value) => setLookbackMinutes(Number(value ?? 180))} style={{ width: '100%' }} />
-        </div>
-        <div className="field">
-          <label>触发规则</label>
+        </Form.Item>
+        <Form.Item label="监控账号">
+          <Table
+            size="small"
+            rowKey="rowKey"
+            columns={accountColumns}
+            dataSource={accounts}
+            pagination={false}
+            scroll={{ x: 920 }}
+          />
+          <Button className={styles.addTopicAccountButton} icon={<PlusOutlined />} onClick={addAccount}>
+            添加账号
+          </Button>
+        </Form.Item>
+        <Form.Item label="触发规则">
           <Input.TextArea rows={5} value={triggerRules} onChange={(e) => setTriggerRules(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>证据要求</label>
+        </Form.Item>
+        <Form.Item label="证据要求">
           <Input.TextArea rows={5} value={evidenceRequirements} onChange={(e) => setEvidenceRequirements(e.target.value)} />
-        </div>
-      </div>
+        </Form.Item>
+      </Form>
       <Alert message="保存后会更新当前 active 监控计划；不会创建新版本。" showIcon />
     </div>
   )

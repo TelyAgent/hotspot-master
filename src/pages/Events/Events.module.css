@@ -1,125 +1,579 @@
-.events {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 62px - 26px - 30px);
+.events,
+.eventDetailPage {
+  color: #20302d;
 }
 
-.eventLayout {
-  display: grid;
-  grid-template-columns: 345px minmax(0, 1fr);
-  gap: 14px;
-  flex: 1;
-  min-height: 0;
+.eventHero {
+  margin-bottom: 18px;
 }
 
-.eventList {
-  background: #fff;
-  border: 1px solid var(--line);
-  padding: 8px;
-  overflow-y: auto;
+.eventHero h1,
+.detailHero h1 {
+  margin: 10px 0 7px !important;
+  color: #20302d !important;
+  font-size: 32px !important;
+  line-height: 1.1 !important;
 }
 
-.eventListItems {
-  border-top: 1px solid var(--line2);
+.eventHero :global(.ant-typography),
+.detailHero :global(.ant-typography) {
+  color: #566864;
 }
 
-.eventItem {
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  padding: 12px 10px !important;
-  border-bottom: 1px solid var(--line2);
-}
-
-.eventItem:hover {
-  background: #f5f9f8;
-}
-
-.eventItem.active {
-  border-left-color: var(--g);
-  background: var(--soft);
-}
-
-.eventDetail {
-  background: #fff;
-  border: 1px solid var(--line);
-  padding: 18px;
-  overflow-y: auto;
-}
-
-.fact {
-  border-left: 3px solid var(--g);
-  background: var(--soft);
-  padding: 13px;
-  margin: 12px 0;
-}
-
-.eventMetrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.eventMetric {
-  background: #f4f7f7;
-  padding: 10px;
-}
-
-.evidence {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line2);
-}
-
-.url {
-  display: block;
+.eventEyebrow {
   color: var(--g);
   font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 560px;
+  font-weight: 800;
+  letter-spacing: 4px;
 }
 
-.relation {
-  padding: 10px;
-  border: 1px solid var(--line);
-  margin-top: 8px;
-}
-
-.eventActions {
+.eventRuleStrip,
+.eventStats,
+.contractStrip,
+.timeStrip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  overflow: hidden;
+  border: 1px solid #d7e2df;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.eventRuleStrip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.eventRuleStrip > div,
+.eventStats > div,
+.contractStrip > div,
+.timeStrip > div {
+  min-width: 0;
+  padding: 17px 18px;
+  border-right: 1px solid #d7e2df;
+}
+
+.eventRuleStrip > div:last-child,
+.eventStats > div:last-child,
+.contractStrip > div:last-child,
+.timeStrip > div:last-child {
+  border-right: 0;
+}
+
+.eventRuleStrip b {
+  display: block;
+  color: #20302d;
+  font-size: 14px;
+}
+
+.eventRuleStrip span,
+.eventStats span,
+.contractStrip span,
+.timeStrip span,
+.meta {
+  display: block;
+  margin-top: 6px;
+  color: #566864;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.eventStats {
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  margin-bottom: 16px;
+}
+
+.eventStats strong {
+  display: block;
+  color: #243f3b;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.eventToolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.eventToolbar > span {
+  flex: 0 0 auto;
+  color: #6b7c78;
+  font-size: 12px;
+}
+
+.eventFilters,
+.tagrow,
+.packActions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin: 16px 0;
 }
 
-.eventActions button {
-  min-height: 38px;
+.eventFilters :global(.ant-btn) {
+  height: 34px;
+  border-color: #d7e2df;
+  border-radius: 10px;
+  color: #334844;
+  box-shadow: none;
 }
 
-.eventPagination {
+.eventFilters :global(.ant-btn-primary),
+.cardFoot :global(.ant-btn-primary),
+.packActions :global(.ant-btn-primary),
+.detailPanel :global(.ant-btn-primary) {
+  background: #5b9b8f !important;
+  border-color: #5b9b8f !important;
+  color: #fff !important;
+  box-shadow: none;
+}
+
+.eventGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.intelCard {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #d7e2df;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 35px rgba(18, 53, 48, 0.06);
+}
+
+.intelCard.featured {
+  border-color: #6aada2;
+}
+
+.intelCard h2 {
+  margin: 13px 0 8px;
+  color: #20302d;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.intelCard p {
+  margin: 0 0 12px;
+  color: #566864;
+  line-height: 1.55;
+}
+
+.between {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.triggerBox,
+.changeNote,
+.nextBox,
+.warning {
+  padding: 13px 14px;
+  border-radius: 8px;
+  background: #f0f7f5;
+}
+
+.triggerBox strong {
+  display: block;
+  margin-top: 5px;
+  color: #20302d;
+  font-size: 22px;
+}
+
+.cardFoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line2);
 }
 
-.activeOperationTask {
-  background: var(--soft);
-  border-left: 3px solid var(--g);
+.cardFoot :global(.ant-btn) {
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.pill {
+  margin-inline-end: 0;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.cyan {
+  background: #e4f3f3;
+  color: #2d7471;
+}
+
+.green {
+  background: #dff2ec;
+  color: #397162;
+}
+
+.purple {
+  background: #eee9f8;
+  color: #64539a;
+}
+
+.amber {
+  background: #fff1d8;
+  color: #8a641f;
+}
+
+.hot {
+  background: #ffe7dd;
+  color: #a64d35;
+}
+
+.sourceMarks {
+  display: flex;
+  gap: 5px;
+}
+
+.sourceMarks span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d7e2df;
+  border-radius: 50%;
+  color: #8aa19c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.sourceMarks .on {
+  color: #fff;
+  background: #5b9b8f;
+  border-color: #5b9b8f;
+}
+
+.noSourceMark {
+  color: #8aa19c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.backLink {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4f9187;
+  font-weight: 800;
   cursor: pointer;
-  padding-left: 12px !important;
+}
+
+.detailHero {
+  margin-bottom: 16px;
+  padding: 24px;
+  border: 1px solid #d7e2df;
+  border-radius: 12px;
+  background: #f6fbf9;
+}
+
+.packActions {
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.packActions :global(.ant-btn),
+.detailPanel :global(.ant-btn) {
+  border-radius: 10px;
+}
+
+.changeNote {
+  margin-top: 18px;
+  border-left: 3px solid #5b9b8f;
+  border-radius: 0;
+  background: #eef7f4;
+}
+
+.changeNote b,
+.changeNote span {
+  display: block;
+}
+
+.contractStrip {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.contractStrip b,
+.timeStrip b {
+  display: block;
+  margin-top: 5px;
+  color: #20302d;
+}
+
+.contractEmphasis {
+  color: #397162 !important;
+}
+
+.detailTabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #d7e2df;
+}
+
+.detailTabs button {
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #566864;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.detailTabs .activeTab {
+  color: #4f9187;
+  border-bottom-color: #5b9b8f;
+}
+
+.changeCard,
+.detailPanel {
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px solid #d7e2df;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.changeCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-left: 4px solid #5b9b8f;
+  background: #f6fbf9;
+}
+
+.changeCard b,
+.changeCard strong,
+.changeCard span {
+  display: block;
+}
+
+.changeCard strong {
+  margin-top: 7px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(300px, 1fr);
+  gap: 14px;
+}
+
+.detailPanel h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.detailPanel h3 {
+  margin: 18px 0 10px;
+  font-size: 15px;
+}
+
+.kvRow {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.kvRow span {
+  color: #566864;
+}
+
+.kvRow b {
+  color: #20302d;
+}
+
+.nextBox {
+  margin-top: 14px;
+}
+
+.nextBox ol {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.timeStrip {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.factRowButton {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #d7e2df;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.activeFact {
+  border-left: 3px solid #5b9b8f;
+  background: #f6fbf9;
+}
+
+.factRowButton p,
+.evidenceDetail p,
+.signalList p {
+  color: #566864;
+  line-height: 1.55;
+}
+
+.factRowButton span {
+  color: #6b7c78;
+  font-size: 12px;
+}
+
+.evidenceDetail {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid #d7e2df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.evidenceDetail a {
+  color: #4f9187;
+  font-weight: 700;
+}
+
+.timelineList {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  border-left: 2px solid #d7e2df;
+  padding-left: 14px;
+}
+
+.timelineList div {
+  position: relative;
+}
+
+.timelineList div::before {
+  position: absolute;
+  left: -20px;
+  top: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #5b9b8f;
+  content: '';
+}
+
+.timelineList small {
+  display: block;
+  margin-top: 4px;
+  color: #6b7c78;
+}
+
+.signalPackage {
+  margin-top: 12px;
+  border: 1px solid #d7e2df;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.signalPackage summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.signalPackage summary span {
+  display: block;
+  margin-top: 4px;
+  color: #6b7c78;
+  font-size: 12px;
+}
+
+.signalList {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--line2);
+}
+
+.mergeMatrix {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mergeMatrix div {
+  padding: 12px;
+  background: #f0f7f5;
+}
+
+.mergeMatrix span,
+.mergeMatrix b {
+  display: block;
+}
+
+.mergeMatrix span {
+  color: #566864;
+  font-size: 12px;
+}
+
+.mergeMatrix b {
+  margin-top: 5px;
+  color: #397162;
+}
+
+.warning {
+  margin-top: 14px;
+  color: #566864;
 }
 
 @media (max-width: 1180px) {
-  .events {
-    height: auto;
+  .eventGrid,
+  .detailGrid,
+  .eventRuleStrip,
+  .eventStats,
+  .contractStrip,
+  .timeStrip {
+    grid-template-columns: 1fr;
   }
 
-  .eventLayout {
-    grid-template-columns: 1fr;
+  .eventRuleStrip > div,
+  .eventStats > div,
+  .contractStrip > div,
+  .timeStrip > div {
+    border-right: 0;
+    border-bottom: 1px solid #d7e2df;
+  }
+
+  .eventRuleStrip > div:last-child,
+  .eventStats > div:last-child,
+  .contractStrip > div:last-child,
+  .timeStrip > div:last-child {
+    border-bottom: 0;
+  }
+
+  .eventToolbar,
+  .between,
+  .changeCard {
+    flex-direction: column;
+  }
+
+  .packActions {
+    justify-content: flex-start;
   }
 }
