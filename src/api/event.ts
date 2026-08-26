@@ -1,10 +1,11 @@
 import { request } from './client'
-import type { EventItem } from '../data/types'
+import type { EventItem, EventLabel } from '../data/types'
 
 export interface EventListParams {
   page?: number
   pageSize?: number
   status?: string
+  label?: string
   q?: string
 }
 
@@ -25,6 +26,7 @@ interface V2EventResponse {
   missingData?: unknown
   riskNotes?: unknown
   confidence?: string
+  labels?: unknown
   status: 'suggested' | 'confirmed' | 'ignored' | 'archived' | string
   createdAt?: string
   updatedAt?: string
@@ -40,17 +42,31 @@ interface V2EvidenceResponse {
   metadata?: unknown
 }
 
+interface V2EventListResponse {
+  items: V2EventResponse[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 /** 获取 v2 事件热点列表（分页 + 状态筛选 + 关键词搜索） */
 export async function getEvents(params: EventListParams = {}): Promise<EventListResponse> {
-  const rows = await request<V2EventResponse[]>('/opportunities/events?take=200')
-  const evidenceById = await fetchEvidenceByRefs(rows.flatMap((item) => stringArray(item.evidenceRefs)))
-  const q = params.q?.trim().toLowerCase()
   const page = Math.max(params.page ?? 1, 1)
   const pageSize = Math.max(params.pageSize ?? 20, 1)
+  const query = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+  if (params.status) query.set('status', params.status)
+  if (params.label) query.set('label', params.label)
+
+  const response = await request<V2EventListResponse>(`/opportunities/events?${query.toString()}`)
+  const rows = response.items
+  const evidenceById = await fetchEvidenceByRefs(rows.flatMap((item) => stringArray(item.evidenceRefs)))
+  const q = params.q?.trim().toLowerCase()
 
   const filtered = rows
     .map((item) => mapV2EventToEventItem(item, evidenceById))
-    .filter((item) => !params.status || item.status === params.status)
     .filter((item) => {
       if (!q) return true
       return (
@@ -60,12 +76,11 @@ export async function getEvents(params: EventListParams = {}): Promise<EventList
       )
     })
 
-  const start = (page - 1) * pageSize
   return {
-    items: filtered.slice(start, start + pageSize),
-    total: filtered.length,
-    page,
-    pageSize,
+    items: filtered,
+    total: q ? filtered.length : response.total,
+    page: response.page,
+    pageSize: response.pageSize,
   }
 }
 
@@ -91,6 +106,7 @@ export function mapV2EventToEventItem(
     regions: '—',
     trigger: formatTrigger(item),
     urls: [],
+    labels: eventLabels(item.labels),
     evidence: evidenceRefs.map((ref) => mapEvidenceRef(ref, evidenceById.get(ref))),
     related: [],
   }
@@ -179,4 +195,24 @@ function stringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     : []
+}
+
+function eventLabels(value: unknown): EventLabel[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => {
+    if (!isRecord(item) || typeof item.code !== 'string' || typeof item.name !== 'string') return []
+    return [{
+      code: item.code,
+      name: item.name,
+      category: typeof item.category === 'string' ? item.category : 'trigger',
+      sourcePath: typeof item.sourcePath === 'string' ? item.sourcePath : null,
+      evidenceRefs: stringArray(item.evidenceRefs),
+      reason: typeof item.reason === 'string' ? item.reason : undefined,
+      confidence: typeof item.confidence === 'string' ? item.confidence : undefined,
+    }]
+  })
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Empty, Tag, Typography } from 'antd'
+import { Alert, Button, Empty, Pagination, Tag, Typography } from 'antd'
 import { CopyOutlined, ProfileOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import type { EventItem, TaskItem } from '../../data/types'
@@ -16,7 +16,21 @@ import styles from './Events.module.css'
 
 type DetailTab = 'overview' | 'facts' | 'timeline' | 'sources' | 'merge'
 
-const FILTERS = ['全部', 'X Trend', 'Topic Circle', 'Future Event', 'Top 5', 'Fast Rising', 'Multi-region', '第一方确认', 'Candidate']
+const STANDARD_FILTERS = [
+  '全部',
+  'X 热搜',
+  '关注圈层',
+  'Future Event',
+  'YouTube',
+  'Top 5',
+  'Fast Rising',
+  '第一方确认',
+  '核心人物确认',
+  '官方日程确认',
+  'Action Score 80+',
+  'Candidate',
+]
+
 const DETAIL_TABS: { key: DetailTab; label: string }[] = [
   { key: 'overview', label: '完整上下文' },
   { key: 'facts', label: '事实与证据' },
@@ -39,15 +53,20 @@ interface EventView extends EventItem {
 export default function Events() {
   const { openModal, toast } = useApp()
   const [filter, setFilter] = useState('全部')
+  const [page, setPage] = useState(1)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [detailTab, setDetailTab] = useState<DetailTab>('overview')
 
-  const { events, loading, error } = useEvents({ page: 1, pageSize: 200 })
+  const query = useMemo(() => eventFilterToQuery(filter), [filter])
+  const { events, total, pageSize, loading, error } = useEvents({
+    page,
+    pageSize: 20,
+    status: query.status,
+    label: query.label,
+  })
   const eventViews = useMemo(() => events.map((item, index) => toEventView(item, index)), [events])
-  const visibleEvents = useMemo(
-    () => eventViews.filter((item) => matchesEventFilter(item, filter)),
-    [eventViews, filter],
-  )
+  const filters = useMemo(() => buildFilters(eventViews), [eventViews])
+  const visibleEvents = eventViews
   const detailEvent = detailEventId ? eventViews.find((item) => item.id === detailEventId) ?? null : null
   const metrics = {
     active: eventViews.length,
@@ -114,8 +133,15 @@ export default function Events() {
 
       <div className={styles.eventToolbar}>
         <div className={styles.eventFilters}>
-          {FILTERS.map((item) => (
-            <Button key={item} type={filter === item ? 'primary' : 'default'} onClick={() => setFilter(item)}>
+          {filters.map((item) => (
+            <Button
+              key={item}
+              type={filter === item ? 'primary' : 'default'}
+              onClick={() => {
+                setFilter(item)
+                setPage(1)
+              }}
+            >
               {item}
             </Button>
           ))}
@@ -127,19 +153,29 @@ export default function Events() {
       {error ? <Alert type="error" message={`加载失败：${error}`} showIcon /> : null}
       {!loading && !error && visibleEvents.length === 0 ? <Empty description="没有匹配的 Event" /> : null}
       {!loading && !error && visibleEvents.length ? (
-        <div className={styles.eventGrid}>
-          {visibleEvents.map((item, index) => (
-            <EventCard
-              key={item.id}
-              event={item}
-              featured={index === 0}
-              onOpen={() => {
-                setDetailEventId(item.id)
-                setDetailTab('overview')
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className={styles.eventGrid}>
+            {visibleEvents.map((item, index) => (
+              <EventCard
+                key={item.id}
+                event={item}
+                featured={index === 0}
+                onOpen={() => {
+                  setDetailEventId(item.id)
+                  setDetailTab('overview')
+                }}
+              />
+            ))}
+          </div>
+          <Pagination
+            className={styles.eventPagination}
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            showSizeChanger={false}
+            onChange={setPage}
+          />
+        </>
       ) : null}
     </div>
   )
@@ -164,6 +200,9 @@ function EventCard({ event, featured, onOpen }: { event: EventView; featured: bo
             {event.sources.map((source) => (
               <Pill key={source} label={source} />
             ))}
+            {event.triggers.slice(0, 4).map((trigger) => (
+              <Pill key={trigger} label={trigger} />
+            ))}
           </div>
           <span className={styles.meta}>{event.pack}</span>
         </div>
@@ -184,11 +223,13 @@ function EventCard({ event, featured, onOpen }: { event: EventView; featured: bo
           </div>
           <SourceMarks sources={event.sources} />
         </div>
-        <div className={styles.tagrow}>
-          {event.triggers.slice(0, 3).map((trigger) => (
-            <Pill key={trigger} label={trigger} />
-          ))}
-        </div>
+        {event.triggers.length ? (
+          <div className={styles.tagrow}>
+            {event.triggers.slice(0, 3).map((trigger) => (
+              <Pill key={trigger} label={trigger} />
+            ))}
+          </div>
+        ) : null}
         <p className={styles.meta}>关注权重不等于事实可信度</p>
       </div>
       <div className={styles.cardFoot}>
@@ -480,8 +521,11 @@ function Pill({ label }: { label: string }) {
 function SourceMarks({ sources }: { sources: string[] }) {
   const labels: Record<string, string> = {
     'X Trend': 'XT',
+    'X 热搜': 'XT',
     'Topic Circle': 'TC',
+    '关注圈层': 'TC',
     'Future Event': 'FE',
+    'YouTube': 'YT',
   }
   if (!sources.length) return <span className={styles.noSourceMark}>—</span>
 
@@ -496,7 +540,7 @@ function SourceMarks({ sources }: { sources: string[] }) {
 
 function toEventView(event: EventItem, index: number): EventView {
   const sources = inferSources(event)
-  const triggers = inferTriggers(event, sources)
+  const triggers = inferTriggers(event)
   const evidenceCount = event.evidence?.length ?? event.urls.length
 
   return {
@@ -507,36 +551,37 @@ function toEventView(event: EventItem, index: number): EventView {
     attention: sources.length > 1 ? `+${sources.length} 来源` : evidenceCount ? `${evidenceCount} 条 Evidence` : '待补充',
     pack: `Context Pack v${Math.max(1, Math.min(index + 1, 9))}`,
     time: formatEventTime(event.trigger),
-    entryMode: sources.includes('X Trend') ? 'trend' : sources.includes('Topic Circle') ? 'topic_watch' : sources.includes('Future Event') ? 'future_event' : 'unknown',
+    entryMode: sources.includes('X 热搜') ? 'trend' : sources.includes('关注圈层') ? 'topic_watch' : sources.includes('Future Event') ? 'future_event' : 'unknown',
     state: event.verify === '存在冲突' ? 'needs_review' : 'validated_active',
   }
 }
 
 function inferSources(event: EventItem) {
+  const labelSources = (event.labels ?? [])
+    .filter((label) => label.category === 'source')
+    .map((label) => label.name)
+    .filter(Boolean)
+  if (labelSources.length > 0) return Array.from(new Set(labelSources))
+
   const sourceSet = new Set<string>()
   const evidence = event.evidence ?? []
   evidence.forEach((item) => {
     const source = sourceTypeToEventSource(item.sourceType)
     if (source) sourceSet.add(source)
   })
-
-  const trigger = event.trigger.toLowerCase()
-  if (/\bx_trend\b|x[-_\s]?trend|热搜榜/.test(trigger)) sourceSet.add('X Trend')
-  if (/topic[-_\s]?watch|topic[-_\s]?circle|主题圈|重点主题|关注圈层/.test(trigger)) sourceSet.add('Topic Circle')
-
   return Array.from(sourceSet)
 }
 
 function sourceTypeToEventSource(sourceType: string) {
   const normalized = sourceType.trim().toLowerCase()
-  if (normalized === 'x_trend' || normalized.startsWith('x_trend_')) return 'X Trend'
+  if (normalized === 'x_trend' || normalized.startsWith('x_trend_')) return 'X 热搜'
   if (
     normalized === 'topic_watch' ||
     normalized === 'topic_circle' ||
     normalized === 'x_account_post' ||
     normalized === 'x_post'
   ) {
-    return 'Topic Circle'
+    return '关注圈层'
   }
   if (
     normalized === 'future_event_candidate' ||
@@ -546,94 +591,34 @@ function sourceTypeToEventSource(sourceType: string) {
   ) {
     return 'Future Event'
   }
+  if (normalized === 'youtube_video') return 'YouTube'
   return null
 }
 
-function inferTriggers(event: EventItem, sources: string[]) {
-  const triggers = new Set<string>()
-  if (event.trigger.includes('置信度 高')) triggers.add('高置信度')
-
-  const evidence = event.evidence ?? []
-  const xTrendEvidence = evidence.filter((item) => sourceTypeToEventSource(item.sourceType) === 'X Trend')
-  if (xTrendEvidence.some((item) => {
-    const rank = getMetadataNumber(item.metadata, 'rank')
-    return typeof rank === 'number' && rank <= 5
-  })) {
-    triggers.add('Top 5')
-  }
-
-  if (xTrendEvidence.some(hasFastRisingEvidence)) {
-    triggers.add('Fast Rising')
-  }
-
-  if (getDistinctMetadataValues(xTrendEvidence.map((item) => item.metadata), 'region').length >= 2) {
-    triggers.add('Multi-region')
-  }
-
-  if (evidence.some(isFirstPartyEvidence)) {
-    triggers.add('First-party')
-  }
-
-  if (sources.includes('Future Event') && evidence.some(hasActionScoreEvidence)) {
-    triggers.add('Action Score 80+')
-  }
-
-  if (event.verify === '存在冲突') triggers.add('Candidate')
-  return Array.from(triggers)
-}
-
-function hasFastRisingEvidence(item: NonNullable<EventItem['evidence']>[number]) {
-  const rank = getMetadataNumber(item.metadata, 'rank')
-  const previousRank = getMetadataNumber(item.metadata, 'previousRank')
-  if (typeof rank === 'number' && typeof previousRank === 'number' && previousRank - rank >= 10) {
-    return true
-  }
-
-  const rankDelta = getMetadataNumber(item.metadata, 'rankDelta')
-  if (typeof rankDelta === 'number' && rankDelta >= 10) return true
-
-  const rankChange = getMetadataNumber(item.metadata, 'rankChange')
-  return typeof rankChange === 'number' && rankChange >= 10
-}
-
-function hasActionScoreEvidence(item: NonNullable<EventItem['evidence']>[number]) {
-  const score = getMetadataNumber(item.metadata, 'actionScore')
-  return typeof score === 'number' && score >= 80
-}
-
-function isFirstPartyEvidence(item: NonNullable<EventItem['evidence']>[number]) {
-  const normalized = item.sourceType.trim().toLowerCase()
-  return (
-    normalized === 'future_event_source_item' ||
-    ['bea', 'bls', 'fomc', 'opm'].includes(normalized)
-  )
-}
-
-function getMetadataNumber(metadata: unknown, key: string) {
-  if (!isRecord(metadata)) return null
-  const value = metadata[key]
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
-function getDistinctMetadataValues(metadataItems: unknown[], key: string) {
+function inferTriggers(event: EventItem) {
   return Array.from(
     new Set(
-      metadataItems
-        .map((metadata) => (isRecord(metadata) ? metadata[key] : null))
-        .filter((value): value is string | number => typeof value === 'string' || typeof value === 'number'),
+      (event.labels ?? [])
+        .filter((label) => label.category === 'trigger' || label.category === 'aggregation')
+        .map((label) => label.name)
+        .filter(Boolean),
     ),
   )
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function buildFilters(events: EventView[]) {
+  const values = new Set<string>(STANDARD_FILTERS)
+  events.forEach((event) => {
+    event.sources.forEach((source) => values.add(source))
+    event.triggers.forEach((trigger) => values.add(trigger))
+  })
+  return Array.from(values)
 }
 
-function matchesEventFilter(event: EventView, filter: string) {
-  if (filter === '全部') return true
-  if (filter === 'Candidate') return event.status === '内容生成中' || event.verify === '存在冲突'
-  if (filter === '第一方确认') return event.triggers.includes('First-party')
-  return event.sources.includes(filter) || event.triggers.includes(filter)
+function eventFilterToQuery(filter: string): { status?: string; label?: string } {
+  if (filter === '全部') return {}
+  if (filter === 'Candidate') return { status: 'suggested' }
+  return { label: filter }
 }
 
 function createPackObject(event: EventView) {
@@ -648,6 +633,7 @@ function createPackObject(event: EventView) {
     summary: event.summary,
     sources: event.sources,
     triggers: event.triggers,
+    labels: event.labels ?? [],
     evidence_records: event.evidence ?? [],
   }
 }
@@ -655,7 +641,7 @@ function createPackObject(event: EventView) {
 function pillTone(label: string) {
   if (/Top 5|Fast|Spike|急升|高置信度/.test(label)) return 'hot'
   if (/Future|Upcoming|Schedule|Action|未来/.test(label)) return 'amber'
-  if (/Circle|圈|Topic|Cross/.test(label)) return 'purple'
+  if (/Circle|圈|Topic|Cross|关注/.test(label)) return 'purple'
   if (/确认|First-party|Event|validated|已纳入|已通过/.test(label)) return 'green'
   if (/Candidate|待|冲突|review/.test(label)) return 'amber'
   return 'cyan'

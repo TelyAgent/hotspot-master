@@ -6,10 +6,11 @@ export interface UseEventsParams {
   page: number
   pageSize?: number
   status?: string
+  label?: string
   q?: string
 }
 
-export function useEvents({ page, pageSize = 20, status, q }: UseEventsParams) {
+export function useEvents({ page, pageSize = 20, status, label, q }: UseEventsParams) {
   const [events, setEvents] = useState<EventItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -18,7 +19,7 @@ export function useEvents({ page, pageSize = 20, status, q }: UseEventsParams) {
   const reload = useCallback(() => {
     setLoading(true)
     setError(null)
-    getEvents({ page, pageSize, status, q })
+    getEvents({ page, pageSize, status, label, q })
       .then((r) => {
         setEvents(r.items)
         setTotal(r.total)
@@ -27,7 +28,7 @@ export function useEvents({ page, pageSize = 20, status, q }: UseEventsParams) {
         setError(e instanceof Error ? e.message : '加载事件失败'),
       )
       .finally(() => setLoading(false))
-  }, [page, pageSize, status, q])
+  }, [page, pageSize, status, label, q])
 
   useEffect(() => {
     reload()

@@ -27,6 +27,7 @@ export interface EventItem {
   regions: string
   trigger: string
   urls: string[]
+  labels?: EventLabel[]
   evidence?: {
     sourceType: string
     claim: string
@@ -34,6 +35,16 @@ export interface EventItem {
     metadata?: unknown
   }[]
   related: string[]
+}
+
+export interface EventLabel {
+  code: string
+  name: string
+  category: 'source' | 'trigger' | 'aggregation' | string
+  sourcePath?: string | null
+  evidenceRefs?: string[]
+  reason?: string
+  confidence?: string
 }
 
 export interface TaskItem {

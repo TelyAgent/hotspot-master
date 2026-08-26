@@ -135,6 +135,12 @@
   gap: 14px;
 }
 
+.eventPagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
 .intelCard {
   display: grid;
   gap: 13px;
