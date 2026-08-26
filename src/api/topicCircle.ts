@@ -166,14 +166,7 @@ export interface TopicCirclePipelineStatus {
 }
 
 export async function getTopicCirclePipelineStatus(): Promise<TopicCirclePipelineStatus> {
-  return {
-    latestFetchRun: null,
-    failedAccounts: [],
-    recentPostCount24h: 0,
-    candidateCount24h: 0,
-    triggeredCandidateCount24h: 0,
-    latestWorkflowRun: null,
-  }
+  return request<TopicCirclePipelineStatus>('/topic-watches/status')
 }
 
 /** 获取主题圈总结出的话题（可按主题圈名筛选） */
