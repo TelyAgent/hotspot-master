@@ -411,6 +411,81 @@
   font-size: 15px;
 }
 
+.evidencePanel {
+  margin-bottom: 14px;
+}
+
+.sectionEyebrow {
+  margin-bottom: 8px;
+  color: #4f9187;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.evidencePanel h2 {
+  margin: 0 0 14px;
+  color: #20302d;
+  font-size: 20px;
+}
+
+.evidenceCardList {
+  display: grid;
+  gap: 12px;
+}
+
+.evidenceCard {
+  padding: 16px;
+  border: 1px solid #d7e2df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.evidenceCardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.evidenceCardHead b {
+  display: block;
+  color: #20302d;
+}
+
+.evidenceCardHead span {
+  display: block;
+  margin-top: 3px;
+  color: #6b7c78;
+  font-size: 12px;
+}
+
+.evidenceCard p {
+  margin: 12px 0 10px;
+  color: #20302d;
+  line-height: 1.55;
+}
+
+.evidenceCardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #6b7c78;
+  font-size: 13px;
+}
+
+.evidenceCardFoot span {
+  min-width: 0;
+}
+
+.evidenceCardFoot a {
+  flex: 0 0 auto;
+  color: #4f9187;
+  font-weight: 700;
+}
+
 .kvRow {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
@@ -650,5 +725,10 @@
 
   .packActions {
     justify-content: flex-start;
+  }
+
+  .evidenceCardFoot {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

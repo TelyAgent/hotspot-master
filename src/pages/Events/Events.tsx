@@ -56,11 +56,13 @@ interface EventView extends EventItem {
   sources: string[]
   triggers: string[]
   domains: string[]
+  displayLabels: string[]
   fact: string
   attention: string
   pack: string
   time: string
   observedTime: string
+  sourcePublishedTime: string
   createdTime: string
   updatedTime: string
   entryMode: string
@@ -323,11 +325,8 @@ function EventDetailPage({
         <div className={styles.between}>
           <div>
             <div className={styles.tagrow}>
-              <Pill label="Event" />
-              <Pill label={event.status === '内容生成中' ? 'Candidate' : '已确认'} />
-              <Pill label={event.pack} />
-              {event.domains.map((domain) => (
-                <Pill key={domain} label={domain} />
+              {event.displayLabels.map((label) => (
+                <Pill key={label} label={label} />
               ))}
             </div>
             <Typography.Title level={1}>{event.title}</Typography.Title>
@@ -413,12 +412,9 @@ function OverviewTab({ event }: { event: EventView }) {
           <Pill label="已通过结构校验" />
         </div>
         <KeyValue label="事实摘要" value={event.summary} />
-        <KeyValue label="主体" value={inferSubject(event.title)} />
-        <KeyValue label="核心动作" value={inferAction(event)} />
-        <KeyValue label="具体对象" value={event.title} />
-        <KeyValue label="事件类型" value={event.trigger} />
-        <KeyValue label="事件领域" value={event.domains.join('、') || '未标注'} />
         <KeyValue label="事实发生时间" value={event.time} />
+        <KeyValue label="事件领域" value={event.domains.join('、') || '未标注'} />
+        <TagValue label="触发标签" values={event.displayLabels} />
       </section>
 
       <section className={styles.detailPanel}>
@@ -428,11 +424,9 @@ function OverviewTab({ event }: { event: EventView }) {
         </div>
         <p className={styles.meta}>区分系统观测时间、事实发生时间和事件有效窗口。</p>
         <div className={styles.timeStrip}>
-          <ContractCell label="observed_at" value={event.observedTime} />
-          <ContractCell label="fact_time" value={event.time} />
-          <ContractCell label="timezone" value="Asia/Shanghai" />
-          <ContractCell label="event_window" value="当前观察窗口" />
-          <ContractCell label="development.state" value={event.state} />
+          <ContractCell label="热点抓取时间" value={event.observedTime} />
+          <ContractCell label="首次事实来源发布时间" value={event.sourcePublishedTime} />
+          <ContractCell label="时区" value="Asia/Shanghai" />
         </div>
       </section>
 
@@ -446,52 +440,272 @@ function OverviewTab({ event }: { event: EventView }) {
 function FactsTab({ event }: { event: EventView }) {
   const evidence = event.evidence ?? []
   return (
-    <>
-      <section className={styles.detailPanel}>
-        <div className={styles.between}>
-          <div>
-            <h2>F-1 · core_fact</h2>
-            <p>{event.summary}</p>
-          </div>
-          <Pill label={event.fact === '高' ? '已确认' : '待确认'} />
-        </div>
-        <h3>绑定的 Evidence</h3>
-        {evidence.length ? (
-          evidence.map((item, index) => (
-            <article className={styles.evidenceDetail} key={`${item.url ?? item.claim}-${index}`}>
-              <div className={styles.between}>
-                <b>EV-{String(index + 1).padStart(3, '0')} · {item.sourceType}</b>
-                <Pill label="supports" />
+    <section className={styles.evidencePanel}>
+      <div className={styles.sectionEyebrow}>EVIDENCE</div>
+      <h2>绑定的 Evidence</h2>
+      {evidence.length ? (
+        <div className={styles.evidenceCardList}>
+          {evidence.map((item, index) => (
+            <article className={styles.evidenceCard} key={`${item.url ?? item.claim}-${index}`}>
+              <div className={styles.evidenceCardHead}>
+                <div>
+                  <b>{evidenceSourceTitle(item)}</b>
+                  {evidenceAuthorHandle(item) ? <span>@{evidenceAuthorHandle(item)}</span> : null}
+                </div>
+                <Pill label={event.fact === '高' ? '已核验' : '待核验'} />
               </div>
               <p>{item.claim}</p>
-              <div className={styles.between}>
-                <span className={styles.meta}>来源子包 · {event.sources.join(' / ')}</span>
-                {item.url ? <a href={item.url} target="_blank" rel="noreferrer">查看原始链接 ↗</a> : null}
+              <div className={styles.evidenceCardFoot}>
+                <span>{evidenceMetaText(item)}</span>
+                {item.url ? (
+                  <a href={item.url} target="_blank" rel="noreferrer">
+                    查看原始链接 ↗
+                  </a>
+                ) : null}
               </div>
             </article>
-          ))
-        ) : (
-          <div className="note">暂无可解析 Evidence。</div>
-        )}
-      </section>
-    </>
+          ))}
+        </div>
+      ) : (
+        <Empty description="暂无可解析 Evidence" />
+      )}
+    </section>
   )
 }
 
+function evidenceSourceTitle(item: NonNullable<EventView['evidence']>[number]) {
+  const sourceLabel = evidenceAccountName(item) ?? sourceTypeName(item.sourceType)
+  const role = evidenceRoleName(item.sourceType)
+  return `${sourceLabel}${role ? ` · ${role}` : ''}`
+}
+
+function evidenceAccountName(item: NonNullable<EventView['evidence']>[number]) {
+  const metadata = asRecord(item.metadata)
+  return getString(metadata?.authorName) ?? getString(metadata?.channelTitle) ?? getString(item.author)
+}
+
+function evidenceAuthorHandle(item: NonNullable<EventView['evidence']>[number]) {
+  const metadata = asRecord(item.metadata)
+  const handle = getString(item.author) ?? getString(metadata?.authorHandle)
+  const accountName = evidenceAccountName(item)
+  return handle && handle !== accountName ? handle.replace(/^@/, '') : null
+}
+
+function evidenceMetaText(item: NonNullable<EventView['evidence']>[number]) {
+  return [
+    item.publishedAt ? `发布 ${formatDateTime(item.publishedAt)}` : null,
+    item.observedAt ? `采集 ${formatDateTime(item.observedAt)}` : null,
+    evidenceMetricText(item.metrics),
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(' · ') || '暂无时间与公开指标'
+}
+
+function sourceTypeName(sourceType: string) {
+  const names: Record<string, string> = {
+    x_account_post: 'X 帖子',
+    x_post: 'X 帖子',
+    x_trend: 'X 热搜榜',
+    x_trend_related_post: 'X 相关帖子',
+    youtube_video: 'YouTube 视频',
+    youtube_transcript_analysis: 'YouTube 字幕拆解',
+    future_event_source_item: '官方日程',
+    evidence_ref: 'Evidence',
+  }
+  return names[sourceType] ?? sourceType
+}
+
+function evidenceRoleName(sourceType: string) {
+  const roles: Record<string, string> = {
+    x_account_post: '监控账号',
+    x_post: '帖子来源',
+    x_trend: '热榜来源',
+    x_trend_related_post: '相关讨论',
+    youtube_video: '视频来源',
+    youtube_transcript_analysis: '内容拆解',
+    future_event_source_item: '官方来源',
+  }
+  return roles[sourceType] ?? ''
+}
+
+function evidenceMetricText(metrics: unknown) {
+  if (!metrics || typeof metrics !== 'object' || Array.isArray(metrics)) return null
+  const data = metrics as Record<string, unknown>
+  const views = getMetricNumber(data, ['views', 'viewCount'])
+  const likes = getMetricNumber(data, ['likes', 'likeCount'])
+  const replies = getMetricNumber(data, ['replies', 'replyCount', 'comments', 'commentCount'])
+  const reposts = getMetricNumber(data, ['reposts', 'retweets', 'retweetCount'])
+  const parts = [
+    views != null ? `${formatCompactNumber(views)}浏览` : null,
+    likes != null ? `${formatCompactNumber(likes)}赞` : null,
+    replies != null ? `${formatCompactNumber(replies)}回复` : null,
+    reposts != null ? `${formatCompactNumber(reposts)}转发` : null,
+  ].filter((part): part is string => Boolean(part))
+  return parts.length ? parts.join(' · ') : null
+}
+
+function getMetricNumber(data: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = data[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string') {
+      const parsed = Number(value)
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+  return null
+}
+
+function asRecord(value: unknown) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
+}
+
+function getString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function formatCompactNumber(value: number) {
+  if (value >= 10000) return `${Number((value / 10000).toFixed(value >= 100000 ? 0 : 1))}万`
+  return String(value)
+}
+
 function TimelineTab({ event }: { event: EventView }) {
+  const [detail, setDetail] = useState<EventMergeDetail | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    setError(null)
+    getEventMergeDetail(event.id)
+      .then((response) => {
+        if (alive) setDetail(response)
+      })
+      .catch((e: unknown) => {
+        if (alive) setError(e instanceof Error ? e.message : '加载聚合更新时间失败')
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [event.id])
+
+  const timeline = buildTimelineEntries(event, detail)
+
   return (
     <section className={styles.detailPanel}>
-      <h2>Event Development</h2>
-      <KeyValue label="State" value={event.state} />
-      <KeyValue label="Basis Evidence IDs" value={(event.evidence ?? []).map((_, index) => `EV-${index + 1}`).join(', ') || '待补充'} />
-      <KeyValue label="Next Observable" value="出现新的第一方确认、官方更正或事实反转" />
+      <h2>时间与发展</h2>
+      <KeyValue label="当前状态" value={event.state} />
+      <KeyValue label="依据数量" value={`${event.evidence?.length ?? 0} 条 Evidence`} />
+      <KeyValue label="下一观察点" value="出现新的第一方确认、官方更正、事实反转或热度快照变化" />
+      {error ? <Alert type="warning" message={`聚合记录加载失败：${error}`} showIcon /> : null}
       <div className={styles.timelineList}>
-        <div><b>{event.observedTime} · Signal 首次被系统观测</b><small>observed_at 记录，尚未改变事实状态</small></div>
-        <div><b>{event.createdTime} · 核心事实进入 Event</b><small>来自热点挖掘 Agent 的事件判断</small></div>
-        <div><b>{event.updatedTime} · Context Pack 版本更新</b><small>Evidence 改变了可表达边界</small></div>
+        {timeline.map((item) => (
+          <div key={`${item.time}-${item.title}`}>
+            <b>{formatDateTime(item.time)} · {item.title}</b>
+            <small>{item.description}</small>
+          </div>
+        ))}
       </div>
     </section>
   )
+}
+
+interface TimelineEntry {
+  time: string
+  title: string
+  description: string
+  priority: number
+}
+
+function buildTimelineEntries(event: EventView, detail: EventMergeDetail | null): TimelineEntry[] {
+  const entries: TimelineEntry[] = []
+
+  ;(event.evidence ?? []).forEach((item, index) => {
+    const label = `EV-${String(index + 1).padStart(3, '0')}`
+    if (item.publishedAt) {
+      entries.push({
+        time: item.publishedAt,
+        title: `${label} 原证据发布`,
+        description: `${item.sourceType} · ${item.url || item.claim}`,
+        priority: 10,
+      })
+    }
+    if (item.observedAt) {
+      entries.push({
+        time: item.observedAt,
+        title: `${label} 被系统采集为证据`,
+        description: 'snapshot_at / observed_at 记录，表示系统读取公开数据的时间。',
+        priority: 20,
+      })
+    }
+  })
+
+  addTimelineEntry(entries, event.createdAt, '核心事实进入 Event', '热点挖掘 Agent 创建 Event，并写入当前核心事实。', 30)
+
+  ;(detail?.sourceContexts ?? []).forEach((context) => {
+    addTimelineEntry(
+      entries,
+      context.triggeredAt,
+      `${sourceName(context.sourceType)} 来源触发`,
+      `${context.triggerType}${context.triggerRuleCode ? ` · ${context.triggerRuleCode}` : ''} · ${context.summary || context.title}`,
+      40,
+    )
+    addTimelineEntry(
+      entries,
+      context.updatedAt ?? context.createdAt,
+      `${sourceName(context.sourceType)} 来源上下文更新`,
+      `Context v${context.contextVersion} · ${context.evidenceRefs.length} 条 Evidence，${context.signalRefs.length} 条 Signal。`,
+      50,
+    )
+  })
+
+  addTimelineEntry(
+    entries,
+    detail?.latestIdentityDecision?.decidedAt ?? detail?.latestIdentityDecision?.createdAt,
+    '事件聚合判断更新',
+    detail?.latestIdentityDecision
+      ? `${detail.latestIdentityDecision.systemAction} · 合并置信度 ${detail.latestIdentityDecision.mergeConfidence}`
+      : '',
+    60,
+  )
+
+  ;(detail?.relations ?? []).forEach((relation) => {
+    addTimelineEntry(
+      entries,
+      relation.createdAt,
+      `关联事件记录：${relationTypeName(relation.relationType)}`,
+      relation.reason,
+      70,
+    )
+  })
+
+  addTimelineEntry(entries, event.updatedAt, 'Context Pack 版本更新', 'Event 绑定的数据或表达边界发生变化，更新时间来自 Event.updated_at。', 90)
+
+  return dedupeTimelineEntries(entries).sort((left, right) => {
+    const delta = new Date(left.time).getTime() - new Date(right.time).getTime()
+    return delta === 0 ? left.priority - right.priority : delta
+  })
+}
+
+function addTimelineEntry(
+  entries: TimelineEntry[],
+  time: string | null | undefined,
+  title: string,
+  description: string,
+  priority: number,
+) {
+  if (!time || Number.isNaN(new Date(time).getTime())) return
+  entries.push({ time, title, description, priority })
+}
+
+function dedupeTimelineEntries(entries: TimelineEntry[]) {
+  const seen = new Set<string>()
+  return entries.filter((entry) => {
+    const key = `${new Date(entry.time).toISOString()}|${entry.title}|${entry.description}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function MergeTab({ event }: { event: EventView }) {
@@ -572,6 +786,17 @@ function KeyValue({ label, value }: { label: string; value: string }) {
   )
 }
 
+function TagValue({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div className={styles.kvRow}>
+      <span>{label}</span>
+      <div className={styles.tagrow}>
+        {values.length ? values.map((value) => <Pill key={value} label={value} />) : <b>未标注</b>}
+      </div>
+    </div>
+  )
+}
+
 function formatDateTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -594,6 +819,17 @@ function relationTypeName(value: string) {
     parent_child: '父子事件',
   }
   return names[value] ?? value
+}
+
+function sourceName(value: string) {
+  const names: Record<string, string> = {
+    x_trend: 'X Trend',
+    topic_circle: 'Topic Circle',
+    topic_watch: 'Topic Circle',
+    future_event: 'Future Event',
+    official_schedule: 'Future Event',
+  }
+  return names[value] ?? normalizeSourceHeatLabel(value) ?? value
 }
 
 function Pill({ label }: { label: string }) {
@@ -620,10 +856,11 @@ function SourceMarks({ sources }: { sources: string[] }) {
 function toEventView(event: EventItem, index: number): EventView {
   const sources = inferSources(event)
   const triggers = inferTriggers(event)
+  const domains = inferDomains(event)
   const evidenceCount = event.evidence?.length ?? event.urls.length
   const observedAt = firstDate(event.evidence?.map((item) => item.observedAt))
   const publishedAt = firstDate(event.evidence?.map((item) => item.publishedAt))
-  const factAt = event.occurredAt ?? publishedAt ?? observedAt ?? event.createdAt ?? event.updatedAt
+  const factAt = event.occurredAt ?? publishedAt ?? event.createdAt ?? event.updatedAt
   const createdAt = event.createdAt ?? observedAt ?? factAt
   const updatedAt = event.updatedAt ?? createdAt
 
@@ -631,17 +868,27 @@ function toEventView(event: EventItem, index: number): EventView {
     ...event,
     sources,
     triggers,
-    domains: inferDomains(event),
+    domains,
+    displayLabels: buildEventDisplayLabels({ sources, triggers, domains }),
     fact: event.verify === '存在冲突' ? '待核实' : '高',
     attention: sources.length > 1 ? `+${sources.length} 来源` : evidenceCount ? `${evidenceCount} 条 Evidence` : '待补充',
     pack: `Context Pack v${Math.max(1, Math.min(index + 1, 9))}`,
     time: formatNullableDateTime(factAt),
-    observedTime: formatNullableDateTime(observedAt ?? createdAt),
+    observedTime: formatNullableDateTime(observedAt),
+    sourcePublishedTime: formatNullableDateTime(publishedAt),
     createdTime: formatNullableDateTime(createdAt),
     updatedTime: formatNullableDateTime(updatedAt),
     entryMode: sources.includes('X Trend') ? 'trend' : sources.includes('Topic Circle') ? 'topic_watch' : sources.includes('Future Event') ? 'future_event' : 'unknown',
     state: event.verify === '存在冲突' ? 'needs_attention' : 'validated_active',
   }
+}
+
+function buildEventDisplayLabels(input: {
+  sources: string[]
+  triggers: string[]
+  domains: string[]
+}) {
+  return Array.from(new Set([...input.sources, ...input.triggers, ...input.domains]))
 }
 
 function inferSources(event: EventItem) {
@@ -788,29 +1035,31 @@ function createPackText(event: EventView) {
     '## 标签',
     labels.length
       ? labels
-          .map((label) =>
-            `- ${label.name || label.code}：${label.reason || '无说明'}（分类：${label.category || 'unknown'}，置信度：${label.confidence || 'unknown'}）`,
-          )
-          .join('\n')
+        .map((label) =>
+          `- ${label.name || label.code}：${label.reason || '无说明'}（分类：${label.category || 'unknown'}，置信度：${label.confidence || 'unknown'}）`,
+        )
+        .join('\n')
       : '- 暂无标签',
     '',
     '## Evidence',
     evidence.length
       ? evidence
-          .map((item, index) =>
-            [
-              `### EV-${String(index + 1).padStart(3, '0')}`,
-              `- 来源类型：${item.sourceType}`,
-              `- 证据陈述：${item.claim}`,
-              `- 原始链接：${item.url || '暂无'}`,
-            ].join('\n'),
-          )
-          .join('\n\n')
+        .map((item, index) =>
+          [
+            `### EV-${String(index + 1).padStart(3, '0')}`,
+            `- 来源类型：${item.sourceType}`,
+            `- 证据陈述：${item.claim}`,
+            `- 原始链接：${item.url || '暂无'}`,
+          ].join('\n'),
+        )
+        .join('\n\n')
       : '- 暂无可解析 Evidence',
     '',
     '## 时间与发展',
-    `- observed_at：${event.observedTime}`,
-    `- fact_time：${event.time}`,
+    `- source_published_at：${event.sourcePublishedTime}`,
+    `- snapshot_at / observed_at：${event.observedTime}`,
+    `- event_created_at：${event.createdTime}`,
+    `- event_updated_at：${event.updatedTime}`,
     '- timezone：Asia/Shanghai',
     '- event_window：当前观察窗口',
     `- development.state：${event.state}`,

@@ -41,6 +41,7 @@ interface V2EvidenceResponse {
   author?: string | null
   publishedAt?: string | null
   observedAt?: string
+  metrics?: unknown
   metadata?: unknown
 }
 
@@ -160,8 +161,10 @@ function mapEvidenceRef(ref: string, evidence?: V2EvidenceResponse) {
     sourceType: evidence.sourceType,
     claim: isOpaqueId(claim) ? '证据详情待同步' : claim,
     url: evidence.url ?? undefined,
+    author: evidence.author ?? null,
     publishedAt: evidence.publishedAt ?? null,
     observedAt: evidence.observedAt,
+    metrics: evidence.metrics,
     metadata: evidence.metadata,
   }
 }

@@ -34,8 +34,10 @@ export interface EventItem {
     sourceType: string
     claim: string
     url?: string
+    author?: string | null
     publishedAt?: string | null
     observedAt?: string
+    metrics?: unknown
     metadata?: unknown
   }[]
   related: string[]
@@ -74,6 +76,8 @@ export interface EventSourceContext {
   evidenceRefs: string[]
   signalRefs: string[]
   triggeredAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface EventMergeDetail {
@@ -87,6 +91,8 @@ export interface EventMergeDetail {
     conflictPoints: string[]
     systemAction: string
     reason: string
+    decidedAt?: string
+    createdAt?: string
   }
   relations: EventRelation[]
 }
