@@ -21,6 +21,8 @@ export interface EventItem {
   eventType?: string
   confidence?: string
   occurredAt?: string | null
+  createdAt?: string
+  updatedAt?: string
   rawStatus?: string
   status: string
   verify: string
@@ -32,6 +34,8 @@ export interface EventItem {
     sourceType: string
     claim: string
     url?: string
+    publishedAt?: string | null
+    observedAt?: string
     metadata?: unknown
   }[]
   related: string[]

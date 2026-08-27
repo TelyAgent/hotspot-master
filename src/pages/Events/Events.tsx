@@ -19,20 +19,31 @@ import styles from './Events.module.css'
 
 type DetailTab = 'overview' | 'facts' | 'timeline' | 'merge'
 
-const STANDARD_FILTERS = [
+const SOURCE_HEAT_FILTERS = [
   '全部',
-  'X 热搜',
-  '关注圈层',
+  'X Trend',
+  'Topic Circle',
   'Future Event',
-  'YouTube',
-  'Top 5',
+  'Top5',
   'Fast Rising',
+  'Multi-region',
   '第一方确认',
-  '核心人物确认',
-  '官方日程确认',
-  'Action Score 80+',
-  'Candidate',
+  'Re-entry',
 ]
+
+const DOMAIN_FILTERS = [
+  'AI',
+  'Technology',
+  'Politics & Elections',
+  'Geopolitics & Conflict',
+  'Macro & Financial Markets',
+  'Crypto & Web3',
+  'Prediction Markets',
+  'Official Schedule',
+]
+
+const SOURCE_HEAT_FILTER_SET = new Set(SOURCE_HEAT_FILTERS.filter((item) => item !== '全部'))
+const DOMAIN_FILTER_SET = new Set(DOMAIN_FILTERS)
 
 const DETAIL_TABS: { key: DetailTab; label: string }[] = [
   { key: 'overview', label: '完整上下文' },
@@ -44,10 +55,14 @@ const DETAIL_TABS: { key: DetailTab; label: string }[] = [
 interface EventView extends EventItem {
   sources: string[]
   triggers: string[]
+  domains: string[]
   fact: string
   attention: string
   pack: string
   time: string
+  observedTime: string
+  createdTime: string
+  updatedTime: string
   entryMode: string
   state: string
 }
@@ -67,7 +82,8 @@ export default function Events() {
     label: query.label,
   })
   const eventViews = useMemo(() => events.map((item, index) => toEventView(item, index)), [events])
-  const filters = useMemo(() => buildFilters(eventViews), [eventViews])
+  const sourceHeatFilters = useMemo(() => buildSourceHeatFilters(eventViews), [eventViews])
+  const domainFilters = useMemo(() => buildDomainFilters(eventViews), [eventViews])
   const visibleEvents = eventViews
   const detailEvent = detailEventId ? eventViews.find((item) => item.id === detailEventId) ?? null : null
   const metrics = {
@@ -137,22 +153,51 @@ export default function Events() {
         <KpiBox value={metrics.conflict} label="冲突/待核实" />
       </div>
 
-      <div className={styles.eventToolbar}>
-        <div className={styles.eventFilters}>
-          {filters.map((item) => (
-            <Button
-              key={item}
-              type={filter === item ? 'primary' : 'default'}
-              onClick={() => {
-                setFilter(item)
-                setPage(1)
-              }}
-            >
-              {item}
-            </Button>
-          ))}
+      <div className={styles.eventFilterPanel}>
+        <div className={styles.filterRow}>
+          <b>来源与热度</b>
+          <div className={styles.eventFilters}>
+            {sourceHeatFilters.map((item) => (
+              <Button
+                key={item}
+                type={filter === item ? 'primary' : 'default'}
+                onClick={() => {
+                  setFilter(item)
+                  setPage(1)
+                }}
+              >
+                {item}
+              </Button>
+            ))}
+          </div>
+          <Button
+            className={styles.resetFilter}
+            type="link"
+            onClick={() => {
+              setFilter('全部')
+              setPage(1)
+            }}
+          >
+            重置筛选
+          </Button>
         </div>
-        <span>来源 · 客观触发 · 主题与事实状态</span>
+        <div className={styles.filterRow}>
+          <b>事件领域</b>
+          <div className={styles.eventFilters}>
+            {domainFilters.map((item) => (
+              <Button
+                key={item}
+                type={filter === item ? 'primary' : 'default'}
+                onClick={() => {
+                  setFilter(item)
+                  setPage(1)
+                }}
+              >
+                {item}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {loading ? <div className="note">正在加载 Event…</div> : null}
@@ -202,12 +247,14 @@ function EventCard({ event, featured, onOpen }: { event: EventView; featured: bo
       <div>
         <div className={styles.between}>
           <div className={styles.tagrow}>
-            <Pill label={event.status === '内容生成中' ? 'Candidate' : '已确认'} />
             {event.sources.map((source) => (
               <Pill key={source} label={source} />
             ))}
             {event.triggers.slice(0, 4).map((trigger) => (
               <Pill key={trigger} label={trigger} />
+            ))}
+            {event.domains.slice(0, 3).map((domain) => (
+              <Pill key={domain} label={domain} />
             ))}
           </div>
           <span className={styles.meta}>{event.pack}</span>
@@ -279,6 +326,9 @@ function EventDetailPage({
               <Pill label="Event" />
               <Pill label={event.status === '内容生成中' ? 'Candidate' : '已确认'} />
               <Pill label={event.pack} />
+              {event.domains.map((domain) => (
+                <Pill key={domain} label={domain} />
+              ))}
             </div>
             <Typography.Title level={1}>{event.title}</Typography.Title>
             <Typography.Text>{event.summary}</Typography.Text>
@@ -351,7 +401,7 @@ function OverviewTab({ event }: { event: EventView }) {
       <section className={styles.changeCard}>
         <div>
           <b>本版本最新变化</b>
-          <strong>{event.time} · 新 Evidence 更新 Context Pack</strong>
+          <strong>{event.updatedTime} · 新 Evidence 更新 Context Pack</strong>
           <span>核心事实不变，表达边界与下一观察点已更新。</span>
         </div>
         <span className={styles.meta}>{event.pack} · 受影响：evidence_records / event_development</span>
@@ -367,6 +417,7 @@ function OverviewTab({ event }: { event: EventView }) {
         <KeyValue label="核心动作" value={inferAction(event)} />
         <KeyValue label="具体对象" value={event.title} />
         <KeyValue label="事件类型" value={event.trigger} />
+        <KeyValue label="事件领域" value={event.domains.join('、') || '未标注'} />
         <KeyValue label="事实发生时间" value={event.time} />
       </section>
 
@@ -377,7 +428,7 @@ function OverviewTab({ event }: { event: EventView }) {
         </div>
         <p className={styles.meta}>区分系统观测时间、事实发生时间和事件有效窗口。</p>
         <div className={styles.timeStrip}>
-          <ContractCell label="observed_at" value={event.time} />
+          <ContractCell label="observed_at" value={event.observedTime} />
           <ContractCell label="fact_time" value={event.time} />
           <ContractCell label="timezone" value="Asia/Shanghai" />
           <ContractCell label="event_window" value="当前观察窗口" />
@@ -435,9 +486,9 @@ function TimelineTab({ event }: { event: EventView }) {
       <KeyValue label="Basis Evidence IDs" value={(event.evidence ?? []).map((_, index) => `EV-${index + 1}`).join(', ') || '待补充'} />
       <KeyValue label="Next Observable" value="出现新的第一方确认、官方更正或事实反转" />
       <div className={styles.timelineList}>
-        <div><b>{event.time} · Signal 首次被系统观测</b><small>observed_at 记录，尚未改变事实状态</small></div>
-        <div><b>{event.time} · 核心事实进入 Event</b><small>来自热点挖掘 Agent 的事件判断</small></div>
-        <div><b>{event.time} · Context Pack 版本更新</b><small>Evidence 改变了可表达边界</small></div>
+        <div><b>{event.observedTime} · Signal 首次被系统观测</b><small>observed_at 记录，尚未改变事实状态</small></div>
+        <div><b>{event.createdTime} · 核心事实进入 Event</b><small>来自热点挖掘 Agent 的事件判断</small></div>
+        <div><b>{event.updatedTime} · Context Pack 版本更新</b><small>Evidence 改变了可表达边界</small></div>
       </div>
     </section>
   )
@@ -552,11 +603,8 @@ function Pill({ label }: { label: string }) {
 function SourceMarks({ sources }: { sources: string[] }) {
   const labels: Record<string, string> = {
     'X Trend': 'XT',
-    'X 热搜': 'XT',
     'Topic Circle': 'TC',
-    '关注圈层': 'TC',
     'Future Event': 'FE',
-    'YouTube': 'YT',
   }
   if (!sources.length) return <span className={styles.noSourceMark}>—</span>
 
@@ -573,16 +621,25 @@ function toEventView(event: EventItem, index: number): EventView {
   const sources = inferSources(event)
   const triggers = inferTriggers(event)
   const evidenceCount = event.evidence?.length ?? event.urls.length
+  const observedAt = firstDate(event.evidence?.map((item) => item.observedAt))
+  const publishedAt = firstDate(event.evidence?.map((item) => item.publishedAt))
+  const factAt = event.occurredAt ?? publishedAt ?? observedAt ?? event.createdAt ?? event.updatedAt
+  const createdAt = event.createdAt ?? observedAt ?? factAt
+  const updatedAt = event.updatedAt ?? createdAt
 
   return {
     ...event,
     sources,
     triggers,
+    domains: inferDomains(event),
     fact: event.verify === '存在冲突' ? '待核实' : '高',
     attention: sources.length > 1 ? `+${sources.length} 来源` : evidenceCount ? `${evidenceCount} 条 Evidence` : '待补充',
     pack: `Context Pack v${Math.max(1, Math.min(index + 1, 9))}`,
-    time: formatEventTime(event.trigger),
-    entryMode: sources.includes('X 热搜') ? 'trend' : sources.includes('关注圈层') ? 'topic_watch' : sources.includes('Future Event') ? 'future_event' : 'unknown',
+    time: formatNullableDateTime(factAt),
+    observedTime: formatNullableDateTime(observedAt ?? createdAt),
+    createdTime: formatNullableDateTime(createdAt),
+    updatedTime: formatNullableDateTime(updatedAt),
+    entryMode: sources.includes('X Trend') ? 'trend' : sources.includes('Topic Circle') ? 'topic_watch' : sources.includes('Future Event') ? 'future_event' : 'unknown',
     state: event.verify === '存在冲突' ? 'needs_attention' : 'validated_active',
   }
 }
@@ -590,8 +647,8 @@ function toEventView(event: EventItem, index: number): EventView {
 function inferSources(event: EventItem) {
   const labelSources = (event.labels ?? [])
     .filter((label) => label.category === 'source')
-    .map((label) => label.name)
-    .filter(Boolean)
+    .map((label) => normalizeSourceHeatLabel(label.name || label.code))
+    .filter((label): label is string => Boolean(label))
   if (labelSources.length > 0) return Array.from(new Set(labelSources))
 
   const sourceSet = new Set<string>()
@@ -605,14 +662,14 @@ function inferSources(event: EventItem) {
 
 function sourceTypeToEventSource(sourceType: string) {
   const normalized = sourceType.trim().toLowerCase()
-  if (normalized === 'x_trend' || normalized.startsWith('x_trend_')) return 'X 热搜'
+  if (normalized === 'x_trend' || normalized.startsWith('x_trend_')) return 'X Trend'
   if (
     normalized === 'topic_watch' ||
     normalized === 'topic_circle' ||
     normalized === 'x_account_post' ||
     normalized === 'x_post'
   ) {
-    return '关注圈层'
+    return 'Topic Circle'
   }
   if (
     normalized === 'future_event_candidate' ||
@@ -622,7 +679,6 @@ function sourceTypeToEventSource(sourceType: string) {
   ) {
     return 'Future Event'
   }
-  if (normalized === 'youtube_video') return 'YouTube'
   return null
 }
 
@@ -631,25 +687,52 @@ function inferTriggers(event: EventItem) {
     new Set(
       (event.labels ?? [])
         .filter((label) => label.category === 'trigger' || label.category === 'aggregation')
-        .map((label) => label.name)
-        .filter(Boolean),
+        .map((label) => normalizeSourceHeatLabel(label.name || label.code))
+        .filter((label): label is string => Boolean(label)),
     ),
   )
 }
 
-function buildFilters(events: EventView[]) {
-  const values = new Set<string>(STANDARD_FILTERS)
-  events.forEach((event) => {
-    event.sources.forEach((source) => values.add(source))
-    event.triggers.forEach((trigger) => values.add(trigger))
-  })
-  return Array.from(values)
+function inferDomains(event: EventItem) {
+  return Array.from(
+    new Set(
+      (event.labels ?? [])
+        .filter((label) => label.category === 'domain')
+        .map((label) => label.name || label.code)
+        .filter((label) => DOMAIN_FILTER_SET.has(label)),
+    ),
+  )
+}
+
+function buildSourceHeatFilters(_events: EventView[]) {
+  return SOURCE_HEAT_FILTERS
+}
+
+function buildDomainFilters(_events: EventView[]) {
+  return DOMAIN_FILTERS
 }
 
 function eventFilterToQuery(filter: string): { status?: string; label?: string } {
   if (filter === '全部') return {}
-  if (filter === 'Candidate') return { status: 'suggested' }
   return { label: filter }
+}
+
+function normalizeSourceHeatLabel(label: string) {
+  const aliases: Record<string, string> = {
+    'X 热搜': 'X Trend',
+    x_trend: 'X Trend',
+    'Top 5': 'Top5',
+    x_trend_top_5: 'Top5',
+    x_trend_fast_rising: 'Fast Rising',
+    x_trend_multi_region: 'Multi-region',
+    多地区上榜: 'Multi-region',
+    关注圈层: 'Topic Circle',
+    topic_circle: 'Topic Circle',
+    first_party_confirmed: '第一方确认',
+    'First-party': '第一方确认',
+  }
+  const normalized = aliases[label] ?? label
+  return SOURCE_HEAT_FILTER_SET.has(normalized) ? normalized : null
 }
 
 function createPackObject(event: EventView) {
@@ -659,11 +742,12 @@ function createPackObject(event: EventView) {
     intake_id: `IN-${event.id.slice(0, 8).toUpperCase()}`,
     entry_mode: event.entryMode,
     state: event.state,
-    updated_at: event.time,
+    updated_at: event.updatedTime,
     title: event.title,
     summary: event.summary,
     sources: event.sources,
     triggers: event.triggers,
+    domains: event.domains,
     labels: event.labels ?? [],
     evidence_records: event.evidence ?? [],
   }
@@ -699,6 +783,7 @@ function createPackText(event: EventView) {
     '## 来源与触发',
     listOrNone('来源', event.sources),
     listOrNone('触发标签', event.triggers),
+    listOrNone('领域标签', event.domains),
     '',
     '## 标签',
     labels.length
@@ -724,7 +809,7 @@ function createPackText(event: EventView) {
       : '- 暂无可解析 Evidence',
     '',
     '## 时间与发展',
-    `- observed_at：${event.time}`,
+    `- observed_at：${event.observedTime}`,
     `- fact_time：${event.time}`,
     '- timezone：Asia/Shanghai',
     '- event_window：当前观察窗口',
@@ -775,7 +860,7 @@ async function copyTextToClipboard(text: string) {
 }
 
 function pillTone(label: string) {
-  if (/Top 5|Fast|Spike|急升|高置信度/.test(label)) return 'hot'
+  if (/Top5|Fast|Spike|急升|高置信度/.test(label)) return 'hot'
   if (/Future|Upcoming|Schedule|Action|未来/.test(label)) return 'amber'
   if (/Circle|圈|Topic|Cross|关注/.test(label)) return 'purple'
   if (/确认|First-party|Event|validated|已纳入|已通过/.test(label)) return 'green'
@@ -783,21 +868,24 @@ function pillTone(label: string) {
   return 'cyan'
 }
 
-function formatEventTime(trigger: string) {
-  const maybeDate = trigger.match(/\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}:\d{2}/)?.[0]
-  if (maybeDate) {
-    const date = new Date(maybeDate)
-    if (!Number.isNaN(date.getTime())) {
-      return date.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-    }
-  }
-  return new Date().toLocaleString('zh-CN', {
+function firstDate(values?: Array<string | null | undefined>) {
+  const dates = (values ?? [])
+    .map((value) => {
+      if (!value) return null
+      const date = new Date(value)
+      return Number.isNaN(date.getTime()) ? null : date
+    })
+    .filter((date): date is Date => Boolean(date))
+    .sort((a, b) => a.getTime() - b.getTime())
+
+  return dates[0]?.toISOString()
+}
+
+function formatNullableDateTime(value?: string | null) {
+  if (!value) return '暂无记录'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('zh-CN', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',

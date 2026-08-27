@@ -39,6 +39,8 @@ interface V2EvidenceResponse {
   text?: string | null
   url?: string | null
   author?: string | null
+  publishedAt?: string | null
+  observedAt?: string
   metadata?: unknown
 }
 
@@ -100,6 +102,8 @@ export function mapV2EventToEventItem(
     eventType: item.eventType,
     confidence: item.confidence,
     occurredAt: item.occurredAt ?? null,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
     rawStatus: item.status,
     status: mapEventStatus(item.status),
     verify,
@@ -156,6 +160,8 @@ function mapEvidenceRef(ref: string, evidence?: V2EvidenceResponse) {
     sourceType: evidence.sourceType,
     claim: isOpaqueId(claim) ? '证据详情待同步' : claim,
     url: evidence.url ?? undefined,
+    publishedAt: evidence.publishedAt ?? null,
+    observedAt: evidence.observedAt,
     metadata: evidence.metadata,
   }
 }

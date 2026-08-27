@@ -2,15 +2,6 @@ import { request } from './client'
 import type { RefreshResponse, TrendingResponse } from './types'
 import { getPlatformCollectionConfig } from './collectionConfig'
 
-interface SignalResponse {
-  id: string
-  signalType: string
-  title: string
-  observedAt: string
-  metrics?: Record<string, unknown> | null
-  metadata?: Record<string, unknown> | null
-}
-
 interface CollectionRunResponse {
   id: string
   status: string
@@ -18,36 +9,38 @@ interface CollectionRunResponse {
   errorMessage?: string | null
 }
 
+interface XTrendRankingResponse {
+  region: string
+  observedAt: string | null
+  items: Array<{
+    id: string
+    name: string
+    query: string
+    rank: number
+    url?: string | null
+    heat?: string | null
+    category?: string | null
+  }>
+}
+
 /** 获取指定地区热搜排行榜前 N 条 */
 export async function getTrending(region: string, limit = 30): Promise<TrendingResponse> {
-  const signals = await request<SignalResponse[]>('/signals?signalType=x_trend&take=500')
   const snapshotRegion = region === 'Worldwide' ? 'global' : region
-  const matching = signals
-    .filter((signal) => signal.signalType === 'x_trend')
-    .filter((signal) => stringValue(signal.metadata?.region) === snapshotRegion)
-    .sort((a, b) => new Date(b.observedAt).getTime() - new Date(a.observedAt).getTime())
-  const latestObservedAt = matching[0]?.observedAt
-  const latest = latestObservedAt
-    ? matching.filter((signal) => signal.observedAt === latestObservedAt)
-    : []
+  const ranking = await request<XTrendRankingResponse>(
+    `/data-sources/x-trends/latest?region=${encodeURIComponent(snapshotRegion)}&limit=${limit}`,
+  )
 
   return {
     region,
-    collectedAt: latestObservedAt ?? '',
+    collectedAt: ranking.observedAt ?? '',
     source: 'twitter',
-    items: latest
-      .sort((a, b) => numberValue(a.metrics?.rank) - numberValue(b.metrics?.rank))
-      .slice(0, limit)
-      .map((signal) => {
-        const query = stringValue(signal.metadata?.query) ?? signal.title
-        return {
-          rank: numberValue(signal.metrics?.rank),
-          name: signal.title,
-          query,
-          url: `https://x.com/search?q=${encodeURIComponent(query)}`,
-          heat: stringValue(signal.metrics?.heat) ?? '',
-        }
-      }),
+    items: ranking.items.map((item) => ({
+      rank: item.rank,
+      name: item.name,
+      query: item.query,
+      url: item.url ?? `https://x.com/search?q=${encodeURIComponent(item.query)}`,
+      heat: item.heat ?? '',
+    })),
   }
 }
 
@@ -78,17 +71,4 @@ export async function refreshMonitor(): Promise<RefreshResponse> {
     itemCount: result.rawItemCount,
     error: result.errorMessage ?? undefined,
   }
-}
-
-function stringValue(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value : undefined
-}
-
-function numberValue(value: unknown): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string' && value.trim()) {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : 0
-  }
-  return 0
 }
