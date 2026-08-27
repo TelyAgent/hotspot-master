@@ -8,25 +8,34 @@ export interface AssistantChatContext {
 }
 
 export interface AssistantChatResponse {
+  sessionId?: string
+  runId?: string
   message: string
-  proposedActions?: AssistantProposedAction[]
+  proposedActions: AssistantProposedAction[]
+  usedTools?: unknown[]
+  missingData?: unknown[]
+  suggestedNextSteps?: unknown[]
 }
 
-export function sendAssistantMessage(message: string, context: AssistantChatContext) {
-  return request<AssistantChatResponse>('/assistant/chat', {
+export function sendAssistantMessage(
+  message: string,
+  context: AssistantChatContext,
+  sessionId?: string,
+) {
+  return request<AssistantChatResponse>('/copilot/chat', {
     method: 'POST',
-    body: JSON.stringify({ message, context }),
+    body: JSON.stringify({
+      sessionId,
+      tenantId: 'default',
+      userId: 'local-user',
+      client: 'hotspot-master',
+      message,
+      context,
+    }),
   })
 }
 
-export type AssistantToolName =
-  | 'get_twitter_config'
-  | 'update_twitter_config'
-  | 'list_twitter_topics'
-  | 'upsert_twitter_topic'
-  | 'add_twitter_topic_account'
-  | 'remove_twitter_topic_account'
-  | 'set_twitter_trend_schedule'
+export type AssistantToolName = string
 
 export interface AssistantProposedAction {
   id: string
@@ -34,16 +43,29 @@ export interface AssistantProposedAction {
   summary: string
   arguments: Record<string, unknown>
   requiresConfirmation: true
+  status?: 'pending' | 'succeeded' | 'failed' | 'rejected'
 }
 
 export interface AssistantToolExecutionResponse {
+  status?: string
   message: string
   result?: unknown
 }
 
-export function executeAssistantTool(action: Pick<AssistantProposedAction, 'tool' | 'arguments'>) {
-  return request<AssistantToolExecutionResponse>('/assistant/tool-executions', {
+export function executeAssistantTool(action: AssistantProposedAction) {
+  return request<AssistantToolExecutionResponse>(`/copilot/actions/${action.id}/confirm`, {
     method: 'POST',
-    body: JSON.stringify(action),
+    body: JSON.stringify({
+      confirmedBy: 'local-user',
+    }),
+  })
+}
+
+export function rejectAssistantAction(action: AssistantProposedAction) {
+  return request<AssistantToolExecutionResponse>(`/copilot/actions/${action.id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({
+      rejectedBy: 'local-user',
+    }),
   })
 }

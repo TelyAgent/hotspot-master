@@ -118,6 +118,23 @@
   justify-self: start;
 }
 
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionStatus {
+  justify-self: start;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #edf5f3;
+  color: var(--g);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .launcher {
     right: 14px;

@@ -3,6 +3,7 @@ import { Button, FloatButton, Input, Spin } from 'antd'
 import { RobotOutlined, SendOutlined } from '@ant-design/icons'
 import {
   executeAssistantTool,
+  rejectAssistantAction,
   sendAssistantMessage,
   type AssistantProposedAction,
 } from '../api/assistant'
@@ -21,6 +22,7 @@ export default function AssistantChatFloat() {
   const app = useApp()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
+  const [sessionId, setSessionId] = useState<string>()
   const [sending, setSending] = useState(false)
   const [executingActionId, setExecutingActionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -51,7 +53,10 @@ export default function AssistantChatFloat() {
     setMessages((prev) => [...prev, createMessage('user', content)])
 
     try {
-      const response = await sendAssistantMessage(content, context)
+      const response = await sendAssistantMessage(content, context, sessionId)
+      if (response.sessionId) {
+        setSessionId(response.sessionId)
+      }
       setMessages((prev) => [
         ...prev,
         createMessage('assistant', response.message, 'normal', response.proposedActions),
@@ -64,17 +69,44 @@ export default function AssistantChatFloat() {
     }
   }
 
+  const updateActionStatus = (actionId: string, status: NonNullable<AssistantProposedAction['status']>) => {
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (!message.proposedActions?.length) return message
+        return {
+          ...message,
+          proposedActions: message.proposedActions.map((action) =>
+            action.id === actionId ? { ...action, status } : action,
+          ),
+        }
+      }),
+    )
+  }
+
   const executeAction = async (action: AssistantProposedAction) => {
     if (executingActionId) return
     setExecutingActionId(action.id)
     try {
-      const result = await executeAssistantTool({
-        tool: action.tool,
-        arguments: action.arguments,
-      })
+      const result = await executeAssistantTool(action)
+      updateActionStatus(action.id, (result.status as AssistantProposedAction['status']) ?? 'succeeded')
       setMessages((prev) => [...prev, createMessage('assistant', result.message)])
     } catch (error) {
       const message = error instanceof Error ? error.message : '执行失败'
+      setMessages((prev) => [...prev, createMessage('assistant', message, 'error')])
+    } finally {
+      setExecutingActionId(null)
+    }
+  }
+
+  const rejectAction = async (action: AssistantProposedAction) => {
+    if (executingActionId) return
+    setExecutingActionId(action.id)
+    try {
+      const result = await rejectAssistantAction(action)
+      updateActionStatus(action.id, (result.status as AssistantProposedAction['status']) ?? 'rejected')
+      setMessages((prev) => [...prev, createMessage('assistant', result.message)])
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '拒绝失败'
       setMessages((prev) => [...prev, createMessage('assistant', message, 'error')])
     } finally {
       setExecutingActionId(null)
@@ -120,14 +152,30 @@ export default function AssistantChatFloat() {
                 {message.proposedActions.map((action) => (
                   <div key={action.id} className={styles.proposedAction}>
                     <span>{action.summary}</span>
-                    <Button
-                      size="small"
-                      loading={executingActionId === action.id}
-                      disabled={executingActionId != null && executingActionId !== action.id}
-                      onClick={() => executeAction(action)}
-                    >
-                      {executingActionId === action.id ? '应用中...' : '确认应用'}
-                    </Button>
+                    {action.status && action.status !== 'pending' ? (
+                      <span className={styles.actionStatus}>
+                        {action.status === 'succeeded' ? '已应用' : action.status === 'rejected' ? '已拒绝' : '执行失败'}
+                      </span>
+                    ) : (
+                      <div className={styles.actionButtons}>
+                        <Button
+                          size="small"
+                          type="primary"
+                          loading={executingActionId === action.id}
+                          disabled={executingActionId != null && executingActionId !== action.id}
+                          onClick={() => executeAction(action)}
+                        >
+                          {executingActionId === action.id ? '应用中...' : '确认应用'}
+                        </Button>
+                        <Button
+                          size="small"
+                          disabled={executingActionId != null}
+                          onClick={() => rejectAction(action)}
+                        >
+                          拒绝
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
