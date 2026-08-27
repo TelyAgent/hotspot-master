@@ -23,6 +23,7 @@ const REGION_OPTIONS = ['global', 'United States', 'United Kingdom', 'Japan', 'K
 const FREQUENCY_OPTIONS = [
   { label: '每 1 小时', value: 60 * 60 * 1000 },
   { label: '每 2 小时', value: 2 * 60 * 60 * 1000 },
+  { label: '每 3 小时', value: 3 * 60 * 60 * 1000 },
   { label: '每 4 小时', value: 4 * 60 * 60 * 1000 },
   { label: '每 6 小时', value: 6 * 60 * 60 * 1000 },
 ]
@@ -85,10 +86,20 @@ export default function TwitterSetting() {
   const [workflowId, setWorkflowId] = useState('x-trend-event-formation')
   const [topicWatches, setTopicWatches] = useState<TopicWatchConfig[]>([])
 
-  const frequencyLabel = useMemo(
-    () => FREQUENCY_OPTIONS.find((item) => item.value === frequencyMs)?.label ?? `${Math.round(frequencyMs / 3600000)} 小时`,
-    [frequencyMs],
-  )
+  const frequencyLabel = useMemo(() => formatIntervalMs(frequencyMs), [frequencyMs])
+  const frequencyOptions = useMemo(() => {
+    if (FREQUENCY_OPTIONS.some((item) => item.value === frequencyMs)) {
+      return FREQUENCY_OPTIONS
+    }
+
+    return [
+      ...FREQUENCY_OPTIONS,
+      {
+        label: formatIntervalMs(frequencyMs),
+        value: frequencyMs,
+      },
+    ]
+  }, [frequencyMs])
   useEffect(() => {
     let mounted = true
 
@@ -230,9 +241,15 @@ export default function TwitterSetting() {
             <div className="field">
               <label>采集频率</label>
               <Select
+                showSearch
                 value={frequencyMs}
-                options={FREQUENCY_OPTIONS}
-                onChange={setFrequencyMs}
+                options={frequencyOptions}
+                placeholder="选择或输入小时数"
+                onChange={(value) => setFrequencyMs(Number(value))}
+                onSearch={(value) => {
+                  const nextMs = parseIntervalInput(value)
+                  if (nextMs) setFrequencyMs(nextMs)
+                }}
               />
             </div>
             <div className="field">
@@ -265,7 +282,7 @@ export default function TwitterSetting() {
               <h3>主题圈配置</h3>
               <p className="small">保存后由服务端同步到主题圈采集任务。</p>
             </div>
-            <span className="pill green">{frequencyLabel}</span>
+            <span className="pill green">按主题计划</span>
           </div>
           {topicWatches.length === 0 ? (
             <Empty description="暂无重点主题配置" />
@@ -784,6 +801,30 @@ function textLines(value: string) {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
+}
+
+function formatIntervalMs(ms: number) {
+  if (!Number.isFinite(ms) || ms <= 0) return '未配置'
+  if (ms % (60 * 60 * 1000) === 0) return `每 ${ms / (60 * 60 * 1000)} 小时`
+  if (ms % (60 * 1000) === 0) return `每 ${ms / (60 * 1000)} 分钟`
+  return `每 ${Math.round(ms / 60000)} 分钟`
+}
+
+function parseIntervalInput(value: string) {
+  const normalized = value.trim()
+  if (!normalized) return null
+
+  const numberMatch = normalized.match(/(\d+(?:\.\d+)?)/)
+  if (!numberMatch) return null
+
+  const amount = Number(numberMatch[1])
+  if (!Number.isFinite(amount) || amount <= 0) return null
+
+  if (/分钟|min/i.test(normalized)) {
+    return Math.round(amount * 60 * 1000)
+  }
+
+  return Math.round(amount * 60 * 60 * 1000)
 }
 
 function formatTriggerRules(rules: NonNullable<TopicMonitoringPlanConfig['triggerRules']>) {

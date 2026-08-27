@@ -3,12 +3,13 @@ import { PlayCircleOutlined, ReloadOutlined, SyncOutlined, YoutubeOutlined } fro
 import { useEffect, useMemo, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { analyzeYoutubeVideo, fetchLatestYoutubeRun, fetchYoutubeBoard, runYoutubeCollection } from '../../api/youtube'
-import type { YoutubeBoardVideo, YoutubeRun } from '../../api/youtube'
+import type { YoutubeBoardResponse, YoutubeBoardVideo, YoutubeRun } from '../../api/youtube'
 import styles from './Monitor.module.css'
 
 export default function YouTubeMonitor() {
   const [run, setRun] = useState<YoutubeRun | null>(null)
   const [videos, setVideos] = useState<YoutubeBoardVideo[]>([])
+  const [boardStats, setBoardStats] = useState<YoutubeBoardResponse['stats'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [analyzingVideoId, setAnalyzingVideoId] = useState<string | null>(null)
@@ -17,12 +18,16 @@ export default function YouTubeMonitor() {
 
   const stats = useMemo(
     () => ({
-      todayNew: run?.newVideoCount ?? videos.length,
-      officialVideos: videos.filter((item) => item.selectionSources.some((source) => source.type === 'official_popular')).length,
-      keywordVideos: videos.filter((item) => item.matchedKeywords.length > 0).length,
-      analyzedVideos: videos.filter((item) => item.analysis).length,
+      todayNew: boardStats?.todayNew ?? run?.newVideoCount ?? countTodayVideos(videos),
+      officialVideos:
+        boardStats?.officialVideos ??
+        countTodayVideos(videos.filter((item) => item.selectionSources.some(isOfficialYoutubeSource))),
+      keywordVideos:
+        boardStats?.keywordVideos ??
+        countTodayVideos(videos.filter((item) => item.matchedKeywords.length > 0)),
+      analyzedVideos: boardStats?.analyzedVideos ?? videos.filter((item) => item.analysis).length,
     }),
-    [run?.newVideoCount, videos],
+    [boardStats, run?.newVideoCount, videos],
   )
   const filteredVideos = useMemo(
     () => videos.filter((video) => videoMatchesFilter(video, activeFilter)),
@@ -35,6 +40,7 @@ export default function YouTubeMonitor() {
       const [latestRun, board] = await Promise.all([fetchLatestYoutubeRun(), fetchYoutubeBoard()])
       setRun(latestRun)
       setVideos(board.videos)
+      setBoardStats(board.stats ?? null)
     } catch (error) {
       message.error(error instanceof Error ? error.message : '获取 YouTube 看板失败')
     } finally {
@@ -194,7 +200,7 @@ function YoutubeVideoCard({
           <span>{video.analysis ? 'Insight' : analysisLabel.text}</span>
         </div>
         <Typography.Text type="secondary">
-          {video.publishedAt ? formatDate(video.publishedAt) : '发布时间未知'} · 持续火热 {video.consecutiveHotDays} 天
+          入选 {video.observedAt ? formatDateTime(video.observedAt) : '时间未知'} · 发布 {video.publishedAt ? formatDate(video.publishedAt) : '未知'} · 持续火热 {video.consecutiveHotDays} 天
         </Typography.Text>
         <div className={styles.youtubeTags}>
           {[...video.selectionSources.map((source) => source.label), ...video.discoveryLabels, ...video.matchedKeywords].slice(0, 4).map((label) => (
@@ -270,7 +276,7 @@ function YoutubeAnalysisDrawer({
             </div>
             <Typography.Title level={2}>{video.title}</Typography.Title>
             <Typography.Text type="secondary">
-              {video.channelTitle || '未知频道'} · {video.publishedAt ? formatDate(video.publishedAt) : '发布时间未知'}
+              {video.channelTitle || '未知频道'} · 入选 {video.observedAt ? formatDateTime(video.observedAt) : '时间未知'} · 发布 {video.publishedAt ? formatDate(video.publishedAt) : '未知'}
             </Typography.Text>
           </div>
 
@@ -353,7 +359,7 @@ function AnalysisBlock({ title, items }: { title: string; items: [string, string
 }
 
 function getSourceLabel(video: YoutubeBoardVideo) {
-  const officialSource = video.selectionSources.find((source) => source.type === 'official_popular')
+  const officialSource = video.selectionSources.find(isOfficialYoutubeSource)
   if (officialSource) return 'YouTube 官方热门'
   const keyword = video.matchedKeywords[0]
   if (keyword) return `关键词 · ${keyword}`
@@ -363,13 +369,27 @@ function getSourceLabel(video: YoutubeBoardVideo) {
 function videoMatchesFilter(video: YoutubeBoardVideo, filter: string) {
   if (filter === '全部') return true
   if (filter === 'YouTube 官方热门') {
-    return video.selectionSources.some((source) => source.type === 'official_popular' || source.label.includes('官方热门'))
+    return video.selectionSources.some(isOfficialYoutubeSource)
   }
   if (filter.startsWith('关键词 · ')) {
     const keyword = filter.replace('关键词 · ', '').toLowerCase()
     return video.matchedKeywords.some((item) => item.toLowerCase() === keyword)
   }
   return true
+}
+
+function isOfficialYoutubeSource(source: YoutubeBoardVideo['selectionSources'][number]) {
+  return source.type === 'youtube_trending' || source.type === 'official_popular' || source.label.includes('官方热门')
+}
+
+function countTodayVideos(videos: YoutubeBoardVideo[]) {
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  return videos.filter((video) => {
+    if (!video.observedAt) return false
+    const observedAt = new Date(video.observedAt).getTime()
+    return Number.isFinite(observedAt) && observedAt >= todayStart
+  }).length
 }
 
 function getAnalysisLabel(video: YoutubeBoardVideo): { text: string; color: 'success' | 'error' | 'processing' | 'default' | 'warning' } {
@@ -395,5 +415,15 @@ function formatDate(value: string) {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+  }).format(new Date(value))
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   }).format(new Date(value))
 }

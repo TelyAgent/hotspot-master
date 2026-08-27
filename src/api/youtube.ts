@@ -20,6 +20,7 @@ export interface YoutubeBoardVideo {
   thumbnailUrl: string | null
   channelTitle: string | null
   publishedAt: string | null
+  observedAt?: string
   consecutiveHotDays: number
   boardVisibleUntil: string
   selectionSources: { type: string; label: string; rank: number }[]
@@ -53,6 +54,12 @@ export interface YoutubeBoardVideo {
 }
 
 export interface YoutubeBoardResponse {
+  stats?: {
+    todayNew: number
+    officialVideos: number
+    keywordVideos: number
+    analyzedVideos: number
+  }
   videos: YoutubeBoardVideo[]
 }
 
