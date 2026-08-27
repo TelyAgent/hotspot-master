@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { EventItem, EventLabel } from '../data/types'
+import type { EventItem, EventLabel, EventTriggerReason } from '../data/types'
 
 export interface EventListParams {
   page?: number
@@ -27,6 +27,7 @@ interface V2EventResponse {
   riskNotes?: unknown
   confidence?: string
   labels?: unknown
+  triggerReasons?: unknown
   status: 'suggested' | 'confirmed' | 'ignored' | 'archived' | string
   createdAt?: string
   updatedAt?: string
@@ -110,6 +111,7 @@ export function mapV2EventToEventItem(
     verify,
     regions: '—',
     trigger: formatTrigger(item),
+    triggerReasons: eventTriggerReasons(item.triggerReasons),
     urls: [],
     labels: eventLabels(item.labels),
     evidence: evidenceRefs.map((ref) => mapEvidenceRef(ref, evidenceById.get(ref))),
@@ -218,6 +220,19 @@ function eventLabels(value: unknown): EventLabel[] {
       evidenceRefs: stringArray(item.evidenceRefs),
       reason: typeof item.reason === 'string' ? item.reason : undefined,
       confidence: typeof item.confidence === 'string' ? item.confidence : undefined,
+    }]
+  })
+}
+
+function eventTriggerReasons(value: unknown): EventTriggerReason[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => {
+    if (!isRecord(item) || typeof item.code !== 'string' || typeof item.text !== 'string') return []
+    return [{
+      code: item.code,
+      text: item.text,
+      sourcePath: typeof item.sourcePath === 'string' ? item.sourcePath : undefined,
+      evidenceRefs: stringArray(item.evidenceRefs),
     }]
   })
 }

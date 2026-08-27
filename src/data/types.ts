@@ -28,6 +28,7 @@ export interface EventItem {
   verify: string
   regions: string
   trigger: string
+  triggerReasons?: EventTriggerReason[]
   urls: string[]
   labels?: EventLabel[]
   evidence?: {
@@ -51,6 +52,13 @@ export interface EventLabel {
   evidenceRefs?: string[]
   reason?: string
   confidence?: string
+}
+
+export interface EventTriggerReason {
+  code: string
+  text: string
+  evidenceRefs?: string[]
+  sourcePath?: string
 }
 
 export interface EventMergeDimensionResult {

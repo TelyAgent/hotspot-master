@@ -415,6 +415,7 @@ function OverviewTab({ event }: { event: EventView }) {
         <KeyValue label="事实发生时间" value={event.time} />
         <KeyValue label="事件领域" value={event.domains.join('、') || '未标注'} />
         <TagValue label="触发标签" values={event.displayLabels} />
+        <KeyValue label="触发原因" value={buildTriggerReason(event)} />
       </section>
 
       <section className={styles.detailPanel}>
@@ -797,6 +798,14 @@ function TagValue({ label, values }: { label: string; values: string[] }) {
   )
 }
 
+function buildTriggerReason(event: EventView) {
+  const reasons = event.triggerReasons
+    ?.map((reason) => reason.text)
+    .filter((reason): reason is string => Boolean(reason?.trim())) ?? []
+  if (reasons.length) return Array.from(new Set(reasons)).join('；')
+  return '暂无可追溯触发规则，只有来源标签和 Evidence。'
+}
+
 function formatDateTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -994,6 +1003,7 @@ function createPackObject(event: EventView) {
     summary: event.summary,
     sources: event.sources,
     triggers: event.triggers,
+    trigger_reasons: event.triggerReasons ?? [],
     domains: event.domains,
     labels: event.labels ?? [],
     evidence_records: event.evidence ?? [],
@@ -1026,6 +1036,7 @@ function createPackText(event: EventView) {
     `- 事件类型：${event.trigger}`,
     `- 事实发生时间：${event.time}`,
     `- 事实可信度：${event.fact}`,
+    `- 触发原因：${buildTriggerReason(event)}`,
     '',
     '## 来源与触发',
     listOrNone('来源', event.sources),
