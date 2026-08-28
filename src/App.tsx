@@ -15,7 +15,6 @@ import Modal from './components/Modal'
 import Toast from './components/Toast'
 import AssistantChatFloat from './components/AssistantChatFloat'
 import Login from './pages/Login/Login'
-import Overview from './pages/Overview/Overview'
 import Monitor from './pages/Monitor/Monitor'
 import YouTubeMonitor from './pages/Monitor/YouTubeMonitor'
 import Events from './pages/Events/Events'
@@ -94,8 +93,8 @@ export default function App() {
 
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/overview" replace />} />
-                <Route path="/overview" element={<Overview />} />
+                <Route path="/" element={<Navigate to="/monitor" replace />} />
+                <Route path="/overview" element={<Navigate to="/monitor" replace />} />
                 <Route path="/monitor" element={<Monitor />} />
                 <Route path="/monitor/youtube" element={<YouTubeMonitor />} />
                 <Route path="/events" element={<Events />} />

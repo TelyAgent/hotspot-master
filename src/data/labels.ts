@@ -10,7 +10,6 @@ export const PAGE_LABELS: Record<PageId, string> = {
 }
 
 export const NAV_ITEMS: { page: PageId; label: string; sub: string }[] = [
-  { page: 'overview', label: '运营总览', sub: 'Operations Overview' },
   { page: 'monitor', label: '热点监测', sub: 'Hotspot Monitoring' },
   { page: 'future', label: '运营排期', sub: 'Operations Schedule' },
   { page: 'events', label: '事件管理', sub: 'Event Management' },

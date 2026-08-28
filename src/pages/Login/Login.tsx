@@ -14,12 +14,12 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  if (isAuthenticated) return <Navigate to="/overview" replace />
+  if (isAuthenticated) return <Navigate to="/monitor" replace />
 
-  // 登录后回到被拦截前的页面（无则回到总览）
+  // 登录后回到被拦截前的页面（无则回到热点监测）
   const from =
     (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ??
-    '/overview'
+    '/monitor'
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
