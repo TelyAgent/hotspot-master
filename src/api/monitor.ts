@@ -37,11 +37,15 @@ export async function getTrending(region: string, limit = 30): Promise<TrendingR
     items: ranking.items.map((item) => ({
       rank: item.rank,
       name: item.name,
-      query: item.query,
-      url: item.url ?? `https://x.com/search?q=${encodeURIComponent(item.query)}`,
+      query: normalizeTrendQuery(item.query || item.name),
+      url: `https://x.com/search?q=${encodeURIComponent(normalizeTrendQuery(item.query || item.name))}`,
       heat: item.heat ?? '',
     })),
   }
+}
+
+function normalizeTrendQuery(value: string) {
+  return value.trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, '')
 }
 
 /** 触发立即采集（对应「立即采集」按钮） */

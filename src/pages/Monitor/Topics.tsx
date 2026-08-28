@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Collapse, Empty, Spin, Statistic, Tag } from 'antd'
+import { Alert, Button, Collapse, Empty, Spin, Statistic, Tabs, Tag } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { getTopicCircleTopicPosts, refreshTopicCircleTopics } from '../../api/topicCircle'
@@ -17,10 +17,21 @@ const TRIGGER_LABEL: Record<string, string> = {
 }
 
 export default function Topics() {
-  const { topicDetail, set, toast } = useApp()
+  const { topicDetail, toast } = useApp()
   const { topics, loading, error, reload } = useTopicCircleMonitorTopics()
   const pipeline = useTopicCirclePipelineStatus()
   const [refreshing, setRefreshing] = useState(false)
+  const [activeTopic, setActiveTopic] = useState<string | undefined>()
+
+  useEffect(() => {
+    if (!topics.length) {
+      setActiveTopic(undefined)
+      return
+    }
+    setActiveTopic((current) =>
+      current && topics.some((topic) => topic.name === current) ? current : topics[0].name,
+    )
+  }, [topics])
 
   const refreshTopics = async () => {
     setRefreshing(true)
@@ -59,27 +70,21 @@ export default function Topics() {
         </Button>
       </div>
       {pipeline.error ? <Alert type="warning" message={`流水线状态加载失败：${pipeline.error}`} showIcon /> : null}
-      <div className="three grid">
-        {topics.map((c) => {
-          return (
-            <article className={styles.topic} key={c.id}>
-              <div className={styles.topicTop}>
-                <div>
-                  <h2>{c.name}</h2>
-                  <span className="small">
-                    {c.enabled ? '启用' : '停用'} · {c.accountCount} 个监控账号 · 近 3 小时 {c.recentPostCount3h} 条帖子
-                  </span>
-                </div>
-                <span className={styles.number}>{c.accountCount}</span>
-              </div>
-              <p>
-                24 小时候选 {c.candidateCount24h} 个，已触发 {c.triggeredEventCount24h} 个。
-              </p>
-              <Button type="link" onClick={() => set({ topicDetail: c.name })}>查看该主题全部话题</Button>
-            </article>
-          )
-        })}
-      </div>
+      <Tabs
+        className={styles.topicTabs}
+        activeKey={activeTopic}
+        onChange={setActiveTopic}
+        items={topics.map((topic) => ({
+          key: topic.name,
+          label: (
+            <span>
+              {topic.name}
+              <small>{topic.candidateCount24h}</small>
+            </span>
+          ),
+          children: <TopicDetail name={topic.name} embedded summary={topic} />,
+        }))}
+      />
     </>
   )
 }
@@ -95,7 +100,21 @@ function formatTime(value: string) {
   })
 }
 
-function TopicDetail({ name }: { name: string }) {
+function TopicDetail({
+  name,
+  embedded = false,
+  summary,
+}: {
+  name: string
+  embedded?: boolean
+  summary?: {
+    enabled: boolean
+    accountCount: number
+    recentPostCount3h: number
+    candidateCount24h: number
+    triggeredEventCount24h: number
+  }
+}) {
   const { set, toast } = useApp()
   const { topics, loading, error, reload } = useTopicCircleTopics(name)
   const [refreshing, setRefreshing] = useState(false)
@@ -117,18 +136,24 @@ function TopicDetail({ name }: { name: string }) {
 
   return (
     <>
-      <div className={styles.topicDetailBreadcrumb}>
-        <Button type="link" onClick={() => set({ topicDetail: null })}>
-          重点主题追踪
-        </Button>
-        <span className="muted">/</span>
-        <b>{name}</b>
-      </div>
+      {!embedded ? (
+        <div className={styles.topicDetailBreadcrumb}>
+          <Button type="link" onClick={() => set({ topicDetail: null })}>
+            重点主题追踪
+          </Button>
+          <span className="muted">/</span>
+          <b>{name}</b>
+        </div>
+      ) : null}
       <section className={styles.topicDetailSummary}>
         <div>
           <span className="small">当前主题</span>
           <h1 style={{ fontSize: 22, margin: '3px 0' }}>{name}话题</h1>
-          <span className="small">从监控账号帖子总结出的具体事件/话题</span>
+          <span className="small">
+            {summary
+              ? `${summary.enabled ? '启用' : '停用'} · ${summary.accountCount} 个监控账号 · 近 3 小时 ${summary.recentPostCount3h} 条帖子`
+              : '从监控账号帖子总结出的具体事件/话题'}
+          </span>
         </div>
         <div>
           <Statistic title="话题数" value={topics.length} />
@@ -137,6 +162,10 @@ function TopicDetail({ name }: { name: string }) {
         <div>
           <Statistic title="已触发响应" value={triggered} />
           <span className="small">已进入内容链路</span>
+        </div>
+        <div>
+          <span className="small">24 小时候选 / 已触发</span>
+          <strong>{summary ? `${summary.candidateCount24h} / ${summary.triggeredEventCount24h}` : '—'}</strong>
         </div>
         <div>
           <span className="small">手动刷新</span>
@@ -185,9 +214,11 @@ function TopicTrendLabel({ topic }: { topic: TopicCircleTopicItem }) {
   return (
     <div className={styles.topicTrendRow}>
       <span>
-        <b>{topic.title}</b>
+        <b>{topic.summary || topic.title}</b>
         <br />
-        <small className="muted">{topic.summary}</small>
+        <small className="muted">
+          {topic.circle} · {topic.postIds.length} 条相关帖子
+        </small>
       </span>
       <strong>{topic.b3h}</strong>
       <strong>{topic.b24h}</strong>

@@ -8,6 +8,7 @@ import styles from './Monitor.module.css'
 type RankingRow = {
   rank: number
   name: string
+  url: string
   change: string
   signal: '已触发' | '持续观察'
   heat: string
@@ -30,11 +31,12 @@ export default function Ranking({
   isMock: boolean
   onReload: () => void
 }) {
-  const { region, set, go, ensureEventForTrend, toast } = useApp()
+  const { region, set, toast } = useApp()
 
   const rows: RankingRow[] = (data?.items ?? []).map((item) => ({
     rank: item.rank,
     name: item.name,
+    url: item.url,
     // 服务端暂未返回涨跌与触发状态（需快照对比），先用占位；后续接快照接口补上
     change: '—',
     signal: item.rank <= 5 ? '已触发' : '持续观察',
@@ -111,20 +113,9 @@ export default function Ranking({
               <Tag color={x.change.includes('↑') ? 'warning' : x.rank <= 5 ? 'success' : 'default'}>{x.change}</Tag>
               <span>{x.heat}</span>
               <Tag color={x.signal === '已触发' ? 'success' : 'default'}>{x.signal}</Tag>
-              {x.signal === '已触发' ? (
-                <Button
-                  type="link"
-                  onClick={() => {
-                    const event = ensureEventForTrend(x.name, region, x.rank)
-                    set({ event: event.id, eventStatus: '全部' })
-                    go('events')
-                  }}
-                >
-                  查看聚合
-                </Button>
-              ) : (
-                <span className="small">尚未触发响应</span>
-              )}
+              <Button type="link" href={x.url} target="_blank" rel="noreferrer">
+                打开热搜
+              </Button>
             </div>
           ))
         )}
