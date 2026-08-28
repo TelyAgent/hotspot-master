@@ -63,6 +63,16 @@ export interface YoutubeBoardResponse {
   videos: YoutubeBoardVideo[]
 }
 
+export interface YoutubeVideoAnalysisResponse {
+  id: string
+  signalId: string
+  videoId: string
+  status: string
+  transcriptStatus?: string | null
+  result?: unknown
+  errorMessage?: string | null
+}
+
 export function fetchYoutubeBoard(): Promise<YoutubeBoardResponse> {
   return request('/youtube/videos/board')
 }
@@ -75,6 +85,6 @@ export function runYoutubeCollection(): Promise<YoutubeRun> {
   return request('/youtube/run', { method: 'POST' })
 }
 
-export function analyzeYoutubeVideo(videoId: string): Promise<unknown> {
+export function analyzeYoutubeVideo(videoId: string): Promise<YoutubeVideoAnalysisResponse> {
   return request(`/youtube/videos/${encodeURIComponent(videoId)}/analyze`, { method: 'POST' })
 }

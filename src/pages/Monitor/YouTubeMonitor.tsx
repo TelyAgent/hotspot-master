@@ -6,6 +6,8 @@ import { analyzeYoutubeVideo, fetchLatestYoutubeRun, fetchYoutubeBoard, runYoutu
 import type { YoutubeBoardResponse, YoutubeBoardVideo, YoutubeRun } from '../../api/youtube'
 import styles from './Monitor.module.css'
 
+type YoutubeAnalysisView = NonNullable<YoutubeBoardVideo['analysis']>
+
 export default function YouTubeMonitor() {
   const [run, setRun] = useState<YoutubeRun | null>(null)
   const [videos, setVideos] = useState<YoutubeBoardVideo[]>([])
@@ -41,8 +43,13 @@ export default function YouTubeMonitor() {
       setRun(latestRun)
       setVideos(board.videos)
       setBoardStats(board.stats ?? null)
+      setSelectedVideo((current) =>
+        current ? board.videos.find((item) => item.videoId === current.videoId) ?? current : current,
+      )
+      return board
     } catch (error) {
       message.error(error instanceof Error ? error.message : '获取 YouTube 看板失败')
+      return null
     } finally {
       setLoading(false)
     }
@@ -69,12 +76,28 @@ export default function YouTubeMonitor() {
   async function handleAnalyzeVideo(videoId: string) {
     setAnalyzingVideoId(videoId)
     try {
-      await analyzeYoutubeVideo(videoId)
-      message.success('视频拆解已完成')
-      await load()
+      const result = await analyzeYoutubeVideo(videoId)
+      const patch = buildVideoPatchFromAnalysis(result)
+      setVideos((current) => current.map((video) =>
+        video.videoId === videoId ? { ...video, ...patch } : video,
+      ))
+      setSelectedVideo((current) =>
+        current?.videoId === videoId ? { ...current, ...patch } : current,
+      )
+      setBoardStats((current) =>
+        current && result.status === 'success' && result.result
+          ? { ...current, analyzedVideos: current.analyzedVideos + 1 }
+          : current,
+      )
+      if (result.status === 'success' && result.result) {
+        message.success('视频拆解已完成')
+      } else if (result.status === 'transcript_unavailable' || result.status === 'content_unavailable') {
+        message.warning('字幕不可用，未生成拆解内容')
+      } else {
+        message.warning('拆解未生成内容，可稍后重试')
+      }
     } catch (error) {
       message.error(error instanceof Error ? error.message : '视频拆解失败')
-      await load()
     } finally {
       setAnalyzingVideoId(null)
     }
@@ -187,8 +210,8 @@ function YoutubeVideoCard({
     <Card className={styles.youtubeVideoCard} hoverable onClick={() => onOpen(video)}>
       <div className={styles.youtubeThumb}>
         {video.thumbnailUrl ? <img src={video.thumbnailUrl} alt={video.title} /> : <div className={styles.youtubeThumbFallback} />}
-        <span>{sourceLabel}</span>
-        <button type="button" aria-label="播放视频" onClick={(event) => openWithoutCardClick(event, () => window.open(video.url, '_blank', 'noopener,noreferrer'))}>
+        <span className={styles.youtubeSourceBadge}>{sourceLabel}</span>
+        <button className={styles.youtubePlayButton} type="button" aria-label="播放视频" onClick={(event) => openWithoutCardClick(event, () => window.open(video.url, '_blank', 'noopener,noreferrer'))}>
           <PlayCircleOutlined />
         </button>
         <Typography.Title level={3}>{video.title}</Typography.Title>
@@ -390,6 +413,29 @@ function countTodayVideos(videos: YoutubeBoardVideo[]) {
     const observedAt = new Date(video.observedAt).getTime()
     return Number.isFinite(observedAt) && observedAt >= todayStart
   }).length
+}
+
+function buildVideoPatchFromAnalysis(result: Awaited<ReturnType<typeof analyzeYoutubeVideo>>): Partial<YoutubeBoardVideo> {
+  return {
+    analysisStatus: result.status,
+    transcriptStatus: result.transcriptStatus ?? null,
+    analysis: normalizeAnalysisResult(result.result),
+  }
+}
+
+function normalizeAnalysisResult(result: unknown): YoutubeBoardVideo['analysis'] {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) return null
+  const record = result as Record<string, unknown>
+  return {
+    mainReason: isRecord(record.main_reason) ? record.main_reason as YoutubeAnalysisView['mainReason'] : null,
+    execution: isRecord(record.execution) ? record.execution as YoutubeAnalysisView['execution'] : null,
+    replication: isRecord(record.replication) ? record.replication as YoutubeAnalysisView['replication'] : null,
+    limitations: Array.isArray(record.limitations) ? record.limitations.filter((item): item is string => typeof item === 'string') : [],
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
 function getAnalysisLabel(video: YoutubeBoardVideo): { text: string; color: 'success' | 'error' | 'processing' | 'default' | 'warning' } {

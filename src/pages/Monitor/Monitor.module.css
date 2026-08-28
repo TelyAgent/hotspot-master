@@ -260,7 +260,7 @@
   background: linear-gradient(180deg, rgba(8, 27, 24, 0.02) 30%, rgba(8, 25, 22, 0.82) 100%);
 }
 
-.youtubeThumb span {
+.youtubeSourceBadge {
   position: absolute;
   top: 8px;
   left: 8px;
@@ -275,22 +275,40 @@
   line-height: 1.2;
 }
 
-.youtubeThumb button {
+.youtubePlayButton {
   position: absolute;
   right: 8px;
   bottom: 8px;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 38px;
   height: 30px;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   background: #f47d70;
   color: #fff;
   cursor: pointer;
+  box-shadow: 0 8px 18px rgba(13, 37, 34, 0.18);
 }
 
-.youtubeThumb button :global(.anticon) {
-  font-size: 20px;
+.youtubePlayButton:hover,
+.youtubePlayButton:focus-visible {
+  background: #ef6f62;
+}
+
+.youtubePlayButton:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.youtubePlayButton :global(.anticon) {
+  display: inline-flex;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .youtubeThumb h3 {
