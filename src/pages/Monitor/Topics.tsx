@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react'
-import { Alert, Button, Collapse, Empty, Spin, Statistic, Tabs, Tag } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Alert, Button, Empty, Spin, Tabs, Tag } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
-import { getTopicCircleTopicPosts, refreshTopicCircleTopics } from '../../api/topicCircle'
-import type { TopicCircleTopicItem, TopicCircleTopicPost } from '../../api/topicCircle'
+import { getTopicCirclePostLeaderboard, refreshTopicCircleTopics } from '../../api/topicCircle'
+import type { TopicCircleMonitorTopic, TopicCirclePostLeaderboardItem, TopicCircleTopicPost } from '../../api/topicCircle'
 import { useTopicCircleMonitorTopics } from '../../hooks/useTopicCircleMonitorTopics'
 import { useTopicCirclePipelineStatus } from '../../hooks/useTopicCirclePipelineStatus'
-import { useTopicCircleTopics } from '../../hooks/useTopicCircleTopics'
 import styles from './Monitor.module.css'
 
-const TRIGGER_LABEL: Record<string, string> = {
-  short_term: '短期集中',
-  sustained: '持续热议',
-  burst: '单点爆发',
-  mixed: '混合上升',
-}
+type BoardMode = 'circle' | 'global' | 'rising'
+
+const BOARD_MODES: { key: BoardMode; label: string; desc: string }[] = [
+  { key: 'circle', label: '圈内榜', desc: '当前主题圈帖子 Top 10' },
+  { key: 'global', label: '全圈总榜', desc: '所有重点主题帖子 Top 10' },
+  { key: 'rising', label: '热度飙升榜', desc: '按本轮新增浏览排序' },
+]
 
 export default function Topics() {
   const { topicDetail, toast } = useApp()
@@ -22,8 +22,14 @@ export default function Topics() {
   const pipeline = useTopicCirclePipelineStatus()
   const [refreshing, setRefreshing] = useState(false)
   const [activeTopic, setActiveTopic] = useState<string | undefined>()
+  const [boardMode, setBoardMode] = useState<BoardMode>('circle')
 
   useEffect(() => {
+    if (boardMode !== 'circle') {
+      setActiveTopic(undefined)
+      return
+    }
+
     if (!topics.length) {
       setActiveTopic(undefined)
       return
@@ -31,7 +37,24 @@ export default function Topics() {
     setActiveTopic((current) =>
       current && topics.some((topic) => topic.name === current) ? current : topics[0].name,
     )
-  }, [topics])
+  }, [boardMode, topics])
+
+  const switchBoardMode = (mode: BoardMode) => {
+    setBoardMode(mode)
+    if (mode === 'circle') {
+      setActiveTopic((current) =>
+        current && topics.some((topic) => topic.name === current) ? current : topics[0]?.name,
+      )
+      return
+    }
+
+    setActiveTopic(undefined)
+  }
+
+  const switchTopic = (topicName: string) => {
+    setBoardMode('circle')
+    setActiveTopic(topicName)
+  }
 
   const refreshTopics = async () => {
     setRefreshing(true)
@@ -39,7 +62,7 @@ export default function Topics() {
       const result = await refreshTopicCircleTopics()
       reload()
       pipeline.reload()
-      toast(`主题圈采集完成：${result.collected} 条帖子，候选 ${result.analysis?.topics ?? 0} 个`)
+      toast(`主题圈采集完成：${result.collected} 条帖子`)
     } catch (error) {
       toast(error instanceof Error ? error.message : '主题圈采集失败')
     } finally {
@@ -47,7 +70,9 @@ export default function Topics() {
     }
   }
 
-  if (topicDetail) return <TopicDetail name={topicDetail} />
+  if (topicDetail) {
+    return <TopicDetail name={topicDetail} topics={topics} />
+  }
 
   if (loading) return <Spin tip="正在加载主题…" />
   if (error) return <Alert type="error" message={`加载失败：${error}`} showIcon />
@@ -66,14 +91,25 @@ export default function Topics() {
           {pipeline.status?.latestWorkflowRun ? ` · Workflow ${pipeline.status.latestWorkflowRun.status}` : ''}
         </span>
         <Button type="primary" icon={<ReloadOutlined />} onClick={refreshTopics} loading={refreshing}>
-          {refreshing ? '采集中…' : '立即采集并总结'}
+          {refreshing ? '采集中…' : '立即采集'}
         </Button>
       </div>
       {pipeline.error ? <Alert type="warning" message={`流水线状态加载失败：${pipeline.error}`} showIcon /> : null}
+      <div className={styles.topicModeTabs}>
+        {BOARD_MODES.map((mode) => (
+          <Button
+            key={mode.key}
+            type={boardMode === mode.key ? 'primary' : 'default'}
+            onClick={() => switchBoardMode(mode.key)}
+          >
+            {mode.label}
+          </Button>
+        ))}
+      </div>
       <Tabs
         className={styles.topicTabs}
-        activeKey={activeTopic}
-        onChange={setActiveTopic}
+        activeKey={boardMode === 'circle' ? activeTopic : ''}
+        onChange={switchTopic}
         items={topics.map((topic) => ({
           key: topic.name,
           label: (
@@ -82,9 +118,18 @@ export default function Topics() {
               <small>{topic.candidateCount24h}</small>
             </span>
           ),
-          children: <TopicDetail name={topic.name} embedded summary={topic} />,
+          children: <TopicDetail name={topic.name} topics={topics} embedded summary={topic} boardMode={boardMode} />,
         }))}
       />
+      {boardMode !== 'circle' ? (
+        <TopicDetail
+          name={boardMode === 'global' ? '全部主题' : '热度飙升'}
+          topics={topics}
+          embedded
+          boardMode={boardMode}
+          modeOnly
+        />
+      ) : null}
     </>
   )
 }
@@ -102,31 +147,93 @@ function formatTime(value: string) {
 
 function TopicDetail({
   name,
+  topics = [],
   embedded = false,
   summary,
+  boardMode = 'circle',
+  modeOnly = false,
 }: {
   name: string
+  topics?: TopicCircleMonitorTopic[]
   embedded?: boolean
-  summary?: {
-    enabled: boolean
-    accountCount: number
-    recentPostCount3h: number
-    candidateCount24h: number
-    triggeredEventCount24h: number
-  }
+  summary?: TopicCircleMonitorTopic
+  boardMode?: BoardMode
+  modeOnly?: boolean
 }) {
   const { set, toast } = useApp()
-  const { topics, loading, error, reload } = useTopicCircleTopics(name)
+  const [posts, setPosts] = useState<TopicCirclePostLeaderboardItem[]>([])
+  const [calculatedAt, setCalculatedAt] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
 
-  const triggered = topics.filter((t) => t.triggeredAt).length
+  const hotCandidates = posts.filter((post) => post.status === 'hot_event_candidate').length
+  const activeMode = BOARD_MODES.find((mode) => mode.key === boardMode) ?? BOARD_MODES[0]
+  const totalAccounts = modeOnly
+    ? topics.reduce((total, topic) => total + topic.accountCount, 0)
+    : summary?.accountCount ?? 0
+
+  const boardPosts = useMemo(() => {
+    if (boardMode === 'rising') {
+      return [...posts]
+        .sort((left, right) => {
+          const delta = (right.deltaViews ?? 0) - (left.deltaViews ?? 0)
+          if (delta !== 0) return delta
+          return (right.metrics?.views ?? 0) - (left.metrics?.views ?? 0)
+        })
+        .slice(0, 10)
+        .map((post, index) => ({ ...post, rank: index + 1 }))
+    }
+
+    return posts.slice(0, 10).map((post, index) => ({ ...post, rank: index + 1 }))
+  }, [boardMode, posts])
+
+  const loadLeaderboard = () => {
+    setLoading(true)
+    setError(null)
+    const targetTopics = boardMode === 'circle' && !modeOnly
+      ? [name]
+      : topics.length
+        ? topics.map((topic) => topic.name)
+        : [name]
+
+    Promise.all(targetTopics.map((topicName) => getTopicCirclePostLeaderboard(topicName)))
+      .then((results) => {
+        const mergedPosts = dedupeLeaderboardPosts(
+          results.flatMap((result) => result?.items ?? []),
+        )
+        const sortedPosts = mergedPosts.sort((left, right) => {
+          if (boardMode === 'rising') {
+            const delta = (right.deltaViews ?? 0) - (left.deltaViews ?? 0)
+            if (delta !== 0) return delta
+          }
+          return (right.metrics?.views ?? 0) - (left.metrics?.views ?? 0)
+        })
+        setPosts(sortedPosts)
+        const calculatedTimes = results
+          .map((result) => result?.calculatedAt)
+          .filter((value): value is string => Boolean(value))
+          .sort()
+        setCalculatedAt(calculatedTimes[calculatedTimes.length - 1] ?? null)
+        setExpandedPostId(null)
+      })
+      .catch((error: unknown) => {
+        setError(error instanceof Error ? error.message : '帖子榜单加载失败')
+      })
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadLeaderboard()
+  }, [name, boardMode, topics.length, modeOnly])
 
   const refreshTopics = async () => {
     setRefreshing(true)
     try {
       const result = await refreshTopicCircleTopics(name)
-      reload()
-      toast(`${name}采集完成：${result.collected} 条帖子，候选 ${result.analysis?.topics ?? 0} 个`)
+      loadLeaderboard()
+      toast(`${name}采集完成：${result.collected} 条帖子`)
     } catch (error) {
       toast(error instanceof Error ? error.message : '主题圈采集失败')
     } finally {
@@ -147,135 +254,129 @@ function TopicDetail({
       ) : null}
       <section className={styles.topicDetailSummary}>
         <div>
-          <span className="small">当前主题</span>
-          <h1 style={{ fontSize: 22, margin: '3px 0' }}>{name}话题</h1>
+          <span className="small">{modeOnly ? '当前榜单' : '当前主题'}</span>
+          <h1>{modeOnly ? activeMode.label : `${name}帖子榜`}</h1>
           <span className="small">
-            {summary
+            {modeOnly
+              ? `${topics.length} 个主题圈 · ${totalAccounts} 个监控账号`
+              : summary
               ? `${summary.enabled ? '启用' : '停用'} · ${summary.accountCount} 个监控账号 · 近 3 小时 ${summary.recentPostCount3h} 条帖子`
-              : '从监控账号帖子总结出的具体事件/话题'}
+              : '按监控账号帖子表现生成圈内榜单'}
           </span>
         </div>
         <div>
-          <Statistic title="话题数" value={topics.length} />
-          <span className="small">个话题</span>
+          <span className="small">{boardMode === 'circle' ? '圈内上榜' : '进入当前榜单'}</span>
+          <strong>{boardPosts.length}</strong>
+          <span className="small">条帖子</span>
         </div>
         <div>
-          <Statistic title="已触发响应" value={triggered} />
-          <span className="small">已进入内容链路</span>
+          <span className="small">Hot Event 候选</span>
+          <strong>{hotCandidates}</strong>
+          <span className="small">待事件判断</span>
         </div>
         <div>
-          <span className="small">24 小时候选 / 已触发</span>
-          <strong>{summary ? `${summary.candidateCount24h} / ${summary.triggeredEventCount24h}` : '—'}</strong>
+          <span className="small">榜单计算时间</span>
+          <strong>{calculatedAt ? formatTime(calculatedAt) : '—'}</strong>
         </div>
         <div>
-          <span className="small">手动刷新</span>
-          <Button type="primary" icon={<ReloadOutlined />} onClick={refreshTopics} loading={refreshing}>
-            {refreshing ? '采集中…' : '立即采集并总结'}
-          </Button>
+          <span className="small">监控账号</span>
+          <strong>{totalAccounts}</strong>
+          <span className="small">个</span>
         </div>
       </section>
+      <div className={styles.topicInlineRefresh}>
+        <span className="small">{modeOnly ? '手动刷新全部主题' : '手动刷新当前主题'}</span>
+        <Button type="primary" icon={<ReloadOutlined />} onClick={refreshTopics} loading={refreshing}>
+            {refreshing ? '采集中…' : '立即采集'}
+        </Button>
+      </div>
       <section className="card">
         <div className="card-head">
           <div>
-            <h2>全部话题</h2>
-            <p className="small">按讨论广度（B3h/B24h）与流量（Tmax）展示</p>
+            <h2>{modeOnly ? activeMode.label : `${name} · ${activeMode.label}`}</h2>
+            <p className="small">{activeMode.desc} · 最近更新 {calculatedAt ? formatTime(calculatedAt) : '—'}</p>
           </div>
         </div>
         <div className={styles.topicTrendHead}>
-          <span>话题</span>
-          <span>B3h</span>
-          <span>B24h</span>
-          <span>Tmax</span>
+          <span>排名</span>
+          <span>热门内容</span>
+          <span>来源账号</span>
+          <span>当前浏览量</span>
+          <span>本轮新增</span>
+          <span>榜单变化</span>
           <span>状态</span>
         </div>
         {loading ? (
-          <Spin tip="正在加载话题…" />
+          <Spin tip="正在加载帖子榜单…" />
         ) : error ? (
           <Alert type="error" message={`加载失败：${error}`} showIcon />
-        ) : topics.length === 0 ? (
-          <Empty description="暂无话题，等待采集与总结" />
+        ) : boardPosts.length === 0 ? (
+          <Empty description="暂无帖子榜单，等待采集" />
         ) : (
-          <Collapse
-            ghost
-            className={styles.topicTrendCollapse}
-            items={topics.map((topic) => ({
-              key: topic.id,
-              label: <TopicTrendLabel topic={topic} />,
-              children: <TopicPostPanel topic={topic} />,
-            }))}
-          />
+          <div className={styles.topicLeaderboard}>
+            {boardPosts.map((post) => {
+              const expanded = expandedPostId === post.signalId
+              return (
+                <article key={post.signalId} className={styles.topicRankItem}>
+                  <button
+                    type="button"
+                    className={styles.topicTrendRow}
+                    onClick={() => setExpandedPostId(expanded ? null : post.signalId)}
+                  >
+                    <RankBadge rank={post.rank} />
+                    <TopicTrendLabel post={post} />
+                  </button>
+                  {expanded ? <TopicPostPanel post={post} /> : null}
+                </article>
+              )
+            })}
+          </div>
         )}
       </section>
     </>
   )
 }
 
-function TopicTrendLabel({ topic }: { topic: TopicCircleTopicItem }) {
+function TopicTrendLabel({ post }: { post: TopicCirclePostLeaderboardItem }) {
   return (
-    <div className={styles.topicTrendRow}>
+    <>
       <span>
-        <b>{topic.summary || topic.title}</b>
+        <b>{summarizePost(post)}</b>
         <br />
-        <small className="muted">
-          {topic.circle} · {topic.postIds.length} 条相关帖子
-        </small>
+        <small className="muted">{post.topicWatchName} · 发布 {formatTime(post.publishedAt)}</small>
       </span>
-      <strong>{topic.b3h}</strong>
-      <strong>{topic.b24h}</strong>
-      <span>{topic.tmax != null ? `${topic.tmax.toFixed(1)}x` : '—'}</span>
-      <Tag color={topic.triggerType ? 'success' : 'default'}>
-        {topic.triggerType ? TRIGGER_LABEL[topic.triggerType] ?? '已触发' : '观察中'}
+      <span className={styles.topicAuthor}>
+        <i>{getAuthorInitial(post.authorHandle)}</i>
+        @{post.authorHandle.replace(/^@/, '')}
+      </span>
+      <strong>{formatMetric(post.metrics?.views)}</strong>
+      <span className={post.deltaViews ? styles.topicPositive : ''}>
+        {post.deltaViews == null ? '—' : `+${formatMetric(post.deltaViews)}`}
+      </span>
+      <span>{formatRankChange(post.previousRank, post.rank)}</span>
+      <Tag color={post.status === 'hot_event_candidate' ? 'orange' : 'processing'}>
+        {post.status === 'hot_event_candidate' ? 'Hot Event 候选' : '观察中'}
       </Tag>
-    </div>
+    </>
   )
 }
 
-function TopicPostPanel({ topic }: { topic: TopicCircleTopicItem }) {
-  const [posts, setPosts] = useState<TopicCircleTopicPost[]>(topic.posts)
-  const [loading, setLoading] = useState(topic.posts.length === 0)
-  const [error, setError] = useState<string | null>(null)
-  const uniqueAuthors = Array.from(new Set(posts.map((post) => post.authorHandle).filter(Boolean)))
+function RankBadge({ rank }: { rank: number }) {
+  const tone = rank <= 3 ? styles.topicRankHot : ''
+  return <span className={`${styles.topicRankBadge} ${tone}`}>{rank}</span>
+}
 
-  useEffect(() => {
-    let cancelled = false
-
-    setLoading(true)
-    setError(null)
-    getTopicCircleTopicPosts(topic)
-      .then((items) => {
-        if (!cancelled) setPosts(items)
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) setError(error instanceof Error ? error.message : '关联帖子加载失败')
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [topic])
-
+function TopicPostPanel({ post }: { post: TopicCirclePostLeaderboardItem }) {
   return (
     <div className={styles.topicPostPanel}>
       <div className={styles.topicPostSummary}>
-        <span>讨论账号：{uniqueAuthors.length ? uniqueAuthors.join('、') : '—'}</span>
-        <span>相关帖子：{posts.length} 条</span>
+        <span>来源账号：@{post.authorHandle.replace(/^@/, '')}</span>
+        <span>首次观测：{formatTime(post.firstObservedAt)}</span>
+        <span>最近观测：{formatTime(post.lastObservedAt)}</span>
       </div>
-      {loading ? (
-        <Spin tip="正在加载关联帖子…" />
-      ) : error ? (
-        <Alert type="error" message={`关联帖子加载失败：${error}`} showIcon />
-      ) : posts.length === 0 ? (
-        <Empty description="暂无关联帖子" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      ) : (
-        <div className={styles.topicPostList}>
-          {posts.map((post) => (
-            <TopicPostItem key={`${topic.id}-${post.postId}`} post={post} />
-          ))}
-        </div>
-      )}
+      <div className={styles.topicPostList}>
+        <TopicPostItem post={post} />
+      </div>
     </div>
   )
 }
@@ -307,4 +408,39 @@ function TopicPostItem({ post }: { post: TopicCircleTopicPost }) {
 function formatMetric(value?: number) {
   if (value == null) return '—'
   return new Intl.NumberFormat('zh-CN', { notation: 'compact' }).format(value)
+}
+
+function formatRankChange(previousRank: number | null, rank: number) {
+  if (previousRank == null) return '—'
+  const delta = previousRank - rank
+  if (delta > 0) return `↑ ${delta}`
+  if (delta < 0) return `↓ ${Math.abs(delta)}`
+  return '—'
+}
+
+function getAuthorInitial(handle: string) {
+  return handle.replace(/^@/, '').slice(0, 1).toUpperCase() || 'X'
+}
+
+function summarizePost(post: TopicCirclePostLeaderboardItem) {
+  const text = post.text.replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim()
+  if (!text) return '暂无正文摘要'
+  if (/[\u4e00-\u9fa5]/.test(text)) return truncateText(text, 42)
+  return truncateText(`${post.authorHandle.replace(/^@/, '')} 发布了一条与${post.topicWatchName}相关的帖子：${text}`, 58)
+}
+
+function truncateText(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value
+}
+
+function dedupeLeaderboardPosts(posts: TopicCirclePostLeaderboardItem[]) {
+  const map = new Map<string, TopicCirclePostLeaderboardItem>()
+  posts.forEach((post) => {
+    const key = post.postId || post.url || post.signalId
+    const existing = map.get(key)
+    if (!existing || new Date(post.lastObservedAt).getTime() > new Date(existing.lastObservedAt).getTime()) {
+      map.set(key, post)
+    }
+  })
+  return Array.from(map.values())
 }

@@ -36,6 +36,27 @@ export interface TopicCircleTopicPost {
   } | null
 }
 
+export interface TopicCirclePostLeaderboardItem extends TopicCircleTopicPost {
+  rank: number
+  signalId: string
+  topicWatchId: string
+  topicWatchName: string
+  firstObservedAt: string
+  lastObservedAt: string
+  deltaViews: number | null
+  previousRank: number | null
+  status: 'hot_event_candidate' | 'watching'
+}
+
+export interface TopicCirclePostLeaderboard {
+  topicWatchId: string
+  topicWatchName: string
+  calculatedAt: string
+  windowStartAt: string
+  windowEndAt: string
+  items: TopicCirclePostLeaderboardItem[]
+}
+
 export interface TopicCircleMonitorTopic {
   id: string
   name: string
@@ -106,21 +127,22 @@ export async function getTopicCircleMonitorTopics(): Promise<TopicCircleMonitorT
 
   return Promise.all(
     watches.map(async (watch) => {
-      const candidates = await request<V2TopicCandidate[]>(
-        `/topic-watches/${encodeURIComponent(watch.id)}/candidates`,
+      const leaderboard = await request<TopicCirclePostLeaderboard>(
+        `/topic-watches/${encodeURIComponent(watch.id)}/post-leaderboard`,
       )
-      const mappedCandidates = candidates.map((candidate) => mapCandidate(candidate, watch))
-      const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+      const threeHoursAgo = Date.now() - 3 * 60 * 60 * 1000
 
       return {
         id: watch.id,
         name: watch.name,
         enabled: watch.status === 'active',
         accountCount: getTopicWatchAccountCount(watch),
-        recentPostCount3h: mappedCandidates.reduce((sum, candidate) => sum + candidate.b3h, 0),
-        candidateCount24h: mappedCandidates.filter((candidate) => new Date(candidate.updatedAt).getTime() >= dayAgo).length,
-        triggeredEventCount24h: mappedCandidates.filter((candidate) => candidate.triggeredAt).length,
-        latestCandidates: mappedCandidates.slice(0, 3),
+        recentPostCount3h: leaderboard.items.filter(
+          (item) => new Date(item.publishedAt).getTime() >= threeHoursAgo,
+        ).length,
+        candidateCount24h: leaderboard.items.length,
+        triggeredEventCount24h: leaderboard.items.filter((item) => item.status === 'hot_event_candidate').length,
+        latestCandidates: [],
       }
     }),
   )
@@ -185,6 +207,18 @@ export async function getTopicCircleTopics(
   )
 
   return candidates.map((candidate) => mapCandidate(candidate, matchedWatch))
+}
+
+export async function getTopicCirclePostLeaderboard(
+  circle: string,
+): Promise<TopicCirclePostLeaderboard | null> {
+  const watches = await request<V2TopicWatch[]>('/topic-watches')
+  const matchedWatch = watches.find((watch) => watch.id === circle || watch.name === circle)
+  if (!matchedWatch) return null
+
+  return request<TopicCirclePostLeaderboard>(
+    `/topic-watches/${encodeURIComponent(matchedWatch.id)}/post-leaderboard`,
+  )
 }
 
 export async function getTopicCircleTopicPosts(

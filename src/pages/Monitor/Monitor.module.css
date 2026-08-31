@@ -49,6 +49,20 @@
   background: #fff;
 }
 
+.topicModeTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.topicModeTabs :global(.ant-btn) {
+  height: 38px;
+  min-width: 92px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
 .number {
   font-size: 25px;
   color: var(--g);
@@ -610,7 +624,7 @@
 
 .topicDetailSummary {
   display: grid;
-  grid-template-columns: 1.5fr repeat(3, 1fr);
+  grid-template-columns: 1.45fr repeat(4, 1fr);
   border: 1px solid var(--line);
   background: #fff;
   margin-bottom: 14px;
@@ -631,28 +645,102 @@
   color: var(--g);
 }
 
+.topicDetailSummary h1 {
+  margin: 3px 0;
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.topicInlineRefresh {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -2px 0 14px;
+}
+
 .topicTrendHead,
 .topicTrendRow {
   display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) 100px 100px 130px 135px;
-  gap: 10px;
+  grid-template-columns: 48px minmax(280px, 1.5fr) 160px 120px 120px 100px 140px;
+  gap: 12px;
   align-items: center;
 }
 
 .topicTrendHead {
-  padding: 9px;
+  padding: 10px 12px;
   background: #edf2f2;
   color: var(--muted);
   font-size: 11px;
 }
 
 .topicTrendRow {
-  padding: 12px 9px;
+  width: 100%;
+  padding: 13px 12px;
+  border: 0;
   border-bottom: 1px solid var(--line2);
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .topicTrendRow:hover {
   background: #f5f9f8;
+}
+
+.topicLeaderboard {
+  border-bottom: 1px solid var(--line2);
+}
+
+.topicRankItem {
+  background: #fff;
+}
+
+.topicRankBadge {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d3dfdc;
+  border-radius: 999px;
+  background: #eef3f2;
+  color: #5e6f6b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.topicRankHot {
+  border-color: #e8bb57;
+  background: #fff8dc;
+  color: #c58916;
+}
+
+.topicAuthor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #566864;
+}
+
+.topicAuthor i {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #357f76;
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.topicPositive {
+  color: #1a9b78;
+  font-weight: 800;
 }
 
 .topicTrendCollapse {
@@ -684,6 +772,7 @@
   display: grid;
   gap: 10px;
   border-left: 2px solid #d6e4e1;
+  margin: 0 12px 12px 60px;
   padding-left: 12px;
 }
 
@@ -779,11 +868,13 @@
 
   .topicTrendHead,
   .topicTrendRow {
-    grid-template-columns: minmax(190px, 1.5fr) 90px 90px 120px;
+    grid-template-columns: 42px minmax(190px, 1.5fr) 110px 100px 120px;
   }
 
-  .topicTrendHead > :nth-child(4),
-  .topicTrendRow > :nth-child(4) {
+  .topicTrendHead > :nth-child(5),
+  .topicTrendRow > :nth-child(5),
+  .topicTrendHead > :nth-child(6),
+  .topicTrendRow > :nth-child(6) {
     display: none;
   }
 
@@ -808,5 +899,21 @@
   .youtubeStats > div:last-child,
   .youtubeRuleStrip > div:last-child {
     border-bottom: 0;
+  }
+
+  .topicTrendHead {
+    display: none;
+  }
+
+  .topicTrendRow {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .topicTrendRow > :nth-child(n + 3) {
+    display: none;
+  }
+
+  .topicPostPanel {
+    margin-left: 12px;
   }
 }
