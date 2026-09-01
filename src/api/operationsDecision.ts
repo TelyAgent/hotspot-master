@@ -14,6 +14,21 @@ export interface OperationRecommendationAngle {
   riskNotes: string[]
 }
 
+export interface OperationRecommendationEvidence {
+  id: string
+  sourceType: string
+  sourceName?: string | null
+  authorName?: string | null
+  title?: string | null
+  summary: string
+  text?: string | null
+  url?: string | null
+  publishedAt?: string | null
+  observedAt: string
+  metrics?: Record<string, unknown> | null
+  confidence: string
+}
+
 export interface OperationRecommendation {
   id: string
   sourceEventId?: string | null
@@ -31,6 +46,7 @@ export interface OperationRecommendation {
   recommendedProductUrl?: string | null
   urlReason?: string | null
   evidenceRefs: string[]
+  evidenceItems?: OperationRecommendationEvidence[]
   riskNotes: string[]
   missingData: string[]
   status: string

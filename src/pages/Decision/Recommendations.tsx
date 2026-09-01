@@ -7,6 +7,7 @@ import {
   listOperationRecommendations,
   rejectOperationRecommendation,
   runOperationRecommendations,
+  type OperationRecommendationEvidence,
   type OperationRecommendation,
   type OperationRecommendationBasis,
   type OperationRecommendationPriority,
@@ -328,9 +329,26 @@ export default function DecisionRecommendations() {
               <h3>关键证据</h3>
               <div className={styles.angleList}>
                 {buildEvidence(active).map((item, index) => (
-                  <div className={styles.angleItem} key={item}>
-                    <b>Evidence {index + 1}</b>
-                    <p>{item}</p>
+                  <div className={styles.evidenceItem} key={item.id}>
+                    <div className={styles.evidenceHead}>
+                      <b>{item.title || `Evidence ${index + 1}`}</b>
+                      {item.url ? (
+                        <a href={item.url} target="_blank" rel="noreferrer">
+                          查看原始链接 ↗
+                        </a>
+                      ) : null}
+                    </div>
+                    <p>{item.summary || item.text || '暂无可读证据内容'}</p>
+                    <small className={styles.muted}>
+                      {[
+                        item.sourceName,
+                        item.authorName,
+                        item.publishedAt ? `发布 ${formatDateTime(item.publishedAt)}` : null,
+                        item.observedAt ? `采集 ${formatDateTime(item.observedAt)}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </small>
                   </div>
                 ))}
               </div>
@@ -422,9 +440,55 @@ function getLatestRecommendationTime(items: OperationRecommendation[]): string |
   return latest == null ? null : new Date(latest).toISOString()
 }
 
-function buildEvidence(item: OperationRecommendation): string[] {
-  const evidence = [...item.evidenceRefs]
-  if (item.predxNewsItem?.sourceUrl) evidence.push(item.predxNewsItem.sourceUrl)
-  if (item.predxNewsItem?.primaryMarketUrl) evidence.push(item.predxNewsItem.primaryMarketUrl)
-  return evidence
+type DisplayEvidence = OperationRecommendationEvidence & {
+  id: string
+}
+
+function buildEvidence(item: OperationRecommendation): DisplayEvidence[] {
+  const resolved: DisplayEvidence[] = (item.evidenceItems ?? []).map((evidence) => ({
+    ...evidence,
+    id: evidence.id,
+  }))
+  const resolvedIds = new Set(resolved.map((evidence) => evidence.id))
+  const missingEvidence = item.evidenceRefs
+    .filter((id) => !resolvedIds.has(id))
+    .map((id): DisplayEvidence => ({
+      id,
+      sourceType: 'unknown',
+      sourceName: '未解析证据',
+      title: '未解析证据',
+      summary: `证据 ${id} 暂未解析到原文或来源。`,
+      observedAt: item.updatedAt,
+      confidence: item.confidence,
+    }))
+  const predxSource = item.predxNewsItem?.sourceUrl
+    ? [
+        {
+          id: `predx-news-${item.predxNewsItem.sourceUrl}`,
+          sourceType: 'predx_news',
+          sourceName: item.predxNewsItem.sourceName || 'PredX 新闻',
+          title: item.predxNewsItem.newsTitle || item.predxNewsItem.title,
+          summary: item.predxNewsItem.title,
+          url: item.predxNewsItem.sourceUrl,
+          publishedAt: item.predxNewsItem.publishedAt,
+          observedAt: item.updatedAt,
+          confidence: item.confidence,
+        } satisfies DisplayEvidence,
+      ]
+    : []
+  const predxMarket = item.predxNewsItem?.primaryMarketUrl
+    ? [
+        {
+          id: `predx-market-${item.predxNewsItem.primaryMarketUrl}`,
+          sourceType: 'predx_market',
+          sourceName: 'PredX 市场',
+          title: item.predxNewsItem.primaryMarketTitle || '匹配的 PredX 市场',
+          summary: item.productAssociationRationale,
+          url: item.predxNewsItem.primaryMarketUrl,
+          observedAt: item.updatedAt,
+          confidence: item.confidence,
+        } satisfies DisplayEvidence,
+      ]
+    : []
+  return [...resolved, ...missingEvidence, ...predxSource, ...predxMarket]
 }

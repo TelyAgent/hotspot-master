@@ -401,6 +401,34 @@
   background: #fff;
 }
 
+.evidenceItem {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.evidenceItem p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.65;
+}
+
+.evidenceHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.evidenceHead a {
+  flex: none;
+  color: var(--g);
+  font-weight: 700;
+}
+
 .angleSelectable {
   width: 100%;
   cursor: pointer;
