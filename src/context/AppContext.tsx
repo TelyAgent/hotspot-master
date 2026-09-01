@@ -4,6 +4,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { App as AntdApp } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { EventItem, PageId } from '../data/types'
 import type { SettingId } from '../data/settings'
@@ -34,18 +35,12 @@ interface ModalState {
   }
 }
 
-interface ToastState {
-  msg: string
-  id: number
-}
-
 interface AppContextValue extends AppState {
   page: PageId
   user: string | null
   isAuthenticated: boolean
   events: EventItem[]
   modal: ModalState | null
-  toastState: ToastState | null
 
   set: (patch: Partial<AppState>) => void
   go: (page: PageId) => void
@@ -99,10 +94,10 @@ const PAGE_IDS = Object.keys(PAGE_LABELS) as PageId[]
 const AUTH_STORAGE_KEY = 'hotspot-monitor.user'
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { notification } = AntdApp.useApp()
   const [state, setState] = useState<AppState>(defaultState)
   const [events, setEvents] = useState<EventItem[]>(initialEvents)
   const [modal, setModal] = useState<ModalState | null>(null)
-  const [toastState, setToastState] = useState<ToastState | null>(null)
   const [user, setUser] = useState<string | null>(
     () => localStorage.getItem(AUTH_STORAGE_KEY),
   )
@@ -134,7 +129,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const toast = (msg: string) => setToastState({ msg, id: Date.now() })
+  const toast = (msg: string) => {
+    notification.open({
+      message: msg,
+      placement: 'topRight',
+      duration: 2.5,
+    })
+  }
 
   const openModal = (
     title: string,
@@ -192,7 +193,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isAuthenticated: user != null,
     events,
     modal,
-    toastState,
     set,
     go,
     login,

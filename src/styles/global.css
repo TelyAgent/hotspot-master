@@ -481,17 +481,6 @@ h3 {
   overflow: auto;
 }
 
-/* ---------- toast ---------- */
-.toast {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  background: #17332f;
-  color: #fff;
-  padding: 11px 14px;
-  z-index: 30;
-}
-
 @media (max-width: 1180px) {
   .app {
     grid-template-columns: 200px minmax(0, 1fr);

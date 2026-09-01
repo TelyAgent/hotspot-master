@@ -79,6 +79,8 @@ export default function TwitterSetting() {
   const [config, setConfig] = useState<PlatformCollectionConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingTrendToggle, setSavingTrendToggle] = useState(false)
+  const [savingTopicToggle, setSavingTopicToggle] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [regions, setRegions] = useState<string[]>(REGION_OPTIONS)
   const [frequencyMs, setFrequencyMs] = useState(2 * 60 * 60 * 1000)
@@ -174,6 +176,61 @@ export default function TwitterSetting() {
     }
   }
 
+  const saveSchedulerSwitch = async (
+    nextValues: {
+      trendCollectionEnabled?: boolean
+      topicWatchSchedulerEnabled?: boolean
+    },
+  ) => {
+    if (!config) return
+    const nextTrendLimit = normalizeTrendLimit(trendLimit) ?? config.variables.defaultTrendLimit ?? 30
+    const nextVariables = {
+      ...config.variables,
+      regions,
+      defaultTrendLimit: nextTrendLimit,
+      trendCollectionIntervalMs: frequencyMs,
+      trendCollectionEnabled,
+      topicWatchSchedulerEnabled,
+      trendEventWorkflowId: workflowId,
+      ...nextValues,
+    }
+    const nextConfig = await updatePlatformCollectionConfig('x', {
+      defaultRegions: regions,
+      variables: nextVariables,
+    })
+    setConfig(nextConfig)
+  }
+
+  const handleTrendCollectionSwitch = async (checked: boolean) => {
+    const previous = trendCollectionEnabled
+    setTrendCollectionEnabled(checked)
+    setSavingTrendToggle(true)
+    try {
+      await saveSchedulerSwitch({ trendCollectionEnabled: checked })
+      toast(checked ? 'X 热榜定时采集已开启' : 'X 热榜定时采集已关闭')
+    } catch (e) {
+      setTrendCollectionEnabled(previous)
+      toast(e instanceof Error ? e.message : '保存 X 热榜定时采集开关失败')
+    } finally {
+      setSavingTrendToggle(false)
+    }
+  }
+
+  const handleTopicWatchSchedulerSwitch = async (checked: boolean) => {
+    const previous = topicWatchSchedulerEnabled
+    setTopicWatchSchedulerEnabled(checked)
+    setSavingTopicToggle(true)
+    try {
+      await saveSchedulerSwitch({ topicWatchSchedulerEnabled: checked })
+      toast(checked ? '重点主题定时采集已开启' : '重点主题定时采集已关闭')
+    } catch (e) {
+      setTopicWatchSchedulerEnabled(previous)
+      toast(e instanceof Error ? e.message : '保存重点主题定时采集开关失败')
+    } finally {
+      setSavingTopicToggle(false)
+    }
+  }
+
   const reloadTopicWatches = async () => {
     setTopicWatches(await getTopicWatchConfigs())
   }
@@ -222,8 +279,8 @@ export default function TwitterSetting() {
 
   return (
     <section className={styles.settingPanel}>
-      <div className={styles.settingSection}>
-        <div className="setting-title">
+      <div className={styles.settingHero}>
+        <div className={styles.settingHeroContent}>
           <div>
             <h2>Twitter 配置</h2>
             <p className="small">X 热搜榜采集、榜单形成 Event 工作流、重点主题追踪。</p>
@@ -241,18 +298,23 @@ export default function TwitterSetting() {
               <h3>获取榜单的时间频率</h3>
               <p className="small">保存后由服务端同步到 X 榜单采集任务。</p>
             </div>
-            <span className="pill green">{frequencyLabel}</span>
+            <span className={styles.statusBadge}>{frequencyLabel}</span>
           </div>
           <div className={styles.settingControls}>
             <div className={styles.switchRow}>
-              <span>定时采集</span>
+              <div>
+                <strong>定时采集</strong>
+                <span>关闭后只保留手动采集入口。</span>
+              </div>
               <Switch
                 checked={trendCollectionEnabled}
                 checkedChildren="开启"
                 unCheckedChildren="关闭"
-                onChange={setTrendCollectionEnabled}
+                loading={savingTrendToggle}
+                onChange={handleTrendCollectionSwitch}
               />
             </div>
+            <div className={styles.controlRow}>
             <div className="field">
               <label>采集频率</label>
               <Select
@@ -277,7 +339,9 @@ export default function TwitterSetting() {
                 style={{ width: '100%' }}
               />
             </div>
+            </div>
           </div>
+          <div className={styles.regionHeader}>采集地区</div>
           <div className={styles.regionList}>
             {REGION_OPTIONS.map((region) => (
               <Checkbox
@@ -297,16 +361,20 @@ export default function TwitterSetting() {
               <h3>主题圈配置</h3>
               <p className="small">保存后由服务端同步到主题圈采集任务。</p>
             </div>
-            <span className="pill green">按主题计划</span>
+            <span className={styles.statusBadge}>按主题计划</span>
           </div>
           <div className={styles.settingControls}>
             <div className={styles.switchRow}>
-              <span>定时采集</span>
+              <div>
+                <strong>定时采集</strong>
+                <span>每个主题使用各自的监控账号与刷新策略。</span>
+              </div>
               <Switch
                 checked={topicWatchSchedulerEnabled}
                 checkedChildren="开启"
                 unCheckedChildren="关闭"
-                onChange={setTopicWatchSchedulerEnabled}
+                loading={savingTopicToggle}
+                onChange={handleTopicWatchSchedulerSwitch}
               />
             </div>
           </div>

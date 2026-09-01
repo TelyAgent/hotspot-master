@@ -170,23 +170,22 @@ export default function OpportunityRulesSetting() {
 
   return (
     <section className={styles.settingPanel}>
-      <div className={styles.settingSection}>
-        <div className="setting-title">
-          <div>
-            <h2>热点挖掘规则包</h2>
-            <p className="small">规则修改会保存为数据库草稿；不会覆盖项目里的预设 Markdown 文档。</p>
-          </div>
-          <div className={styles.inlineActions}>
-            <Button icon={<UndoOutlined />} onClick={resetToPreset} loading={resetting}>
-              恢复预设
-            </Button>
-            <Button icon={<ReloadOutlined />} onClick={() => loadRulePack()} loading={loading}>
-              重新加载
-            </Button>
-            <Button onClick={activateDraft} loading={activating} disabled={!latestDraft || !latestDraftTestPassed}>
-              启用草稿
-            </Button>
-          </div>
+      <div className={styles.rulePackHero}>
+        <div>
+          <div className={styles.kicker}>OPPORTUNITY RULE PACK</div>
+          <h2>热点挖掘规则包</h2>
+          <p>规则修改会保存为数据库草稿；不会覆盖项目里的预设 Markdown 文档。</p>
+        </div>
+        <div className={styles.rulePackToolbar}>
+          <Button icon={<UndoOutlined />} onClick={resetToPreset} loading={resetting}>
+            恢复预设
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={() => loadRulePack()} loading={loading}>
+            重新加载
+          </Button>
+          <Button type="primary" onClick={activateDraft} loading={activating} disabled={!latestDraft || !latestDraftTestPassed}>
+            启用草稿
+          </Button>
         </div>
       </div>
 
@@ -195,48 +194,74 @@ export default function OpportunityRulesSetting() {
           <Spin tip="正在加载热点挖掘规则包…" />
         </div>
       ) : error ? (
-        <Alert type="warning" message={`规则包加载失败：${error}`} showIcon />
+        <div className={styles.rulePackBody}>
+          <Alert type="warning" message={`规则包加载失败：${error}`} showIcon />
+        </div>
       ) : rulePack ? (
-        <div className={styles.rulePackEditor}>
-          <div className={styles.workflowMeta}>
-            <span>当前版本</span>
-            <code>v{rulePack.version} · {formatRulePackStatus(rulePack.status)}</code>
-            <span>规则文档</span>
-            <code>{rulePack.documents.length} 个</code>
-            <span>路由配置</span>
-            <code>{formatRuleRoutes(rulePack.routes)}</code>
-            <span>草稿状态</span>
-            <code>
-              {latestDraft
-                ? `v${latestDraft.version} 已保存，${latestDraftTestPassed ? '测试通过' : '测试未通过'}`
-                : '暂无待启用草稿'}
-            </code>
+        <div className={styles.rulePackBody}>
+          <div className={styles.rulePackSummary}>
+            <div>
+              <span>当前版本</span>
+              <strong>v{rulePack.version}</strong>
+              <small>{formatRulePackStatus(rulePack.status)}</small>
+            </div>
+            <div>
+              <span>规则文档</span>
+              <strong>{rulePack.documents.length} 个</strong>
+              <small>可查看、编辑和测试</small>
+            </div>
+            <div>
+              <span>路由配置</span>
+              <strong>{formatRouteCount(rulePack.routes)} 条</strong>
+              <small>{formatRuleRoutes(rulePack.routes)}</small>
+            </div>
+            <div>
+              <span>草稿状态</span>
+              <strong>{latestDraft ? `v${latestDraft.version}` : '暂无'}</strong>
+              <small>
+                {latestDraft
+                  ? latestDraftTestPassed
+                    ? '测试通过，允许启用'
+                    : '测试未通过，继续调整'
+                  : '暂无待启用草稿'}
+              </small>
+            </div>
           </div>
 
-          <div className={styles.ruleDocList}>
-            {rulePack.documents.map((document) => (
-              <div key={document.id} className={styles.ruleDocItem}>
-                <div className={styles.ruleDocTitle}>
-                  <strong>{document.title}</strong>
-                  <span>{document.id}</span>
-                </div>
-                <div className={styles.ruleDocMeta}>
-                  <Tag>{document.markdown.split(/\r?\n/).length} 行</Tag>
-                </div>
-                <div className={styles.inlineActions}>
-                  <Button icon={<EyeOutlined />} onClick={() => openDocumentViewer(document)}>
-                    查看
-                  </Button>
-                  <Button type="primary" icon={<SaveOutlined />} onClick={() => openDocumentEditor(document)}>
-                    编辑
-                  </Button>
-                </div>
+          <div className={styles.ruleDocPanel}>
+            <div className={styles.ruleDocPanelHeader}>
+              <div>
+                <h3>规则文档</h3>
+                <p>每个文档负责一类判断原则或来源规则，编辑后会先生成草稿并跑短流程测试。</p>
               </div>
-            ))}
+            </div>
+            <div className={styles.ruleDocList}>
+              {rulePack.documents.map((document) => (
+                <div key={document.id} className={styles.ruleDocItem}>
+                  <div className={styles.ruleDocTitle}>
+                    <strong>{document.title}</strong>
+                    <span>{document.id}</span>
+                  </div>
+                  <div className={styles.ruleDocMeta}>
+                    <Tag>{document.markdown.split(/\r?\n/).length} 行</Tag>
+                  </div>
+                  <div className={styles.inlineActions}>
+                    <Button icon={<EyeOutlined />} onClick={() => openDocumentViewer(document)}>
+                      查看
+                    </Button>
+                    <Button type="primary" icon={<SaveOutlined />} onClick={() => openDocumentEditor(document)}>
+                      编辑
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
-        <Empty description="规则包未加载" />
+        <div className={styles.rulePackBody}>
+          <Empty description="规则包未加载" />
+        </div>
       )}
     </section>
   )
@@ -440,6 +465,10 @@ function formatRulePackStatus(status: string) {
 function formatRuleRoutes(routes: OpportunityRulePackSnapshot['routes']) {
   if (!routes.length) return '未解析到路由'
   return routes.map((route) => `${route.signalType}:${route.documents.length}`).join('，')
+}
+
+function formatRouteCount(routes: OpportunityRulePackSnapshot['routes']) {
+  return routes.reduce((sum, route) => sum + route.documents.length, 0)
 }
 
 function isTestPassed(result: unknown) {

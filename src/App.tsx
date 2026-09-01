@@ -6,13 +6,12 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom'
-import { ConfigProvider, Layout } from 'antd'
+import { App as AntdApp, ConfigProvider, Layout } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import { AppProvider, useApp } from './context/AppContext'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import Modal from './components/Modal'
-import Toast from './components/Toast'
 import AssistantChatFloat from './components/AssistantChatFloat'
 import Login from './pages/Login/Login'
 import Monitor from './pages/Monitor/Monitor'
@@ -42,7 +41,6 @@ function AppLayout() {
         </Layout.Content>
       </Layout>
       <Modal />
-      <Toast />
       <AssistantChatFloat />
     </Layout>
   )
@@ -89,32 +87,34 @@ export default function App() {
         },
       }}
     >
-      <BrowserRouter>
-        <AppProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+      <AntdApp notification={{ placement: 'topRight' }}>
+        <BrowserRouter>
+          <AppProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            <Route element={<RequireAuth />}>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/monitor" replace />} />
-                <Route path="/overview" element={<Navigate to="/monitor" replace />} />
-                <Route path="/monitor" element={<Monitor />} />
-                <Route path="/monitor/youtube" element={<YouTubeMonitor />} />
-                <Route path="/decision" element={<Navigate to="/decision/recommendations" replace />} />
-                <Route path="/decision/recommendations" element={<DecisionRecommendations />} />
-                <Route path="/decision/inbox" element={<DecisionContextInbox />} />
-                <Route path="/decision/records" element={<DecisionRecords />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/future" element={<Schedule />} />
-                <Route path="/insights" element={<Insights />} />
-                <Route path="/settings" element={<Settings />} />
+              <Route element={<RequireAuth />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<Navigate to="/monitor" replace />} />
+                  <Route path="/overview" element={<Navigate to="/monitor" replace />} />
+                  <Route path="/monitor" element={<Monitor />} />
+                  <Route path="/monitor/youtube" element={<YouTubeMonitor />} />
+                  <Route path="/decision" element={<Navigate to="/decision/recommendations" replace />} />
+                  <Route path="/decision/recommendations" element={<DecisionRecommendations />} />
+                  <Route path="/decision/inbox" element={<DecisionContextInbox />} />
+                  <Route path="/decision/records" element={<DecisionRecords />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/future" element={<Schedule />} />
+                  <Route path="/insights" element={<Insights />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AppProvider>
-      </BrowserRouter>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AppProvider>
+        </BrowserRouter>
+      </AntdApp>
     </ConfigProvider>
   )
 }

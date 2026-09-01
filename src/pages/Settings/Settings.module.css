@@ -1,13 +1,16 @@
 .settingsLayout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 218px minmax(0, 1fr);
+  gap: 16px;
 }
 
 .settingsNav {
   background: #fff;
   border: 1px solid var(--line);
-  padding: 7px;
+  border-radius: 10px;
+  padding: 8px;
+  align-self: start;
+  box-shadow: 0 10px 26px rgba(16, 38, 35, 0.04);
 }
 
 .settingsMenu {
@@ -15,21 +18,22 @@
 }
 
 .settingsMenu :global(.ant-menu-item) {
-  border-radius: 0;
+  border-radius: 8px;
   margin-inline: 0;
+  margin-block: 2px;
   width: 100%;
+  height: 40px;
+  line-height: 40px;
 }
 
 .settingsMenu :global(.ant-menu-item-selected) {
-  background: var(--soft);
+  background: #e8f3f1;
   color: var(--g);
   font-weight: 700;
 }
 
 .settingsMenu :global(.ant-menu-item-selected::after) {
-  inset-inline-start: 0;
-  inset-inline-end: auto;
-  border-inline-end: 3px solid var(--g);
+  display: none;
 }
 
 .settingTab {
@@ -51,7 +55,35 @@
 .settingPanel {
   background: #fff;
   border: 1px solid var(--line);
-  padding: 18px;
+  border-radius: 10px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(16, 38, 35, 0.04);
+}
+
+.settingHero {
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(232, 243, 241, 0.92), rgba(255, 255, 255, 0.4)),
+    #fff;
+}
+
+.settingHeroContent {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.settingHero h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  letter-spacing: 0;
+}
+
+.settingHero p {
+  margin: 0;
 }
 
 .settingSection {
@@ -75,12 +107,15 @@
 
 .twitterGrid {
   display: grid;
-  gap: 14px;
+  gap: 18px;
+  padding: 20px 24px 24px;
 }
 
 .twitterBlock {
-  border-top: 1px solid var(--line2);
-  padding-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+  background: #fbfdfd;
 }
 
 .blockHeader {
@@ -88,16 +123,52 @@
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.blockHeader h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.blockHeader p {
+  margin: 0;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #dcefeb;
+  color: #087b71;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .switchRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 34px;
+  gap: 18px;
+  min-height: 58px;
   grid-column: 1 / -1;
+  padding: 12px 14px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.switchRow strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 13px;
 }
 
 .switchRow span {
@@ -107,8 +178,21 @@
 
 .settingControls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.controlRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.42fr) minmax(220px, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.regionHeader {
+  margin: 16px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {
@@ -120,8 +204,8 @@
 .regionList {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 0;
 }
 
 .checkItem {
@@ -130,8 +214,17 @@
   gap: 7px;
   border: 1px solid var(--line);
   background: #fff;
-  padding: 8px 10px;
-  min-height: 38px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+  min-width: 132px;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.checkItem:has(:checked) {
+  border-color: rgba(8, 123, 113, 0.45);
+  background: #eef8f6;
+  box-shadow: inset 0 0 0 1px rgba(8, 123, 113, 0.08);
 }
 
 .checkItem input {
@@ -268,15 +361,25 @@
 }
 
 .topicWatchCollapse {
-  background: #fff;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .topicWatchCollapse :global(.ant-collapse-item) {
   border-color: var(--line2);
+  background: #fff;
 }
 
 .topicWatchCollapse :global(.ant-collapse-header) {
   align-items: center !important;
+  padding: 15px 18px !important;
+}
+
+.topicWatchCollapse :global(.ant-collapse-content-box) {
+  padding: 0 18px 18px !important;
+  background: #fff;
 }
 
 .topicWatchLabel {
@@ -290,7 +393,8 @@
 .topicWatchLabel strong {
   display: block;
   color: var(--ink);
-  margin-bottom: 3px;
+  margin-bottom: 5px;
+  font-size: 14px;
 }
 
 .topicWatchLabel span {
@@ -304,6 +408,8 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .topicWatchDetail {
@@ -317,6 +423,13 @@
   gap: 12px;
 }
 
+.topicWatchInfoGrid > div {
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fbfdfd;
+}
+
 .topicWatchInfoGrid p {
   margin: 4px 0 0;
   color: var(--ink);
@@ -325,7 +438,7 @@
 
 .topicWatchSubsection {
   border-top: 1px solid var(--line2);
-  padding-top: 12px;
+  padding-top: 14px;
 }
 
 .topicWatchSubsection h4 {
@@ -362,10 +475,98 @@
   gap: 14px;
 }
 
+.rulePackHero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(232, 243, 241, 0.95), rgba(255, 255, 255, 0.7)),
+    #fff;
+}
+
+.kicker {
+  color: var(--g);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.rulePackHero h2 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.rulePackHero p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.rulePackToolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 330px;
+}
+
+.rulePackBody {
+  display: grid;
+  gap: 18px;
+  padding: 20px 24px 24px;
+}
+
+.rulePackSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rulePackSummary > div {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-left: 1px solid var(--line2);
+}
+
+.rulePackSummary > div:first-child {
+  border-left: 0;
+}
+
+.rulePackSummary span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rulePackSummary strong {
+  color: var(--ink);
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.rulePackSummary small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .rulePackState {
   display: flex;
   justify-content: center;
-  padding: 24px 0;
+  padding: 34px 0;
 }
 
 .rulePackEditor textarea {
@@ -383,15 +584,42 @@
 
 .ruleDocList {
   display: grid;
-  gap: 10px;
+}
+
+.ruleDocPanel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ruleDocPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line2);
+  background: #fbfdfd;
+}
+
+.ruleDocPanelHeader h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.ruleDocPanelHeader p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .ruleDocItem {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr) auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 90px auto;
+  gap: 16px;
   align-items: center;
-  padding: 12px 0;
+  padding: 14px 18px;
   border-top: 1px solid var(--line2);
 }
 
@@ -401,12 +629,13 @@
 
 .ruleDocTitle {
   display: grid;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
 .ruleDocTitle strong {
   color: var(--ink);
+  font-size: 14px;
 }
 
 .ruleDocTitle span,
@@ -419,7 +648,7 @@
 .ruleDocMeta {
   display: grid;
   gap: 6px;
-  justify-items: start;
+  justify-items: center;
   min-width: 0;
 }
 
@@ -445,7 +674,24 @@
     grid-template-columns: 1fr;
   }
 
+  .rulePackHero,
+  .rulePackToolbar {
+    min-width: 0;
+  }
+
+  .rulePackHero {
+    flex-direction: column;
+  }
+
+  .rulePackSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ruleDocItem {
     grid-template-columns: 1fr;
+  }
+
+  .ruleDocMeta {
+    justify-items: start;
   }
 }
