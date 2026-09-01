@@ -479,9 +479,30 @@
 
 .headActions {
   display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.headActionButtons {
+  display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.scheduleTip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.scheduleTip :global(.anticon) {
+  color: var(--g);
 }
 
 .ghostButton,
@@ -534,6 +555,11 @@
   }
 
   .headActions {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .headActionButtons {
     justify-content: flex-start;
   }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Drawer, Empty, Input, Spin, Tag, message } from 'antd'
-import { ImportOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, ImportOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons'
 import {
   adoptEditedOperationRecommendation,
   adoptOperationRecommendation,
@@ -60,6 +60,7 @@ export default function DecisionRecommendations() {
       ),
     [basis, items, priority],
   )
+  const lastGeneratedAt = useMemo(() => getLatestRecommendationTime(items), [items])
 
   const load = async () => {
     setLoading(true)
@@ -162,12 +163,21 @@ export default function DecisionRecommendations() {
           <p>只呈现已通过准入判断的事件；点击任一选题查看证据、产品承接与候选角度。</p>
         </div>
         <div className={styles.headActions}>
-          <Button className={styles.exportButton} icon={<ReloadOutlined />} loading={running} onClick={run}>
-            生成推荐
-          </Button>
-          <Button className={styles.headButton} type="primary" icon={<ImportOutlined />} href="/decision/inbox">
-            导入事件上下文
-          </Button>
+          <div className={styles.headActionButtons}>
+            <Button className={styles.exportButton} icon={<ReloadOutlined />} loading={running} onClick={run}>
+              生成推荐
+            </Button>
+            <Button className={styles.headButton} type="primary" icon={<ImportOutlined />} href="/decision/inbox">
+              导入事件上下文
+            </Button>
+          </div>
+          <div className={styles.scheduleTip}>
+            <ClockCircleOutlined />
+            <span>
+              后台每 3 小时自动生成一次；上一次生成：
+              {lastGeneratedAt ? formatDateTime(lastGeneratedAt) : '暂无记录'}；生成推荐用于立即补跑。
+            </span>
+          </div>
         </div>
       </div>
 
@@ -389,6 +399,27 @@ function formatAge(iso: string): string {
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours} 小时前`
   return `${Math.floor(hours / 24)} 天前`
+}
+
+function formatDateTime(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '时间未知'
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
+function getLatestRecommendationTime(items: OperationRecommendation[]): string | null {
+  const latest = items.reduce<number | null>((max, item) => {
+    const time = new Date(item.updatedAt || item.createdAt).getTime()
+    if (!Number.isFinite(time)) return max
+    return max == null || time > max ? time : max
+  }, null)
+  return latest == null ? null : new Date(latest).toISOString()
 }
 
 function buildEvidence(item: OperationRecommendation): string[] {

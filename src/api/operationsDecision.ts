@@ -64,6 +64,22 @@ export interface OperationDecisionRecord {
   recommendation: OperationRecommendation
 }
 
+export type OperationContextInboxStatus = 'pending' | 'working' | 'missing' | 'done'
+
+export interface OperationContextInboxItem {
+  id: string
+  title: string
+  source: string
+  sourceUrl?: string | null
+  rawContent: string
+  summary: string
+  quality: string
+  status: OperationContextInboxStatus
+  conclusion: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface OperationRecommendationRunResponse {
   syncedPredxNewsCount: number
   generatedCount: number
@@ -125,4 +141,19 @@ export function rejectOperationRecommendation(
 
 export function listOperationDecisionRecords() {
   return request<OperationDecisionRecord[]>('/operations-decision/records')
+}
+
+export function listOperationContextInboxItems() {
+  return request<OperationContextInboxItem[]>('/operations-decision/inbox')
+}
+
+export function createOperationContextInboxItem(body: {
+  rawContent: string
+  source?: string
+  sourceUrl?: string
+}) {
+  return request<OperationContextInboxItem>('/operations-decision/inbox', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
 }

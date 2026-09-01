@@ -1,8 +1,12 @@
-import { useMemo, useState } from 'react'
-import { Button, Drawer, Empty, Tag, message } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Button, Drawer, Empty, Spin, Tag, message } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
+import {
+  createOperationContextInboxItem,
+  listOperationContextInboxItems,
+  type OperationContextInboxItem,
+} from '../../api'
 import styles from './Decision.module.css'
-import { inboxItems, type ContextInboxItem } from './decisionData'
 
 const statusFilters = [
   { key: 'all', label: '全部' },
@@ -12,7 +16,7 @@ const statusFilters = [
   { key: 'done', label: '研判完成' },
 ] as const
 
-function statusClass(status: ContextInboxItem['status']) {
+function statusClass(status: OperationContextInboxItem['status']) {
   if (status === 'done') return styles.statusOk
   if (status === 'missing') return styles.statusBad
   return styles.statusWarn
@@ -28,38 +32,58 @@ function Metric({ value, label }: { value: string | number; label: string }) {
 }
 
 export default function DecisionContextInbox() {
-  const [items, setItems] = useState(inboxItems)
+  const [items, setItems] = useState<OperationContextInboxItem[]>([])
   const [status, setStatus] = useState<(typeof statusFilters)[number]['key']>('all')
-  const [active, setActive] = useState<ContextInboxItem | null>(null)
+  const [active, setActive] = useState<OperationContextInboxItem | null>(null)
   const [text, setText] = useState('')
   const [source, setSource] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const visible = useMemo(
     () => items.filter((item) => status === 'all' || item.status === status),
     [items, status],
   )
 
-  const submit = () => {
+  const load = async () => {
+    setLoading(true)
+    try {
+      setItems(await listOperationContextInboxItems())
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '上下文收件箱加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
+
+  const submit = async () => {
     const content = text.trim()
     if (!content) {
       message.warning('请先粘贴事件上下文')
       return
     }
-    const next: ContextInboxItem = {
-      id: `ctx-${Date.now()}`,
-      title: content.slice(0, 34) + (content.length > 34 ? '...' : ''),
-      source: source.trim() || '人工提交',
-      quality: '待判断',
-      status: 'pending',
-      statusText: '待解析',
-      conclusion: '待判断',
-      receivedAt: '刚刚',
-      summary: '已进入上下文收件箱，等待 Agent 抽取主体、动作、时间、结果与热度信号。',
+    const sourceText = source.trim()
+    const payload = {
+      rawContent: content,
+      source: sourceText && !isUrl(sourceText) ? sourceText : undefined,
+      sourceUrl: isUrl(sourceText) ? sourceText : undefined,
     }
-    setItems((prev) => [next, ...prev])
-    setText('')
-    setSource('')
-    message.success('上下文已进入收件箱')
+    setSubmitting(true)
+    try {
+      const next = await createOperationContextInboxItem(payload)
+      setItems((prev) => [next, ...prev])
+      setText('')
+      setSource('')
+      message.success('上下文已进入收件箱')
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '上下文提交失败')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -118,22 +142,24 @@ export default function DecisionContextInbox() {
             <span>状态</span>
             <span>接收时间</span>
           </div>
-          {visible.length ? (
-            visible.map((item) => (
-              <button className={`${styles.tableRow} ${styles.tableButton}`} key={item.id} type="button" onClick={() => setActive(item)}>
-                <span>
-                  <b>{item.title}</b>
-                  <small>{item.summary}</small>
-                </span>
-                <span>{item.source}</span>
-                <span>{item.quality}</span>
-                <span className={statusClass(item.status)}>{item.statusText}</span>
-                <span>{item.receivedAt}</span>
-              </button>
-            ))
-          ) : (
-            <Empty description="当前筛选下没有上下文" />
-          )}
+          <Spin spinning={loading}>
+            {visible.length ? (
+              visible.map((item) => (
+                <button className={`${styles.tableRow} ${styles.tableButton}`} key={item.id} type="button" onClick={() => setActive(item)}>
+                  <span>
+                    <b>{item.title}</b>
+                    <small>{item.summary}</small>
+                  </span>
+                  <span>{item.source}</span>
+                  <span>{item.quality}</span>
+                  <span className={statusClass(item.status)}>{statusText(item.status)}</span>
+                  <span>{formatDateTime(item.createdAt)}</span>
+                </button>
+              ))
+            ) : (
+              <Empty description="当前筛选下没有上下文" />
+            )}
+          </Spin>
         </div>
 
         <aside className={`${styles.panel} ${styles.quickPanel}`}>
@@ -151,7 +177,7 @@ export default function DecisionContextInbox() {
               onChange={(event) => setText(event.target.value)}
             />
             <input value={source} placeholder="来源链接或来源名称（选填）" onChange={(event) => setSource(event.target.value)} />
-            <Button className={styles.headButton} type="primary" htmlType="submit" icon={<SendOutlined />}>
+            <Button className={styles.headButton} type="primary" htmlType="submit" icon={<SendOutlined />} loading={submitting}>
               交给 Agent 判断
             </Button>
           </form>
@@ -167,16 +193,45 @@ export default function DecisionContextInbox() {
         {active ? (
           <div className={styles.drawerSection}>
             <Tag color={active.status === 'done' ? 'green' : active.status === 'missing' ? 'red' : 'orange'}>
-              {active.statusText}
+              {statusText(active.status)}
             </Tag>
             <h3>{active.title}</h3>
             <p>{active.summary}</p>
             <div className={styles.angleItem}>来源：{active.source}</div>
+            {active.sourceUrl ? (
+              <div className={styles.angleItem}>
+                来源链接：<a href={active.sourceUrl} target="_blank" rel="noreferrer">打开来源</a>
+              </div>
+            ) : null}
             <div className={styles.angleItem}>可判断性：{active.quality}</div>
             <div className={styles.angleItem}>研判结论：{active.conclusion}</div>
+            <div className={styles.angleItem}>接收时间：{formatDateTime(active.createdAt)}</div>
           </div>
         ) : null}
       </Drawer>
     </div>
   )
+}
+
+function statusText(status: OperationContextInboxItem['status']) {
+  if (status === 'pending') return '待解析'
+  if (status === 'working') return '研判中'
+  if (status === 'missing') return '需要补充'
+  return '研判完成'
+}
+
+function formatDateTime(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '时间未知'
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
+function isUrl(value: string) {
+  return /^https?:\/\//i.test(value)
 }
