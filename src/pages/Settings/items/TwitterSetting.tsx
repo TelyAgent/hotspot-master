@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { Alert, Button, Checkbox, Collapse, Empty, Form, Input, InputNumber, Select, Spin, Table, Tag } from 'antd'
+import { Alert, Button, Checkbox, Collapse, Empty, Form, Input, InputNumber, Select, Spin, Switch, Table, Tag } from 'antd'
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
@@ -83,6 +83,8 @@ export default function TwitterSetting() {
   const [regions, setRegions] = useState<string[]>(REGION_OPTIONS)
   const [frequencyMs, setFrequencyMs] = useState(2 * 60 * 60 * 1000)
   const [trendLimit, setTrendLimit] = useState('30')
+  const [trendCollectionEnabled, setTrendCollectionEnabled] = useState(true)
+  const [topicWatchSchedulerEnabled, setTopicWatchSchedulerEnabled] = useState(true)
   const [workflowId, setWorkflowId] = useState('x-trend-event-formation')
   const [topicWatches, setTopicWatches] = useState<TopicWatchConfig[]>([])
 
@@ -116,6 +118,8 @@ export default function TwitterSetting() {
         setRegions(nextConfig.variables.regions?.length ? nextConfig.variables.regions : nextConfig.defaultRegions)
         setFrequencyMs(resolveTrendIntervalMs(nextConfig))
         setTrendLimit(String(nextConfig.variables.defaultTrendLimit ?? 30))
+        setTrendCollectionEnabled(nextConfig.variables.trendCollectionEnabled ?? nextConfig.enabled)
+        setTopicWatchSchedulerEnabled(nextConfig.variables.topicWatchSchedulerEnabled ?? true)
         setWorkflowId(nextConfig.variables.trendEventWorkflowId ?? 'x-trend-event-formation')
         setTopicWatches(nextTopicWatches)
       } catch (e) {
@@ -153,6 +157,8 @@ export default function TwitterSetting() {
         regions,
         defaultTrendLimit: nextTrendLimit,
         trendCollectionIntervalMs: frequencyMs,
+        trendCollectionEnabled,
+        topicWatchSchedulerEnabled,
         trendEventWorkflowId: workflowId,
       }
       const nextConfig = await updatePlatformCollectionConfig('x', {
@@ -237,7 +243,16 @@ export default function TwitterSetting() {
             </div>
             <span className="pill green">{frequencyLabel}</span>
           </div>
-          <div className="form-grid">
+          <div className={styles.settingControls}>
+            <div className={styles.switchRow}>
+              <span>定时采集</span>
+              <Switch
+                checked={trendCollectionEnabled}
+                checkedChildren="开启"
+                unCheckedChildren="关闭"
+                onChange={setTrendCollectionEnabled}
+              />
+            </div>
             <div className="field">
               <label>采集频率</label>
               <Select
@@ -283,6 +298,17 @@ export default function TwitterSetting() {
               <p className="small">保存后由服务端同步到主题圈采集任务。</p>
             </div>
             <span className="pill green">按主题计划</span>
+          </div>
+          <div className={styles.settingControls}>
+            <div className={styles.switchRow}>
+              <span>定时采集</span>
+              <Switch
+                checked={topicWatchSchedulerEnabled}
+                checkedChildren="开启"
+                unCheckedChildren="关闭"
+                onChange={setTopicWatchSchedulerEnabled}
+              />
+            </div>
           </div>
           {topicWatches.length === 0 ? (
             <Empty description="暂无重点主题配置" />

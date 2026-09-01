@@ -17,6 +17,8 @@ export interface PlatformCollectionConfig {
     topicConfigs?: TopicTrackingConfig[]
     trendCollectionCron?: string
     trendCollectionIntervalMs?: number
+    trendCollectionEnabled?: boolean
+    topicWatchSchedulerEnabled?: boolean
     trendEventWorkflowId?: string
     defaultTrendLimit?: number
     defaultPostLimit?: number
@@ -54,6 +56,8 @@ interface XTrendCollectionConfig {
   regions: string[]
   limit: number
   collectionIntervalMs: number
+  trendCollectionEnabled: boolean
+  topicWatchSchedulerEnabled: boolean
 }
 
 const REGION_WOEIDS: Record<string, number> = {
@@ -82,6 +86,8 @@ export async function updatePlatformCollectionConfig(
       regions: data.variables?.regions ?? data.defaultRegions,
       limit: data.variables?.defaultTrendLimit,
       collectionIntervalMs: data.variables?.trendCollectionIntervalMs,
+      trendCollectionEnabled: data.variables?.trendCollectionEnabled,
+      topicWatchSchedulerEnabled: data.variables?.topicWatchSchedulerEnabled,
     }),
   })
   return toPlatformCollectionConfig(config)
@@ -139,13 +145,15 @@ function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCol
     platform: 'x',
     connectorId: 'x-twitterapi-io',
     displayName: 'X / twitterapi.io',
-    enabled: true,
+    enabled: config.trendCollectionEnabled,
     defaultTimezone: 'Asia/Shanghai',
     defaultRegions: config.regions,
     variables: {
       regions: config.regions,
       regionWoeids: REGION_WOEIDS,
       trendCollectionIntervalMs: config.collectionIntervalMs,
+      trendCollectionEnabled: config.trendCollectionEnabled,
+      topicWatchSchedulerEnabled: config.topicWatchSchedulerEnabled,
       defaultTrendLimit: config.limit,
       trendEventWorkflowId: 'x-trend-event-formation',
       defaultPostLimit: 3,
