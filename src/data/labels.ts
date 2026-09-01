@@ -3,6 +3,7 @@ import type { PageId } from './types'
 export const PAGE_LABELS: Record<PageId, string> = {
   overview: '运营总览',
   monitor: '热点监测',
+  decision: '运营决策',
   events: '事件管理',
   future: '运营排期',
   insights: '复盘优化',

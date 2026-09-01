@@ -17,6 +17,9 @@ import AssistantChatFloat from './components/AssistantChatFloat'
 import Login from './pages/Login/Login'
 import Monitor from './pages/Monitor/Monitor'
 import YouTubeMonitor from './pages/Monitor/YouTubeMonitor'
+import DecisionRecommendations from './pages/Decision/Recommendations'
+import DecisionContextInbox from './pages/Decision/ContextInbox'
+import DecisionRecords from './pages/Decision/DecisionRecords'
 import Events from './pages/Events/Events'
 import Schedule from './pages/Schedule/Schedule'
 import Insights from './pages/Insights/Insights'
@@ -97,6 +100,10 @@ export default function App() {
                 <Route path="/overview" element={<Navigate to="/monitor" replace />} />
                 <Route path="/monitor" element={<Monitor />} />
                 <Route path="/monitor/youtube" element={<YouTubeMonitor />} />
+                <Route path="/decision" element={<Navigate to="/decision/recommendations" replace />} />
+                <Route path="/decision/recommendations" element={<DecisionRecommendations />} />
+                <Route path="/decision/inbox" element={<DecisionContextInbox />} />
+                <Route path="/decision/records" element={<DecisionRecords />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/future" element={<Schedule />} />
                 <Route path="/insights" element={<Insights />} />

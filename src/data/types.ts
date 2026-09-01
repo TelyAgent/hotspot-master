@@ -1,6 +1,7 @@
 export type PageId =
   | 'overview'
   | 'monitor'
+  | 'decision'
   | 'events'
   | 'future'
   | 'insights'
