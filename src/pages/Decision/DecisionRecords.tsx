@@ -1,8 +1,12 @@
-import { useMemo, useState } from 'react'
-import { Button, Drawer, Empty, Tag, message } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Button, Drawer, Empty, Spin, Tag, message } from 'antd'
 import { ExportOutlined } from '@ant-design/icons'
 import styles from './Decision.module.css'
-import { decisionRecords, type DecisionRecord } from './decisionData'
+import {
+  listOperationDecisionRecords,
+  type OperationDecisionRecord,
+  type OperationDecisionResult,
+} from '../../api'
 
 const resultFilters = [
   { key: 'all', label: '全部' },
@@ -11,10 +15,16 @@ const resultFilters = [
   { key: 'rejected', label: '不采用' },
 ] as const
 
-function resultColor(result: DecisionRecord['result']) {
+function resultColor(result: OperationDecisionResult) {
   if (result === 'adopted') return 'green'
   if (result === 'edited') return 'orange'
   return 'red'
+}
+
+function resultText(result: OperationDecisionResult) {
+  if (result === 'adopted') return '直接采用'
+  if (result === 'edited') return '修改后采用'
+  return '不采用'
 }
 
 function Metric({ value, label, note }: { value: string | number; label: string; note?: string }) {
@@ -29,14 +39,35 @@ function Metric({ value, label, note }: { value: string | number; label: string;
 
 export default function DecisionRecords() {
   const [result, setResult] = useState<(typeof resultFilters)[number]['key']>('all')
-  const [active, setActive] = useState<DecisionRecord | null>(null)
+  const [items, setItems] = useState<OperationDecisionRecord[]>([])
+  const [active, setActive] = useState<OperationDecisionRecord | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const visible = useMemo(
-    () => decisionRecords.filter((item) => result === 'all' || item.result === result),
-    [result],
+    () => items.filter((item) => result === 'all' || item.result === result),
+    [items, result],
   )
-  const adoptedCount = decisionRecords.filter((item) => item.result !== 'rejected').length
-  const adoptionRate = Math.round((adoptedCount / decisionRecords.length) * 100)
+  const adoptedCount = items.filter((item) => item.result !== 'rejected').length
+  const directAdoptedCount = items.filter((item) => item.result === 'adopted').length
+  const editedCount = items.filter((item) => item.result === 'edited').length
+  const adoptionRate = items.length ? Math.round((adoptedCount / items.length) * 100) : 0
+  const firstRoundRate = items.length ? Math.round((directAdoptedCount / items.length) * 100) : 0
+  const editedRate = items.length ? Math.round((editedCount / items.length) * 100) : 0
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      setItems(await listOperationDecisionRecords())
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '决策记录加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
 
   return (
     <div className={styles.decisionPage}>
@@ -52,10 +83,10 @@ export default function DecisionRecords() {
       </div>
 
       <section className={styles.metrics}>
-        <Metric value={decisionRecords.length} label="筛选范围已审核" />
+        <Metric value={items.length} label="筛选范围已审核" />
         <Metric value={`${adoptionRate}%`} label="最终采用率" note="至少采用一个角度" />
-        <Metric value="51%" label="首轮采用率" note="未重推直接采用" />
-        <Metric value="43%" label="重推挽回率" note="重推后最终采用" />
+        <Metric value={`${firstRoundRate}%`} label="首轮采用率" note="未修改直接采用" />
+        <Metric value={`${editedRate}%`} label="修改后采用率" note="人工修订后采用" />
       </section>
 
       <section className={styles.toolbar}>
@@ -96,6 +127,7 @@ export default function DecisionRecords() {
           <span>重推次数</span>
           <span>审核</span>
         </div>
+        <Spin spinning={loading}>
         {visible.length ? (
           visible.map((item) => (
             <button
@@ -105,47 +137,53 @@ export default function DecisionRecords() {
               onClick={() => setActive(item)}
             >
               <span>
-                <b>{item.title}</b>
-                <small>{item.angle}</small>
+                <b>{item.recommendation.title}</b>
+                <small>{item.finalAngle ?? '本次全部不采用'}</small>
               </span>
-              <span>{item.basis}</span>
-              <span><Tag color={resultColor(item.result)}>{item.resultText}</Tag></span>
-              <span>{item.note}</span>
-              <span>{item.regen} 次</span>
+              <span>{basisText(item.recommendation.basis)}</span>
+              <span><Tag color={resultColor(item.result)}>{resultText(item.result)}</Tag></span>
+              <span>{item.note || '无补充说明'}</span>
+              <span>{item.regenCount} 次</span>
               <span>
-                {item.operator}
-                <small>{item.time}</small>
+                {item.operator || '未记录'}
+                <small>{formatDateTime(item.createdAt)}</small>
               </span>
             </button>
           ))
         ) : (
           <Empty description="当前筛选下没有记录" />
         )}
+        </Spin>
       </section>
 
-      <Drawer title={active?.title} open={active != null} width={540} onClose={() => setActive(null)}>
+      <Drawer title={active?.recommendation.title} open={active != null} width={560} onClose={() => setActive(null)}>
         {active ? (
           <>
             <section className={styles.drawerSection}>
               <div className={styles.tagrow}>
-                <Tag color="cyan">{active.basis}</Tag>
-                <Tag color={resultColor(active.result)}>{active.resultText}</Tag>
+                <Tag color="cyan">{basisText(active.recommendation.basis)}</Tag>
+                <Tag color={resultColor(active.result)}>{resultText(active.result)}</Tag>
               </div>
               <div className={styles.reason}>
-                <b>{active.resultText}：</b>{active.note}
+                <b>{resultText(active.result)}：</b>{active.note || '无补充说明'}
               </div>
             </section>
             <section className={styles.drawerSection}>
               <h3>最终角度</h3>
-              <p>{active.angle}</p>
+              <p>{active.finalAngle ?? '本次全部不采用'}</p>
             </section>
             <section className={styles.drawerSection}>
-              <h3>处理时间线</h3>
+              <h3>事件上下文摘要</h3>
+              <p>{active.recommendation.summary}</p>
+            </section>
+            <section className={styles.drawerSection}>
+              <h3>完整事件时间线</h3>
               <div className={styles.angleList}>
-                {active.timeline.map((item, index) => (
-                  <div className={styles.angleItem} key={item}>
+                {buildTimeline(active).map((item, index) => (
+                  <div className={styles.angleItem} key={`${item.label}-${item.time}`}>
                     <b>0{index + 1}</b>
-                    <p>{item}</p>
+                    <p>{item.label}</p>
+                    <small className={styles.muted}>{item.time}</small>
                   </div>
                 ))}
               </div>
@@ -159,4 +197,41 @@ export default function DecisionRecords() {
       </Drawer>
     </div>
   )
+}
+
+function basisText(basis: string) {
+  if (basis === 'heat') return '公共热度'
+  if (basis === 'market') return '实时市场'
+  return '产品价值'
+}
+
+function formatDateTime(iso: string) {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function buildTimeline(record: OperationDecisionRecord) {
+  const timeline = []
+  const news = record.recommendation.predxNewsItem
+  if (news?.publishedAt) {
+    timeline.push({
+      label: `PredX 新闻发布：${news.title}`,
+      time: formatDateTime(news.publishedAt),
+    })
+  }
+  timeline.push({
+    label: `生成选题推荐：${record.recommendation.reason}`,
+    time: formatDateTime(record.recommendation.createdAt),
+  })
+  timeline.push({
+    label: `运营决策：${resultText(record.result)}`,
+    time: formatDateTime(record.createdAt),
+  })
+  return timeline
 }

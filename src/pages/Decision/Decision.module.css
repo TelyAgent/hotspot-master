@@ -401,6 +401,56 @@
   background: #fff;
 }
 
+.angleSelectable {
+  width: 100%;
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.angleSelectable:hover {
+  border-color: var(--g);
+  background: #f8fbfb;
+}
+
+.angleSelected {
+  border-color: var(--g);
+  background: #eaf5f3;
+  box-shadow: inset 3px 0 0 var(--g);
+}
+
+.drawerFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.drawerFooter > div {
+  display: flex;
+  gap: 8px;
+}
+
+.editAdoptPanel {
+  border: 1px solid var(--g);
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fbfb;
+}
+
+.fieldLabel {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .muted {
   color: var(--muted);
 }
@@ -425,6 +475,13 @@
   border-radius: 7px;
   padding: 0 18px;
   font-weight: 800;
+}
+
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .ghostButton,
@@ -474,6 +531,10 @@
   .cardFoot {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .headActions {
+    justify-content: flex-start;
   }
 
   .metrics,
