@@ -6,6 +6,7 @@ export interface EventListParams {
   pageSize?: number
   status?: string
   label?: string
+  labels?: string[]
   q?: string
 }
 
@@ -63,6 +64,9 @@ export async function getEvents(params: EventListParams = {}): Promise<EventList
   })
   if (params.status) query.set('status', params.status)
   if (params.label) query.set('label', params.label)
+  params.labels?.forEach((label) => {
+    if (label.trim()) query.append('labels', label)
+  })
 
   const response = await request<V2EventListResponse>(`/opportunities/events?${query.toString()}`)
   const rows = response.items

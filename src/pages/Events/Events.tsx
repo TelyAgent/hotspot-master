@@ -71,17 +71,20 @@ interface EventView extends EventItem {
 
 export default function Events() {
   const { openModal, toast } = useApp()
-  const [filter, setFilter] = useState('全部')
+  const [sourceHeatFilter, setSourceHeatFilter] = useState('全部')
+  const [domainFilter, setDomainFilter] = useState('全部')
   const [page, setPage] = useState(1)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [detailTab, setDetailTab] = useState<DetailTab>('overview')
 
-  const query = useMemo(() => eventFilterToQuery(filter), [filter])
+  const labelFilters = useMemo(
+    () => [sourceHeatFilter, domainFilter].filter((item) => item !== '全部'),
+    [domainFilter, sourceHeatFilter],
+  )
   const { events, total, pageSize, loading, error } = useEvents({
     page,
     pageSize: 20,
-    status: query.status,
-    label: query.label,
+    labels: labelFilters,
   })
   const eventViews = useMemo(() => events.map((item, index) => toEventView(item, index)), [events])
   const sourceHeatFilters = useMemo(() => buildSourceHeatFilters(eventViews), [eventViews])
@@ -162,9 +165,9 @@ export default function Events() {
             {sourceHeatFilters.map((item) => (
               <Button
                 key={item}
-                type={filter === item ? 'primary' : 'default'}
+                type={sourceHeatFilter === item ? 'primary' : 'default'}
                 onClick={() => {
-                  setFilter(item)
+                  setSourceHeatFilter(item)
                   setPage(1)
                 }}
               >
@@ -176,7 +179,8 @@ export default function Events() {
             className={styles.resetFilter}
             type="link"
             onClick={() => {
-              setFilter('全部')
+              setSourceHeatFilter('全部')
+              setDomainFilter('全部')
               setPage(1)
             }}
           >
@@ -189,9 +193,9 @@ export default function Events() {
             {domainFilters.map((item) => (
               <Button
                 key={item}
-                type={filter === item ? 'primary' : 'default'}
+                type={domainFilter === item ? 'primary' : 'default'}
                 onClick={() => {
-                  setFilter(item)
+                  setDomainFilter(item)
                   setPage(1)
                 }}
               >
@@ -965,12 +969,7 @@ function buildSourceHeatFilters(_events: EventView[]) {
 }
 
 function buildDomainFilters(_events: EventView[]) {
-  return DOMAIN_FILTERS
-}
-
-function eventFilterToQuery(filter: string): { status?: string; label?: string } {
-  if (filter === '全部') return {}
-  return { label: filter }
+  return ['全部', ...DOMAIN_FILTERS]
 }
 
 function normalizeSourceHeatLabel(label: string) {
