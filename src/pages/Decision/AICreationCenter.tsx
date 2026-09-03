@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Empty, Spin, Tag, message } from 'antd'
-import { EditOutlined, FileAddOutlined, RightOutlined } from '@ant-design/icons'
+import { Button, Empty, Spin, message } from 'antd'
+import { FileAddOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import {
   listOperationRecommendations,
@@ -8,8 +8,8 @@ import {
 } from '../../api'
 import styles from './Decision.module.css'
 
-type CreationStatus = 'draft' | 'selecting' | 'editing' | 'publishing'
-type CreationFilter = '全部任务' | '待创作' | '待选择候选' | '编辑中'
+type CreationStatus = 'draft' | 'generated'
+type CreationFilter = '全部任务' | '未生成内容' | '已生成内容'
 
 interface CreationTask {
   id: string
@@ -17,25 +17,12 @@ interface CreationTask {
   context: string
   angle: string
   status: CreationStatus
-  candidateCount: number
   action: string
-  group: 'priority' | 'active'
 }
 
 const statusMeta: Record<CreationStatus, { label: string; className: string }> = {
-  draft: { label: '待创作', className: styles.creationStatusDraft },
-  selecting: { label: '待选择候选', className: styles.creationStatusSelect },
-  editing: { label: '编辑中', className: styles.creationStatusEdit },
-  publishing: { label: '待人工发布', className: styles.creationStatusPublish },
-}
-
-function Metric({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div className={styles.metric}>
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
-  )
+  draft: { label: '未生成内容', className: styles.creationStatusDraft },
+  generated: { label: '已生成内容', className: styles.creationStatusPublish },
 }
 
 function CreationRow({ item, onOpen }: { item: CreationTask; onOpen: () => void }) {
@@ -53,7 +40,6 @@ function CreationRow({ item, onOpen }: { item: CreationTask; onOpen: () => void 
       </div>
       <div className={styles.creationSide}>
         <span className={`${styles.creationStatus} ${meta.className}`}>{meta.label}</span>
-        <span className={styles.muted}>当前内容：{item.candidateCount} 个候选</span>
         <Button className={styles.ghostButton} icon={<RightOutlined />} onClick={onOpen}>
           {item.action}
         </Button>
@@ -76,9 +62,13 @@ export default function AICreationCenter() {
       }),
     [filter, tasks],
   )
-  const priorityTasks = visibleTasks.filter((item) => item.group === 'priority')
-  const activeTasks = visibleTasks.filter((item) => item.group === 'active')
-  const openWorkspace = (id: string) => navigate(`/decision/creation/workspace?recommendation=${id}`)
+  const openWorkspace = (item: CreationTask) => {
+    if (item.status === 'generated') {
+      navigate('/decision/publish')
+      return
+    }
+    navigate(`/decision/creation/workspace?recommendation=${item.id}`)
+  }
 
   const load = async () => {
     setLoading(true)
@@ -108,16 +98,9 @@ export default function AICreationCenter() {
         </Button>
       </div>
 
-      <section className={styles.metrics}>
-        <Metric value={items.length} label="今日推荐" />
-        <Metric value={tasks.filter((item) => item.status === 'draft').length} label="待创作" />
-        <Metric value={tasks.filter((item) => item.status === 'selecting').length} label="待选择候选" />
-        <Metric value={tasks.filter((item) => item.status === 'publishing').length} label="待人工发布" />
-      </section>
-
       <section className={styles.toolbar}>
         <div className={styles.filters}>
-          {(['全部任务', '待创作', '待选择候选', '编辑中'] as CreationFilter[]).map((item) => (
+          {(['全部任务', '未生成内容', '已生成内容'] as CreationFilter[]).map((item) => (
             <button
               className={`${styles.chip} ${filter === item ? styles.chipActive : ''}`}
               key={item}
@@ -135,60 +118,36 @@ export default function AICreationCenter() {
         {visibleTasks.length ? (
           <>
             <div className={styles.sectionTitle}>
-              <h2>优先开始</h2>
+              <h2>创作队列</h2>
             </div>
             <section className={styles.creationList}>
-              {priorityTasks.map((item) => (
-                <CreationRow item={item} key={item.id} onOpen={() => openWorkspace(item.id)} />
+              {visibleTasks.map((item) => (
+                <CreationRow item={item} key={item.id} onOpen={() => openWorkspace(item)} />
               ))}
-            </section>
-
-            <div className={styles.sectionTitle}>
-              <h2>进行中的创作</h2>
-            </div>
-            <section className={styles.creationList}>
-              {activeTasks.length ? (
-                activeTasks.map((item) => (
-                  <CreationRow item={item} key={item.id} onOpen={() => openWorkspace(item.id)} />
-                ))
-              ) : (
-                <Empty description="当前没有进行中的创作" />
-              )}
             </section>
           </>
         ) : (
           <Empty description="暂无可创作的选题推荐" />
-        )}
+      )}
       </Spin>
-
-      <section className={styles.creationNote}>
-        <Tag color="cyan" icon={<EditOutlined />}>
-          后续接入推荐采用记录后，这里会展示真实创作队列
-        </Tag>
-      </section>
     </div>
   )
 }
 
 function toCreationTask(item: OperationRecommendation): CreationTask {
-  const status = toCreationStatus(item)
+  const status: CreationStatus = isContentGenerated(item.status) ? 'generated' : 'draft'
   return {
     id: item.id,
     title: item.title,
     context: `Context Pack 已就绪 · ${basisText(item.basis)}`,
     angle: item.angles[0]?.claim ?? item.reason,
     status,
-    candidateCount: item.angles.length,
-    action: status === 'selecting' ? '选择终稿' : status === 'editing' ? '继续编辑' : '开始创作',
-    group: status === 'editing' ? 'active' : 'priority',
+    action: '开始创作',
   }
 }
 
-function toCreationStatus(item: OperationRecommendation): CreationStatus {
-  if (item.status === 'adopted' || item.status === 'edited') return 'publishing'
-  if (item.status === 'editing') return 'editing'
-  if (item.angles.length > 1) return 'selecting'
-  return 'draft'
+function isContentGenerated(status: string): boolean {
+  return ['content_generated', 'generated', 'publishing', 'published'].includes(status)
 }
 
 function basisText(basis: OperationRecommendation['basis']) {
