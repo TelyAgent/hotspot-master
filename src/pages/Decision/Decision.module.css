@@ -134,6 +134,7 @@
   justify-content: space-between;
   gap: 16px;
   margin-top: 6px;
+  margin-bottom: 12px;
 }
 
 .sectionTitle h2 {
@@ -572,10 +573,16 @@
 
 .creationSide {
   display: grid;
-  grid-template-columns: minmax(116px, 1fr) auto auto;
+  grid-template-columns: auto auto;
   gap: 14px;
   align-items: center;
   justify-content: end;
+}
+
+.creationSide .ghostButton {
+  min-width: 112px;
+  width: auto;
+  padding-inline: 18px;
 }
 
 .creationStatus {

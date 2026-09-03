@@ -9,8 +9,6 @@ import {
 import styles from './Decision.module.css'
 
 type CreationStatus = 'draft' | 'generated'
-type CreationFilter = '全部任务' | '未生成内容' | '已生成内容'
-
 interface CreationTask {
   id: string
   title: string
@@ -20,14 +18,7 @@ interface CreationTask {
   action: string
 }
 
-const statusMeta: Record<CreationStatus, { label: string; className: string }> = {
-  draft: { label: '未生成内容', className: styles.creationStatusDraft },
-  generated: { label: '已生成内容', className: styles.creationStatusPublish },
-}
-
 function CreationRow({ item, onOpen }: { item: CreationTask; onOpen: () => void }) {
-  const meta = statusMeta[item.status]
-
   return (
     <article className={styles.creationRow}>
       <div className={styles.creationMain}>
@@ -39,8 +30,7 @@ function CreationRow({ item, onOpen }: { item: CreationTask; onOpen: () => void 
         </p>
       </div>
       <div className={styles.creationSide}>
-        <span className={`${styles.creationStatus} ${meta.className}`}>{meta.label}</span>
-        <Button className={styles.ghostButton} icon={<RightOutlined />} onClick={onOpen}>
+        <Button className={styles.ghostButton} onClick={onOpen}>
           {item.action}
         </Button>
       </div>
@@ -52,16 +42,7 @@ export default function AICreationCenter() {
   const navigate = useNavigate()
   const [items, setItems] = useState<OperationRecommendation[]>([])
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState<CreationFilter>('全部任务')
   const tasks = useMemo(() => items.map(toCreationTask), [items])
-  const visibleTasks = useMemo(
-    () =>
-      tasks.filter((item) => {
-        if (filter === '全部任务') return true
-        return statusMeta[item.status].label === filter
-      }),
-    [filter, tasks],
-  )
   const openWorkspace = (item: CreationTask) => {
     if (item.status === 'generated') {
       navigate('/decision/publish')
@@ -98,30 +79,14 @@ export default function AICreationCenter() {
         </Button>
       </div>
 
-      <section className={styles.toolbar}>
-        <div className={styles.filters}>
-          {(['全部任务', '未生成内容', '已生成内容'] as CreationFilter[]).map((item) => (
-            <button
-              className={`${styles.chip} ${filter === item ? styles.chipActive : ''}`}
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <span className={styles.muted}>当前 {visibleTasks.length} 条</span>
-      </section>
-
       <Spin spinning={loading}>
-        {visibleTasks.length ? (
+        {tasks.length ? (
           <>
             <div className={styles.sectionTitle}>
               <h2>创作队列</h2>
             </div>
             <section className={styles.creationList}>
-              {visibleTasks.map((item) => (
+              {tasks.map((item) => (
                 <CreationRow item={item} key={item.id} onOpen={() => openWorkspace(item)} />
               ))}
             </section>
