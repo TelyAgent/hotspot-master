@@ -533,6 +533,287 @@
   color: var(--g);
 }
 
+.creationList {
+  display: grid;
+  gap: 10px;
+}
+
+.creationRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.7fr);
+  gap: 18px;
+  align-items: center;
+  min-height: 82px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 18px;
+}
+
+.creationMain h3 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.creationMain p {
+  margin: 0;
+  color: var(--g);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.creationMain p span {
+  margin-left: 4px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.creationSide {
+  display: grid;
+  grid-template-columns: minmax(116px, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  justify-content: end;
+}
+
+.creationStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 116px;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.creationStatusDraft {
+  background: #fff1df;
+  color: #b55020;
+}
+
+.creationStatusSelect {
+  background: #e3f2f1;
+  color: #207267;
+}
+
+.creationStatusEdit {
+  background: #e8f4fb;
+  color: #2f6f8f;
+}
+
+.creationStatusPublish {
+  background: #fdecef;
+  color: #a83f55;
+}
+
+.creationNote {
+  display: none;
+}
+
+.publishLayout {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.publishList {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.publishCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 16px;
+  color: var(--ink);
+  text-align: left;
+}
+
+.publishCardActive {
+  border: 2px solid var(--g);
+  background: #f4fbf9;
+  padding: 15px;
+}
+
+.publishCard b,
+.publishCard small {
+  display: block;
+}
+
+.publishCard small {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.publishDetail,
+.workspaceHead {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 18px;
+}
+
+.draftPreview {
+  min-height: 220px;
+  margin: 14px 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  padding: 16px;
+  white-space: pre-line;
+  line-height: 1.7;
+}
+
+.miniActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.publishForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.workspaceHead h1 {
+  margin: 12px 0 8px;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.workspaceHead p {
+  color: var(--muted);
+}
+
+.workspaceTabs {
+  margin-top: 14px;
+}
+
+.workspaceSection {
+  display: grid;
+  gap: 12px;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.infoRow:first-of-type {
+  border-top: 0;
+}
+
+.infoRow b {
+  color: var(--muted);
+}
+
+.infoRow span {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.kitchenDrawer :global(.ant-drawer-body) {
+  padding: 0;
+}
+
+.kitchenLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 365px;
+  gap: 34px;
+  padding: 26px;
+}
+
+.kitchenSteps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.kitchenSteps button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--muted);
+  padding: 12px;
+  text-align: left;
+  font-weight: 800;
+}
+
+.kitchenStepActive {
+  border-color: var(--g) !important;
+  background: #eaf5f3 !important;
+  color: var(--g) !important;
+}
+
+.choiceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.selectCard {
+  position: relative;
+  min-height: 100px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  padding: 18px;
+  color: var(--ink);
+  text-align: left;
+}
+
+.selectCard :global(.anticon) {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--g);
+}
+
+.selectCard h3 {
+  margin: 0 0 6px;
+}
+
+.selectCard p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.selectCardActive {
+  border: 2px solid var(--g);
+  background: #eff8f5;
+  padding: 17px;
+}
+
+.aiBox,
+.summaryPanel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdfc;
+  padding: 18px;
+}
+
 .ghostButton,
 .exportButton {
   height: 40px;
@@ -600,5 +881,15 @@
   .tableRow,
   .recordGrid {
     grid-template-columns: 1fr;
+  }
+
+  .creationRow,
+  .creationSide {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+
+  .creationSide {
+    align-items: flex-start;
   }
 }

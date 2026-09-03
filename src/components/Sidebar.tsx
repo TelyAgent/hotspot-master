@@ -9,6 +9,8 @@ import {
   InboxOutlined,
   LineChartOutlined,
   ProfileOutlined,
+  ReadOutlined,
+  SendOutlined,
   SettingOutlined,
   ThunderboltOutlined,
   XOutlined,
@@ -45,9 +47,13 @@ export default function Sidebar() {
   const monitorKey = location.pathname.startsWith('/monitor/youtube') ? 'monitor-youtube' : 'monitor-twitter'
   const decisionKey = location.pathname.startsWith('/decision/inbox')
     ? 'decision-inbox'
-    : location.pathname.startsWith('/decision/records')
-      ? 'decision-records'
-      : 'decision-recommendations'
+    : location.pathname.startsWith('/decision/creation')
+      ? 'decision-creation'
+      : location.pathname.startsWith('/decision/publish')
+        ? 'decision-publish'
+      : location.pathname.startsWith('/decision/records')
+        ? 'decision-records'
+        : 'decision-recommendations'
   const selectedKey = page === 'monitor' ? monitorKey : page === 'decision' ? decisionKey : page
 
   const items: MenuProps['items'] = [
@@ -94,6 +100,16 @@ export default function Sidebar() {
               key: 'decision-inbox',
               icon: <InboxOutlined />,
               label: navLabel('上下文收件箱', 'Context Inbox'),
+            },
+            {
+              key: 'decision-creation',
+              icon: <ReadOutlined />,
+              label: navLabel('AI创作中心', 'AI Creation Center'),
+            },
+            {
+              key: 'decision-publish',
+              icon: <SendOutlined />,
+              label: navLabel('内容发布', 'Content Publishing'),
             },
             {
               key: 'decision-records',
@@ -149,6 +165,16 @@ export default function Sidebar() {
           }
           if (key === 'decision-inbox') {
             navigate('/decision/inbox')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+          }
+          if (key === 'decision-creation') {
+            navigate('/decision/creation')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+          }
+          if (key === 'decision-publish') {
+            navigate('/decision/publish')
             window.scrollTo({ top: 0, behavior: 'smooth' })
             return
           }
