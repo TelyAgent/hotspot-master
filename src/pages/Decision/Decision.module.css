@@ -733,6 +733,14 @@
   font-weight: 650;
 }
 
+.infoRow small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
 .kitchenDrawer :global(.ant-drawer-body) {
   padding: 0;
 }
@@ -892,4 +900,5 @@
   .creationSide {
     align-items: flex-start;
   }
+
 }

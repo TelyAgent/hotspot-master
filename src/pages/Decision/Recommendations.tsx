@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Drawer, Empty, Input, Spin, Tag, message } from 'antd'
+import { Button, Empty, Spin, Tag, message } from 'antd'
 import { ClockCircleOutlined, ImportOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import {
-  adoptEditedOperationRecommendation,
-  adoptOperationRecommendation,
   listOperationRecommendations,
-  rejectOperationRecommendation,
   runOperationRecommendations,
-  type OperationRecommendationEvidence,
   type OperationRecommendation,
   type OperationRecommendationBasis,
   type OperationRecommendationPriority,
@@ -41,16 +38,12 @@ function Metric({ value, label }: { value: string | number; label: string }) {
 }
 
 export default function DecisionRecommendations() {
+  const navigate = useNavigate()
   const [basis, setBasis] = useState<OperationRecommendationBasis | 'all'>('all')
   const [priority, setPriority] = useState<OperationRecommendationPriority | 'all'>('all')
   const [items, setItems] = useState<OperationRecommendation[]>([])
   const [loading, setLoading] = useState(false)
   const [running, setRunning] = useState(false)
-  const [actioning, setActioning] = useState(false)
-  const [active, setActive] = useState<OperationRecommendation | null>(null)
-  const [selectedAngleId, setSelectedAngleId] = useState<string | null>(null)
-  const [editingAdopt, setEditingAdopt] = useState(false)
-  const [editedAngle, setEditedAngle] = useState('')
 
   const visible = useMemo(
     () =>
@@ -91,68 +84,9 @@ export default function DecisionRecommendations() {
     void load()
   }, [])
 
-  useEffect(() => {
-    const firstAngle = active?.angles[0]
-    setSelectedAngleId(firstAngle?.id ?? null)
-    setEditedAngle(firstAngle?.claim ?? '')
-    setEditingAdopt(false)
-  }, [active])
-
-  const selectedAngle = active?.angles.find((item) => item.id === selectedAngleId)
-
-  const adoptSelected = async () => {
-    if (!active || !selectedAngleId) {
-      message.warning('请先选择一个承接角度')
-      return
-    }
-    setActioning(true)
-    try {
-      await adoptOperationRecommendation(active.id, { angleId: selectedAngleId })
-      message.success('已采用，并流转到决策记录')
-      setActive(null)
-      await load()
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : '采用失败')
-    } finally {
-      setActioning(false)
-    }
-  }
-
-  const adoptEdited = async () => {
-    if (!active) return
-    if (!editedAngle.trim()) {
-      message.warning('请填写修改后的承接角度')
-      return
-    }
-    setActioning(true)
-    try {
-      await adoptEditedOperationRecommendation(active.id, {
-        angleId: selectedAngleId ?? undefined,
-        finalAngle: editedAngle,
-      })
-      message.success('已保存修改，并流转到决策记录')
-      setActive(null)
-      await load()
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : '保存采用失败')
-    } finally {
-      setActioning(false)
-    }
-  }
-
-  const rejectAll = async () => {
-    if (!active) return
-    setActioning(true)
-    try {
-      await rejectOperationRecommendation(active.id, { note: '运营判断本次不采用。' })
-      message.success('已记录为不采用')
-      setActive(null)
-      await load()
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : '拒绝失败')
-    } finally {
-      setActioning(false)
-    }
+  const goCreation = (id: string) => {
+    navigate(`/decision/creation/workspace?recommendation=${encodeURIComponent(id)}`)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -236,7 +170,7 @@ export default function DecisionRecommendations() {
       {visible.length ? (
         <section className={styles.cards}>
           {visible.map((item) => (
-            <article className={styles.recommendCard} key={item.id} onClick={() => setActive(item)}>
+            <article className={styles.recommendCard} key={item.id} onClick={() => goCreation(item.id)}>
               <div className={styles.cardTop}>
                 <div className={styles.tagrow}>
                   {item.recommendationLabels.map((label) => (
@@ -256,7 +190,7 @@ export default function DecisionRecommendations() {
               <div className={styles.anglePreview}>建议优先探索：{item.angles[0]?.claim ?? '等待补充候选角度'}</div>
               <div className={styles.cardFoot}>
                 <span className={styles.window}>{priorityText(item.priority)}</span>
-                <Button className={styles.ghostButton} icon={<RightOutlined />}>查看判断</Button>
+                <Button className={styles.ghostButton} icon={<RightOutlined />}>内容创作</Button>
               </div>
             </article>
           ))}
@@ -265,145 +199,6 @@ export default function DecisionRecommendations() {
         <Empty description="暂无选题推荐，点击生成推荐从最近热点和 PredX 新闻中提取" />
       )}
       </Spin>
-
-      <Drawer
-        title={active?.title}
-        open={active != null}
-        width={560}
-        onClose={() => setActive(null)}
-        extra={<span className={styles.muted}>{active ? formatAge(active.createdAt) : ''}</span>}
-        footer={
-          active ? (
-            <div className={styles.drawerFooter}>
-              <div>
-                <Button type="primary" loading={actioning} onClick={adoptSelected}>
-                  直接采用
-                </Button>
-                <Button loading={actioning} onClick={() => setEditingAdopt(true)}>
-                  修改后采用
-                </Button>
-              </div>
-              <div>
-                <Button onClick={() => message.info('重新推荐能力后续接入 Agent 重跑')}>
-                  重新推荐
-                </Button>
-                <Button danger loading={actioning} onClick={rejectAll}>
-                  全部不采用
-                </Button>
-              </div>
-            </div>
-          ) : null
-        }
-      >
-        {active ? (
-          <>
-            <section className={styles.drawerSection}>
-              <div className={styles.tagrow}>
-                {active.recommendationLabels.map((label) => (
-                  <Tag color="cyan" key={label}>{label}</Tag>
-                ))}
-              </div>
-            </section>
-            <section className={styles.drawerSection}>
-              <h3>事件上下文摘要</h3>
-              <p>{active.summary}</p>
-            </section>
-            <section className={styles.drawerSection}>
-              <h3>为什么进入选题推荐</h3>
-              <div className={styles.reason}>{active.reason}</div>
-              <span className={styles.muted}>处理节奏：{priorityText(active.priority)}</span>
-            </section>
-            <section className={styles.drawerSection}>
-              <h3>PredX 承接判断</h3>
-              <div className={styles.bridge}>
-                <b>{active.productAssociationLevel}</b>
-                <p>{active.productAssociationRationale}</p>
-                {active.recommendedProductUrl ? (
-                  <a href={active.recommendedProductUrl} target="_blank" rel="noreferrer">
-                    打开推荐链接
-                  </a>
-                ) : null}
-              </div>
-            </section>
-            <section className={styles.drawerSection}>
-              <h3>关键证据</h3>
-              <div className={styles.angleList}>
-                {buildEvidence(active).map((item, index) => (
-                  <div className={styles.evidenceItem} key={item.id}>
-                    <div className={styles.evidenceHead}>
-                      <b>{item.title || `Evidence ${index + 1}`}</b>
-                      {item.url ? (
-                        <a href={item.url} target="_blank" rel="noreferrer">
-                          查看原始链接 ↗
-                        </a>
-                      ) : null}
-                    </div>
-                    <p>{item.summary || item.text || '暂无可读证据内容'}</p>
-                    <small className={styles.muted}>
-                      {[
-                        item.sourceName,
-                        item.authorName,
-                        item.publishedAt ? `发布 ${formatDateTime(item.publishedAt)}` : null,
-                        item.observedAt ? `采集 ${formatDateTime(item.observedAt)}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </small>
-                  </div>
-                ))}
-              </div>
-            </section>
-            <section className={styles.drawerSection}>
-              <h3>可承接角度</h3>
-              <div className={styles.angleList}>
-                {active.angles.map((item, index) => (
-                  <button
-                    className={`${styles.angleItem} ${styles.angleSelectable} ${
-                      selectedAngleId === item.id ? styles.angleSelected : ''
-                    }`}
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedAngleId(item.id)
-                      setEditedAngle(item.claim)
-                    }}
-                  >
-                    <b>0{index + 1}</b>
-                    <p>{item.claim}</p>
-                    {item.userValue ? <small className={styles.muted}>{item.userValue}</small> : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-            {editingAdopt ? (
-              <section className={`${styles.drawerSection} ${styles.editAdoptPanel}`}>
-                <div className={styles.between}>
-                  <h3>修改后采用</h3>
-                  <Button type="text" onClick={() => setEditingAdopt(false)}>关闭</Button>
-                </div>
-                <p className={styles.muted}>修改最终角度后保存，系统将计入“修改后采用”。</p>
-                <label className={styles.fieldLabel}>修改后的最终角度</label>
-                <Input.TextArea
-                  autoSize={{ minRows: 3, maxRows: 6 }}
-                  value={editedAngle}
-                  onChange={(event) => setEditedAngle(event.target.value)}
-                  placeholder={selectedAngle?.claim ?? '填写最终采用的承接角度'}
-                />
-                <div className={styles.editActions}>
-                  <Button onClick={() => setEditingAdopt(false)}>取消</Button>
-                  <Button type="primary" loading={actioning} onClick={adoptEdited}>
-                    保存并采用
-                  </Button>
-                </div>
-              </section>
-            ) : null}
-            <section className={styles.drawerSection}>
-              <h3>风险提示</h3>
-              <p className={styles.muted}>{active.riskNotes.join('；') || '暂无风险提示'}</p>
-            </section>
-          </>
-        ) : null}
-      </Drawer>
     </div>
   )
 }
@@ -438,57 +233,4 @@ function getLatestRecommendationTime(items: OperationRecommendation[]): string |
     return max == null || time > max ? time : max
   }, null)
   return latest == null ? null : new Date(latest).toISOString()
-}
-
-type DisplayEvidence = OperationRecommendationEvidence & {
-  id: string
-}
-
-function buildEvidence(item: OperationRecommendation): DisplayEvidence[] {
-  const resolved: DisplayEvidence[] = (item.evidenceItems ?? []).map((evidence) => ({
-    ...evidence,
-    id: evidence.id,
-  }))
-  const resolvedIds = new Set(resolved.map((evidence) => evidence.id))
-  const missingEvidence = item.evidenceRefs
-    .filter((id) => !resolvedIds.has(id))
-    .map((id): DisplayEvidence => ({
-      id,
-      sourceType: 'unknown',
-      sourceName: '未解析证据',
-      title: '未解析证据',
-      summary: `证据 ${id} 暂未解析到原文或来源。`,
-      observedAt: item.updatedAt,
-      confidence: item.confidence,
-    }))
-  const predxSource = item.predxNewsItem?.sourceUrl
-    ? [
-        {
-          id: `predx-news-${item.predxNewsItem.sourceUrl}`,
-          sourceType: 'predx_news',
-          sourceName: item.predxNewsItem.sourceName || 'PredX 新闻',
-          title: item.predxNewsItem.newsTitle || item.predxNewsItem.title,
-          summary: item.predxNewsItem.title,
-          url: item.predxNewsItem.sourceUrl,
-          publishedAt: item.predxNewsItem.publishedAt,
-          observedAt: item.updatedAt,
-          confidence: item.confidence,
-        } satisfies DisplayEvidence,
-      ]
-    : []
-  const predxMarket = item.predxNewsItem?.primaryMarketUrl
-    ? [
-        {
-          id: `predx-market-${item.predxNewsItem.primaryMarketUrl}`,
-          sourceType: 'predx_market',
-          sourceName: 'PredX 市场',
-          title: item.predxNewsItem.primaryMarketTitle || '匹配的 PredX 市场',
-          summary: item.productAssociationRationale,
-          url: item.predxNewsItem.primaryMarketUrl,
-          observedAt: item.updatedAt,
-          confidence: item.confidence,
-        } satisfies DisplayEvidence,
-      ]
-    : []
-  return [...resolved, ...missingEvidence, ...predxSource, ...predxMarket]
 }

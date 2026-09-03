@@ -1,9 +1,15 @@
-import { Button, Tag } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Button, Empty, Spin, Tag, message } from 'antd'
 import { EditOutlined, FileAddOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import {
+  listOperationRecommendations,
+  type OperationRecommendation,
+} from '../../api'
 import styles from './Decision.module.css'
 
 type CreationStatus = 'draft' | 'selecting' | 'editing' | 'publishing'
+type CreationFilter = '全部任务' | '待创作' | '待选择候选' | '编辑中'
 
 interface CreationTask {
   id: string
@@ -15,39 +21,6 @@ interface CreationTask {
   action: string
   group: 'priority' | 'active'
 }
-
-const tasks: CreationTask[] = [
-  {
-    id: 'creation-gpt6-api',
-    title: 'GPT-6 API：开发者迁移判断',
-    context: 'Context Pack 已就绪',
-    angle: '开发者迁移判断清单',
-    status: 'selecting',
-    candidateCount: 3,
-    action: '选择终稿',
-    group: 'priority',
-  },
-  {
-    id: 'creation-team-cost',
-    title: 'AI 团队成本结构长文',
-    context: 'Context Pack 已就绪',
-    angle: '开发者迁移判断清单',
-    status: 'draft',
-    candidateCount: 3,
-    action: '开始创作',
-    group: 'priority',
-  },
-  {
-    id: 'creation-60s',
-    title: '60 秒迁移判断视频脚本',
-    context: 'Context Pack 已就绪',
-    angle: '开发者迁移判断清单',
-    status: 'editing',
-    candidateCount: 3,
-    action: '继续编辑',
-    group: 'active',
-  },
-]
 
 const statusMeta: Record<CreationStatus, { label: string; className: string }> = {
   draft: { label: '待创作', className: styles.creationStatusDraft },
@@ -91,9 +64,36 @@ function CreationRow({ item, onOpen }: { item: CreationTask; onOpen: () => void 
 
 export default function AICreationCenter() {
   const navigate = useNavigate()
-  const priorityTasks = tasks.filter((item) => item.group === 'priority')
-  const activeTasks = tasks.filter((item) => item.group === 'active')
-  const openWorkspace = () => navigate('/decision/creation/workspace')
+  const [items, setItems] = useState<OperationRecommendation[]>([])
+  const [loading, setLoading] = useState(false)
+  const [filter, setFilter] = useState<CreationFilter>('全部任务')
+  const tasks = useMemo(() => items.map(toCreationTask), [items])
+  const visibleTasks = useMemo(
+    () =>
+      tasks.filter((item) => {
+        if (filter === '全部任务') return true
+        return statusMeta[item.status].label === filter
+      }),
+    [filter, tasks],
+  )
+  const priorityTasks = visibleTasks.filter((item) => item.group === 'priority')
+  const activeTasks = visibleTasks.filter((item) => item.group === 'active')
+  const openWorkspace = (id: string) => navigate(`/decision/creation/workspace?recommendation=${id}`)
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      setItems(await listOperationRecommendations({ take: 50 }))
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'AI 创作中心加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
 
   return (
     <div className={styles.decisionPage}>
@@ -109,39 +109,57 @@ export default function AICreationCenter() {
       </div>
 
       <section className={styles.metrics}>
-        <Metric value="5" label="今日推荐" />
+        <Metric value={items.length} label="今日推荐" />
         <Metric value={tasks.filter((item) => item.status === 'draft').length} label="待创作" />
         <Metric value={tasks.filter((item) => item.status === 'selecting').length} label="待选择候选" />
-        <Metric value="3" label="待人工发布" />
+        <Metric value={tasks.filter((item) => item.status === 'publishing').length} label="待人工发布" />
       </section>
 
       <section className={styles.toolbar}>
         <div className={styles.filters}>
-          {['全部任务', '待创作', '待选择候选', '编辑中'].map((item, index) => (
-            <button className={`${styles.chip} ${index === 0 ? styles.chipActive : ''}`} key={item} type="button">
+          {(['全部任务', '待创作', '待选择候选', '编辑中'] as CreationFilter[]).map((item) => (
+            <button
+              className={`${styles.chip} ${filter === item ? styles.chipActive : ''}`}
+              key={item}
+              type="button"
+              onClick={() => setFilter(item)}
+            >
               {item}
             </button>
           ))}
         </div>
+        <span className={styles.muted}>当前 {visibleTasks.length} 条</span>
       </section>
 
-      <div className={styles.sectionTitle}>
-        <h2>优先开始</h2>
-      </div>
-      <section className={styles.creationList}>
-        {priorityTasks.map((item) => (
-          <CreationRow item={item} key={item.id} onOpen={openWorkspace} />
-        ))}
-      </section>
+      <Spin spinning={loading}>
+        {visibleTasks.length ? (
+          <>
+            <div className={styles.sectionTitle}>
+              <h2>优先开始</h2>
+            </div>
+            <section className={styles.creationList}>
+              {priorityTasks.map((item) => (
+                <CreationRow item={item} key={item.id} onOpen={() => openWorkspace(item.id)} />
+              ))}
+            </section>
 
-      <div className={styles.sectionTitle}>
-        <h2>进行中的创作</h2>
-      </div>
-      <section className={styles.creationList}>
-        {activeTasks.map((item) => (
-          <CreationRow item={item} key={item.id} onOpen={openWorkspace} />
-        ))}
-      </section>
+            <div className={styles.sectionTitle}>
+              <h2>进行中的创作</h2>
+            </div>
+            <section className={styles.creationList}>
+              {activeTasks.length ? (
+                activeTasks.map((item) => (
+                  <CreationRow item={item} key={item.id} onOpen={() => openWorkspace(item.id)} />
+                ))
+              ) : (
+                <Empty description="当前没有进行中的创作" />
+              )}
+            </section>
+          </>
+        ) : (
+          <Empty description="暂无可创作的选题推荐" />
+        )}
+      </Spin>
 
       <section className={styles.creationNote}>
         <Tag color="cyan" icon={<EditOutlined />}>
@@ -150,4 +168,31 @@ export default function AICreationCenter() {
       </section>
     </div>
   )
+}
+
+function toCreationTask(item: OperationRecommendation): CreationTask {
+  const status = toCreationStatus(item)
+  return {
+    id: item.id,
+    title: item.title,
+    context: `Context Pack 已就绪 · ${basisText(item.basis)}`,
+    angle: item.angles[0]?.claim ?? item.reason,
+    status,
+    candidateCount: item.angles.length,
+    action: status === 'selecting' ? '选择终稿' : status === 'editing' ? '继续编辑' : '开始创作',
+    group: status === 'editing' ? 'active' : 'priority',
+  }
+}
+
+function toCreationStatus(item: OperationRecommendation): CreationStatus {
+  if (item.status === 'adopted' || item.status === 'edited') return 'publishing'
+  if (item.status === 'editing') return 'editing'
+  if (item.angles.length > 1) return 'selecting'
+  return 'draft'
+}
+
+function basisText(basis: OperationRecommendation['basis']) {
+  if (basis === 'heat') return '公共热度'
+  if (basis === 'market') return '实时市场'
+  return '产品价值'
 }

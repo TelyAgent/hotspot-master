@@ -18,7 +18,6 @@ import Monitor from './pages/Monitor/Monitor'
 import YouTubeMonitor from './pages/Monitor/YouTubeMonitor'
 import DecisionRecommendations from './pages/Decision/Recommendations'
 import DecisionContextInbox from './pages/Decision/ContextInbox'
-import DecisionRecords from './pages/Decision/DecisionRecords'
 import AICreationCenter from './pages/Decision/AICreationCenter'
 import ContentPublishing from './pages/Decision/ContentPublishing'
 import CreationWorkspace from './pages/Decision/CreationWorkspace'
@@ -108,7 +107,6 @@ export default function App() {
                   <Route path="/decision/creation" element={<AICreationCenter />} />
                   <Route path="/decision/creation/workspace" element={<CreationWorkspace />} />
                   <Route path="/decision/publish" element={<ContentPublishing />} />
-                  <Route path="/decision/records" element={<DecisionRecords />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/future" element={<Schedule />} />
                   <Route path="/insights" element={<Insights />} />

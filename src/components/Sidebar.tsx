@@ -8,7 +8,6 @@ import {
   FileSearchOutlined,
   InboxOutlined,
   LineChartOutlined,
-  ProfileOutlined,
   ReadOutlined,
   SendOutlined,
   SettingOutlined,
@@ -51,8 +50,6 @@ export default function Sidebar() {
       ? 'decision-creation'
       : location.pathname.startsWith('/decision/publish')
         ? 'decision-publish'
-      : location.pathname.startsWith('/decision/records')
-        ? 'decision-records'
         : 'decision-recommendations'
   const selectedKey = page === 'monitor' ? monitorKey : page === 'decision' ? decisionKey : page
 
@@ -110,11 +107,6 @@ export default function Sidebar() {
               key: 'decision-publish',
               icon: <SendOutlined />,
               label: navLabel('内容发布', 'Content Publishing'),
-            },
-            {
-              key: 'decision-records',
-              icon: <ProfileOutlined />,
-              label: navLabel('决策记录', 'Decision Records'),
             },
           ],
         },
@@ -175,11 +167,6 @@ export default function Sidebar() {
           }
           if (key === 'decision-publish') {
             navigate('/decision/publish')
-            window.scrollTo({ top: 0, behavior: 'smooth' })
-            return
-          }
-          if (key === 'decision-records') {
-            navigate('/decision/records')
             window.scrollTo({ top: 0, behavior: 'smooth' })
             return
           }

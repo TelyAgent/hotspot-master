@@ -65,21 +65,6 @@ export interface OperationRecommendation {
   angles: OperationRecommendationAngle[]
 }
 
-export type OperationDecisionResult = 'adopted' | 'edited' | 'rejected'
-
-export interface OperationDecisionRecord {
-  id: string
-  recommendationId: string
-  result: OperationDecisionResult
-  finalAngle?: string | null
-  note?: string | null
-  operator?: string | null
-  regenCount: number
-  createdAt: string
-  updatedAt: string
-  recommendation: OperationRecommendation
-}
-
 export type OperationContextInboxStatus = 'pending' | 'working' | 'missing' | 'done'
 
 export interface OperationContextInboxItem {
@@ -123,40 +108,6 @@ export function runOperationRecommendations() {
       newsTake: 20,
     }),
   })
-}
-
-export function adoptOperationRecommendation(
-  id: string,
-  body: { angleId: string; operator?: string; note?: string },
-) {
-  return request<OperationDecisionRecord>(`/operations-decision/recommendations/${id}/adopt`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
-}
-
-export function adoptEditedOperationRecommendation(
-  id: string,
-  body: { angleId?: string; finalAngle: string; operator?: string; note?: string },
-) {
-  return request<OperationDecisionRecord>(`/operations-decision/recommendations/${id}/adopt-edited`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
-}
-
-export function rejectOperationRecommendation(
-  id: string,
-  body: { operator?: string; note?: string } = {},
-) {
-  return request<OperationDecisionRecord>(`/operations-decision/recommendations/${id}/reject`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
-}
-
-export function listOperationDecisionRecords() {
-  return request<OperationDecisionRecord[]>('/operations-decision/records')
 }
 
 export function listOperationContextInboxItems() {
