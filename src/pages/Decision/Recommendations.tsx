@@ -190,7 +190,7 @@ export default function DecisionRecommendations() {
               <div className={styles.anglePreview}>建议优先探索：{item.angles[0]?.claim ?? '等待补充候选角度'}</div>
               <div className={styles.cardFoot}>
                 <span className={styles.window}>{priorityText(item.priority)}</span>
-                <Button className={styles.ghostButton} icon={<RightOutlined />}>内容创作</Button>
+                <Button className={styles.ghostButton}>内容创作</Button>
               </div>
             </article>
           ))}

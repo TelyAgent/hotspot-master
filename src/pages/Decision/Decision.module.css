@@ -400,6 +400,8 @@
   border-radius: 8px;
   padding: 12px;
   background: #fff;
+  color: var(--ink);
+  text-align: left;
 }
 
 .evidenceItem {
@@ -452,7 +454,7 @@
 
 .drawerFooter {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -663,10 +665,18 @@
 
 .publishDetail,
 .workspaceHead {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fff;
   padding: 18px;
+}
+
+.workspaceHeadAction {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  min-width: 104px;
 }
 
 .draftPreview {
@@ -695,6 +705,7 @@
 }
 
 .workspaceHead h1 {
+  max-width: calc(100% - 140px);
   margin: 12px 0 8px;
   font-size: 30px;
   line-height: 1.15;
@@ -753,33 +764,101 @@
 }
 
 .kitchenLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 365px;
-  gap: 34px;
-  padding: 26px;
+  padding: 22px 24px 28px;
 }
 
-.kitchenSteps {
+.kitchenFlow {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 26px;
+  gap: 16px;
+  padding-left: 36px;
 }
 
-.kitchenSteps button {
-  border: 1px solid var(--line);
-  border-radius: 9px;
+.kitchenFlow::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 13px;
+  width: 2px;
+  background: var(--line);
+}
+
+.flowStep {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.flowMarker {
+  position: absolute;
+  left: -34px;
+  top: 2px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
   background: #fff;
   color: var(--muted);
-  padding: 12px;
-  text-align: left;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 900;
 }
 
-.kitchenStepActive {
-  border-color: var(--g) !important;
-  background: #eaf5f3 !important;
-  color: var(--g) !important;
+.flowStepActive .flowMarker,
+.flowStepDone .flowMarker {
+  border-color: var(--g);
+  color: var(--g);
+}
+
+.flowStepDone .flowMarker {
+  background: #eaf5f3;
+}
+
+.flowContent {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px;
+}
+
+.flowStepActive .flowContent {
+  border-color: var(--g);
+  background: #fbfdfc;
+}
+
+.flowStepDone .flowContent {
+  background: #fbfdfc;
+}
+
+.flowHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.flowHead h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.flowHead span {
+  max-width: 55%;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.flowBody {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .choiceGrid {
@@ -827,6 +906,30 @@
   border-radius: 10px;
   background: #fbfdfc;
   padding: 18px;
+}
+
+.aiBox h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.aiBox h3 span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.aiInputRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.aiInputRow :global(.ant-btn) {
+  min-width: 88px;
 }
 
 .ghostButton,
