@@ -2,7 +2,7 @@
   display: grid;
   gap: 16px;
   min-width: 0;
-  color: #20302d;
+  color: #000000e0;
 }
 
 .hero {
@@ -10,9 +10,9 @@
   grid-template-columns: minmax(0, 1fr) 180px;
   gap: 18px;
   padding: 18px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
-  background: #f4f7f7;
+  background: #fff;
 }
 
 .hero :global(.ant-typography) {
@@ -21,13 +21,13 @@
 
 .hero h3:global(.ant-typography) {
   margin: 8px 0 7px !important;
-  color: #20302d;
+  color: #000000e0;
   font-size: 21px;
   line-height: 1.3;
 }
 
 .hero :global(.ant-typography).ant-typography {
-  color: #566864;
+  color: #00000073;
   line-height: 1.65;
 }
 
@@ -42,7 +42,7 @@
 
 .heroMeta {
   flex-wrap: wrap;
-  color: #6a7c78;
+  color: #00000073;
   font-size: 12px;
 }
 
@@ -50,7 +50,7 @@
   align-items: flex-end;
   justify-content: space-between;
   flex-direction: column;
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
 }
 
@@ -67,8 +67,8 @@
   margin-inline-end: 0;
   border: 0;
   border-radius: 6px;
-  background: #dff2ec;
-  color: #397162;
+  background: #f6ffed;
+  color: #237804;
   font-weight: 700;
 }
 
@@ -76,7 +76,7 @@
   display: grid;
   gap: 12px;
   padding: 14px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fff;
 }
@@ -84,7 +84,7 @@
 .evidenceSummary {
   padding: 12px;
   border-radius: 8px;
-  background: #f4f7f7;
+  background: #fff;
 }
 
 .evidenceSummary p,
@@ -92,7 +92,7 @@
 .sectionHeader span,
 .toolBox p {
   margin: 6px 0 0;
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -102,7 +102,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   padding: 12px 0;
-  border-top: 1px solid #e4ecea;
+  border-top: 1px solid #f0f0f0;
 }
 
 .evidenceItem:first-of-type {
@@ -110,14 +110,14 @@
 }
 
 .evidenceItem small {
-  color: #6b7c78;
+  color: #00000073;
 }
 
 .evidenceItem a {
   display: inline-block;
   max-width: 100%;
   margin-top: 7px;
-  color: #2d7471;
+  color: #0958d9;
   word-break: break-all;
 }
 
@@ -138,18 +138,18 @@
 
 .candidate {
   overflow: hidden;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
-  box-shadow: 0 10px 28px rgba(18, 53, 48, 0.05);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
 }
 
 .candidate :global(.ant-card-head) {
   min-height: 46px;
-  border-bottom-color: #e4ecea;
+  border-bottom-color: #f0f0f0;
 }
 
 .candidate :global(.ant-card-head-title) {
-  color: #20302d;
+  color: #000000e0;
   font-weight: 800;
 }
 
@@ -158,14 +158,14 @@
 }
 
 .candidate :global(.ant-btn-text) {
-  color: #198678;
+  color: #1677ff;
 }
 
 .copy {
   max-height: 220px;
   overflow: auto;
   padding-right: 4px;
-  color: #20302d;
+  color: #000000e0;
   font-size: 14px;
   line-height: 1.78;
   white-space: pre-wrap;
@@ -183,26 +183,26 @@
   align-content: start;
   gap: 10px;
   padding: 16px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fff;
 }
 
 .toolBox h3 {
   margin: 0;
-  color: #20302d;
+  color: #000000e0;
   font-size: 15px;
 }
 
 .toolBox :global(.ant-input),
 .toolBox :global(.ant-input-outlined) {
-  border-color: #bdcdcb;
+  border-color: #d9d9d9;
   border-radius: 8px;
 }
 
 .toolBox :global(.ant-btn-primary) {
-  background: #198678;
-  border-color: #198678;
+  background: #1677ff;
+  border-color: #1677ff;
 }
 
 @media (max-width: 860px) {

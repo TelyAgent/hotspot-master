@@ -1,9 +1,9 @@
 .card {
   padding: 18px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fff;
-  color: #20302d;
+  color: #000000e0;
 }
 
 .header {
@@ -17,7 +17,7 @@
 .header h2,
 .empty h2 {
   margin: 0;
-  color: #20302d;
+  color: #000000e0;
   font-size: 18px;
   line-height: 1.25;
 }
@@ -25,7 +25,7 @@
 .header p,
 .empty p {
   margin: 12px 0 0;
-  color: #566864;
+  color: #00000073;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -37,20 +37,20 @@
 
 .confidence span {
   display: block;
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
 }
 
 .confidence strong {
   display: block;
-  color: #20302d;
+  color: #000000e0;
   font-size: 28px;
   line-height: 1.1;
 }
 
 .table {
   display: grid;
-  border-top: 1px solid #e4ecea;
+  border-top: 1px solid #f0f0f0;
 }
 
 .tableHead,
@@ -61,17 +61,17 @@
   align-items: center;
   min-width: 0;
   padding: 11px 10px;
-  border-bottom: 1px solid #e4ecea;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .tableHead {
-  color: #20302d;
+  color: #000000e0;
   font-size: 13px;
   font-weight: 800;
 }
 
 .tableRow {
-  color: #20302d;
+  color: #000000e0;
   font-size: 14px;
 }
 
@@ -85,7 +85,7 @@
 }
 
 .compatible {
-  color: #397162;
+  color: #237804;
 }
 
 .conflict {

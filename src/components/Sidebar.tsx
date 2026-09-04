@@ -30,13 +30,8 @@ const NAV_ICONS: Record<PageId, ReactNode> = {
   settings: <SettingOutlined />,
 }
 
-function navLabel(label: string, sub: string) {
-  return (
-    <span className="nav-label">
-      <b>{label}</b>
-      <small>{sub}</small>
-    </span>
-  )
+function navLabel(label: string) {
+  return label
 }
 
 export default function Sidebar() {
@@ -63,50 +58,50 @@ export default function Sidebar() {
             ? {
               key: 'monitor',
               icon: NAV_ICONS.monitor,
-              label: navLabel(item.label, item.sub),
+              label: navLabel(item.label),
               children: [
                 {
                   key: 'monitor-twitter',
                   icon: <XOutlined />,
-                  label: navLabel('Twitter', 'X Trends'),
+                  label: navLabel('Twitter'),
                 },
                 {
                   key: 'monitor-youtube',
                   icon: <YoutubeOutlined />,
-                  label: navLabel('YouTube', 'Video Trends'),
+                  label: navLabel('YouTube'),
                 },
               ],
             }
             : {
               key: item.page,
               icon: NAV_ICONS[item.page],
-              label: navLabel(item.label, item.sub),
+              label: navLabel(item.label),
             },
         ),
         {
           key: 'decision',
           icon: NAV_ICONS.decision,
-          label: navLabel('运营决策', 'Decision Center'),
+          label: navLabel('运营决策'),
           children: [
             {
               key: 'decision-recommendations',
               icon: <BulbOutlined />,
-              label: navLabel('选题推荐', 'Recommendations'),
+              label: navLabel('选题推荐'),
             },
             {
               key: 'decision-inbox',
               icon: <InboxOutlined />,
-              label: navLabel('上下文收件箱', 'Context Inbox'),
+              label: navLabel('上下文收件箱'),
             },
             {
               key: 'decision-creation',
               icon: <ReadOutlined />,
-              label: navLabel('AI创作中心', 'AI Creation Center'),
+              label: navLabel('AI创作中心'),
             },
             {
               key: 'decision-publish',
               icon: <SendOutlined />,
-              label: navLabel('内容发布', 'Content Publishing'),
+              label: navLabel('内容发布'),
             },
           ],
         },
@@ -119,7 +114,7 @@ export default function Sidebar() {
         {
           key: 'settings',
           icon: NAV_ICONS.settings,
-          label: navLabel('系统设置', 'Configuration'),
+          label: navLabel('系统设置'),
         },
       ],
     },
@@ -136,6 +131,7 @@ export default function Sidebar() {
       </div>
       <Menu
         className="side-menu"
+        theme="dark"
         mode="inline"
         selectedKeys={[selectedKey]}
         defaultOpenKeys={['monitor', 'decision']}

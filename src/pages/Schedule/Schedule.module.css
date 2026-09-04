@@ -86,7 +86,7 @@
 
 .monthDow {
   padding: 8px;
-  background: #edf2f2;
+  background: #fff;
   color: var(--muted);
   font-size: 11px;
   border-right: 1px solid var(--line);
@@ -102,8 +102,8 @@
 }
 
 .monthDay.outside {
-  background: #f8fafa;
-  color: #a2adaf;
+  background: #fafafa;
+  color: #00000040;
 }
 
 .monthDate {
@@ -115,7 +115,7 @@
 .futureEventChip {
   width: 100%;
   border: 1px solid transparent;
-  background: #edf5f3;
+  background: #f0f5ff;
   color: var(--ink);
   padding: 7px;
   text-align: left;
@@ -125,16 +125,16 @@
 }
 
 .futureEventChip:hover {
-  border-color: #8dbbb5;
+  border-color: #69b1ff;
 }
 
 .futureEventChip.active {
   border-color: var(--g);
-  background: #def1ed;
+  background: #bae0ff;
 }
 
 .futureEventChip.observe {
-  background: #f1f3f3;
+  background: #fff;
 }
 
 .chipMeta {
@@ -158,12 +158,12 @@
   height: 9px;
   display: inline-block;
   margin-right: 4px;
-  background: #def1ed;
+  background: #bae0ff;
   border: 1px solid var(--g);
 }
 
 .legend i.prepare {
-  background: #f1f3f3;
+  background: #fff;
   border-color: #b8c3c4;
 }
 
@@ -215,23 +215,23 @@
 
 .heatCell {
   aspect-ratio: 1;
-  background: #e8efee;
+  background: #f0f5ff;
 }
 
 .l1 {
-  background: #d7ebe7;
+  background: #d6e4ff;
 }
 
 .l2 {
-  background: #a9d5cd;
+  background: #91caff;
 }
 
 .l3 {
-  background: #52a99e;
+  background: #4096ff;
 }
 
 .l4 {
-  background: #087b71;
+  background: #1677ff;
 }
 
 .heatLegend {
@@ -281,8 +281,8 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid #cfe0dd;
-  background: #eff8f5;
+  border: 1px solid #d9d9d9;
+  background: #e6f4ff;
   margin: 12px 0;
 }
 
@@ -300,7 +300,7 @@
 
 .scoreItem {
   min-width: 0;
-  background: #f4f7f7;
+  background: #fff;
   padding: 8px;
 }
 
@@ -353,7 +353,7 @@
 
 .windowTrack {
   height: 9px;
-  background: #e5eceb;
+  background: #f0f0f0;
   position: relative;
   margin: 10px 0;
 }

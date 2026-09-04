@@ -3,8 +3,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background:
-    radial-gradient(1200px 560px at 50% -10%, #e4f1ee 0%, var(--bg) 55%);
+  background: #fff;
 }
 
 .card {

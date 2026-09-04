@@ -1,18 +1,18 @@
 :root {
-  --bg: #f4f7f7;
+  --bg: #fff;
   --p: #fff;
-  --soft: #edf7f5;
-  --ink: #172026;
-  --muted: #647276;
-  --line: #d6dfdf;
-  --line2: #e5ebeb;
-  --g: #087b71;
-  --g2: #05665e;
-  --o: #b55020;
-  --ob: #f8e6db;
-  --r: #a53d44;
-  --rb: #fbeaec;
-  --shadow: 0 16px 46px #163e3b1a;
+  --soft: #e6f4ff;
+  --ink: #000000e0;
+  --muted: #00000073;
+  --line: #d9d9d9;
+  --line2: #f0f0f0;
+  --g: #1677ff;
+  --g2: #0958d9;
+  --o: #faad14;
+  --ob: #fffbe6;
+  --r: #ff4d4f;
+  --rb: #fff2f0;
+  --shadow: 0 16px 46px #00000014;
 }
 
 * {
@@ -21,7 +21,7 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: #fff;
   color: var(--ink);
   font:
     14px/1.5 Inter,
@@ -47,7 +47,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #82c1bb;
+  outline: 3px solid #91caff;
   outline-offset: 2px;
 }
 
@@ -85,7 +85,13 @@ h3 {
 /* ---------- app shell ---------- */
 .app {
   min-height: 100vh;
-  background: var(--bg);
+  background: #fff;
+}
+
+.app .ant-layout,
+.app-main.ant-layout,
+.app-content.ant-layout-content {
+  background: #fff;
 }
 
 .app-sider {
@@ -99,7 +105,7 @@ h3 {
 
 .app-main {
   min-width: 940px;
-  background: var(--bg);
+  background: #fff;
 }
 
 .app-header {
@@ -113,20 +119,21 @@ h3 {
 }
 
 .app-content {
-  background: var(--bg);
+  background: #fff;
 }
 
 .side {
   height: 100vh;
-  background: #fff;
-  padding: 20px 12px;
+  background: #001529;
+  padding: 20px 0;
 }
 
 .brand {
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 0 10px 23px;
+  padding: 0 18px 23px;
+  color: #fff;
   font-weight: 750;
 }
 
@@ -143,118 +150,12 @@ h3 {
 .brand small {
   display: block;
   font-weight: 500;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 10px;
 }
 
 .side-menu.ant-menu {
   border-inline-end: 0;
-  background: transparent;
-}
-
-.side-menu .ant-menu-item-group-title {
-  padding: 14px 10px 6px;
-  color: #869295;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  line-height: 1.5;
-  text-transform: uppercase;
-}
-
-.side-menu .ant-menu-item,
-.side-menu .ant-menu-submenu-title {
-  height: 48px;
-  margin: 2px 0;
-  padding-inline: 11px 10px !important;
-  border-radius: 0;
-  color: #526165;
-  line-height: 1.2;
-}
-
-.side-menu .ant-menu-item:hover,
-.side-menu .ant-menu-submenu-title:hover {
-  background: #f2f7f6;
-  color: var(--ink);
-}
-
-.side-menu .ant-menu-item-selected {
-  background: var(--soft);
-  color: var(--ink);
-}
-
-.side-menu .ant-menu-item-selected::after {
-  inset-inline-start: 0;
-  inset-inline-end: auto;
-  border-inline-end: 3px solid var(--g);
-}
-
-.side-menu .ant-menu-item-icon {
-  color: inherit;
-  font-size: 15px;
-}
-
-.side-menu .ant-menu-submenu-arrow {
-  color: var(--muted);
-}
-
-.nav-label {
-  display: grid;
-  gap: 2px;
-}
-
-.nav-label b {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.nav-label small {
-  color: #8a9699;
-  font-size: 10px;
-}
-
-.side-menu .ant-menu-item-selected .nav-label small {
-  color: var(--g);
-}
-
-.group {
-  padding: 14px 10px 6px;
-  color: #869295;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.nav {
-  width: 100%;
-  border: 0;
-  border-left: 3px solid transparent;
-  background: transparent;
-  padding: 10px 11px;
-  text-align: left;
-  color: #526165;
-}
-
-.nav b {
-  display: block;
-}
-
-.nav small {
-  font-size: 10px;
-  color: #8a9699;
-}
-
-.nav:hover {
-  background: #f2f7f6;
-}
-
-.nav.active {
-  border-left-color: var(--g);
-  background: var(--soft);
-  color: var(--ink);
-}
-
-.nav.active small {
-  color: var(--g);
 }
 
 .top {
@@ -292,7 +193,7 @@ h3 {
   height: 8px;
   border-radius: 50%;
   background: var(--g);
-  box-shadow: 0 0 0 4px #def1ed;
+  box-shadow: 0 0 0 4px #bae0ff;
 }
 
 .avatar {
@@ -300,7 +201,7 @@ h3 {
   height: 30px;
   display: grid;
   place-items: center;
-  background: #def1ed;
+  background: #bae0ff;
   color: var(--g);
   font-weight: 750;
 }
@@ -344,7 +245,7 @@ h3 {
 /* ---------- buttons & filters ---------- */
 .btn,
 .filter {
-  border: 1px solid #cbd6d7;
+  border: 1px solid #d9d9d9;
   background: #fff;
   color: var(--ink);
   padding: 8px 10px;
@@ -352,8 +253,8 @@ h3 {
 
 .btn:hover,
 .filter:hover {
-  border-color: #8eb7b2;
-  background: #f8fbfa;
+  border-color: #69b1ff;
+  background: #fafafa;
 }
 
 .btn.primary {
@@ -412,15 +313,15 @@ h3 {
 .pill {
   display: inline-flex;
   padding: 3px 7px;
-  background: #eef4f4;
-  color: #526165;
+  background: #fff;
+  color: #000000a6;
   font-size: 11px;
   font-weight: 650;
   white-space: nowrap;
 }
 
 .pill.green {
-  background: #def1ed;
+  background: #bae0ff;
   color: var(--g);
 }
 
@@ -437,7 +338,7 @@ h3 {
 /* ---------- notes ---------- */
 .note {
   border-left: 3px solid var(--g);
-  background: var(--soft);
+  background: #e6f4ff;
   padding: 11px;
   margin: 12px 0;
   font-size: 12px;
@@ -460,7 +361,7 @@ h3 {
 .field select,
 .field textarea {
   width: 100%;
-  border: 1px solid #cbd6d7;
+  border: 1px solid #d9d9d9;
   padding: 9px;
   background: #fff;
 }

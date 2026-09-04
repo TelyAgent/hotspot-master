@@ -29,7 +29,7 @@ export default function Topbar() {
         ]}
       />
       <Space className="top-right" size={10}>
-        <Badge status="processing" color="#087b71" />
+        <Badge status="processing" color="#1677ff" />
         <Typography.Text type="secondary" className="top-status">
           自动响应链路正常
         </Typography.Text>

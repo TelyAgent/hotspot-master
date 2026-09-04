@@ -29,7 +29,7 @@ import Settings from './pages/Settings/Settings'
 function AppLayout() {
   return (
     <Layout className="app">
-      <Layout.Sider className="app-sider" width={224} theme="light">
+      <Layout.Sider className="app-sider" width={224} theme="dark">
         <Sidebar />
       </Layout.Sider>
       <Layout className="app-main">
@@ -60,35 +60,7 @@ function RequireAuth() {
 
 export default function App() {
   return (
-    <ConfigProvider
-      locale={zhCN}
-      theme={{
-        token: {
-          colorPrimary: '#087b71',
-          colorInfo: '#087b71',
-          colorSuccess: '#087b71',
-          colorWarning: '#b55020',
-          colorError: '#a53d44',
-          colorLink: '#087b71',
-          colorLinkHover: '#05665e',
-          colorLinkActive: '#04524c',
-          colorText: '#172026',
-          colorTextSecondary: '#647276',
-          colorBorder: '#d6dfdf',
-          colorBgLayout: '#f4f7f7',
-          borderRadius: 6,
-          fontFamily:
-            "Inter, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif",
-        },
-        components: {
-          Alert: {
-            colorInfoBg: 'rgb(244, 247, 247)',
-            colorInfoBorder: '#d6dfdf',
-            colorInfoText: '#647276',
-          },
-        },
-      }}
-    >
+    <ConfigProvider locale={zhCN}>
       <AntdApp notification={{ placement: 'topRight' }}>
         <BrowserRouter>
           <AppProvider>

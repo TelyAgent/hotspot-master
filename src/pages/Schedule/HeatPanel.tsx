@@ -61,11 +61,11 @@ export default function HeatPanel({ event }: { event: FutureEvent }) {
                 preserveAspectRatio="none"
                 aria-label="累计讨论量趋势"
               >
-                <path d={`M0 ${H} L${polyline} L${W} ${H} Z`} fill="#dff2ee" />
+                <path d={`M0 ${H} L${polyline} L${W} ${H} Z`} fill="#e6f4ff" />
                 <path
                   d={`M${polyline}`}
                   fill="none"
-                  stroke="#087b71"
+                  stroke="#1677ff"
                   strokeWidth="3"
                 />
               </svg>
@@ -94,11 +94,11 @@ export default function HeatPanel({ event }: { event: FutureEvent }) {
           </div>
           <div className={styles.heatLegend}>
             <span>低</span>
-            <i style={{ background: '#e8efee' }} />
-            <i style={{ background: '#d7ebe7' }} />
-            <i style={{ background: '#a9d5cd' }} />
-            <i style={{ background: '#52a99e' }} />
-            <i style={{ background: '#087b71' }} />
+            <i style={{ background: '#f0f5ff' }} />
+            <i style={{ background: '#d6e4ff' }} />
+            <i style={{ background: '#91caff' }} />
+            <i style={{ background: '#4096ff' }} />
+            <i style={{ background: '#1677ff' }} />
             <span>高</span>
           </div>
           <p className="small" style={{ marginTop: 10 }}>

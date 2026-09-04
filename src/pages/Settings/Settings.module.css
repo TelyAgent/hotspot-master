@@ -7,10 +7,9 @@
 .settingsNav {
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 8px;
   align-self: start;
-  box-shadow: 0 10px 26px rgba(16, 38, 35, 0.04);
 }
 
 .settingsMenu {
@@ -27,8 +26,8 @@
 }
 
 .settingsMenu :global(.ant-menu-item-selected) {
-  background: #e8f3f1;
-  color: var(--g);
+  background: #e6f4ff;
+  color: #1677ff;
   font-weight: 700;
 }
 
@@ -55,18 +54,15 @@
 .settingPanel {
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 0;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(16, 38, 35, 0.04);
 }
 
 .settingHero {
   padding: 22px 24px;
   border-bottom: 1px solid var(--line);
-  background:
-    linear-gradient(135deg, rgba(232, 243, 241, 0.92), rgba(255, 255, 255, 0.4)),
-    #fff;
+  background: #fff;
 }
 
 .settingHeroContent {
@@ -113,9 +109,9 @@
 
 .twitterBlock {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 18px;
-  background: #fbfdfd;
+  background: #fff;
 }
 
 .blockHeader {
@@ -144,8 +140,8 @@
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #dcefeb;
-  color: #087b71;
+  background: #e6f4ff;
+  color: #1677ff;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -160,7 +156,7 @@
   grid-column: 1 / -1;
   padding: 12px 14px;
   border: 1px solid var(--line2);
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
 }
 
@@ -222,9 +218,9 @@
 }
 
 .checkItem:has(:checked) {
-  border-color: rgba(8, 123, 113, 0.45);
-  background: #eef8f6;
-  box-shadow: inset 0 0 0 1px rgba(8, 123, 113, 0.08);
+  border-color: rgba(22, 119, 255, 0.45);
+  background: #e6f4ff;
+  box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.12);
 }
 
 .checkItem input {
@@ -250,7 +246,7 @@
 }
 
 .workflowDoc {
-  background: #f6f8f8;
+  background: #fafafa;
   border: 1px solid var(--line);
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -331,7 +327,7 @@
 }
 
 .workflowDiff {
-  background: #f6f8f8;
+  background: #fafafa;
   border: 1px solid var(--line);
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -345,7 +341,7 @@
 }
 
 .diff_added {
-  color: #087b71;
+  color: #1677ff;
 }
 
 .diff_removed {
@@ -427,7 +423,7 @@
   border: 1px solid var(--line2);
   border-radius: 8px;
   padding: 12px;
-  background: #fbfdfd;
+  background: #fafafa;
 }
 
 .topicWatchInfoGrid p {
@@ -482,9 +478,7 @@
   align-items: flex-start;
   padding: 24px;
   border-bottom: 1px solid var(--line);
-  background:
-    linear-gradient(135deg, rgba(232, 243, 241, 0.95), rgba(255, 255, 255, 0.7)),
-    #fff;
+  background: #fff;
 }
 
 .kicker {
@@ -588,7 +582,7 @@
 
 .ruleDocPanel {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   background: #fff;
 }
@@ -599,7 +593,7 @@
   gap: 12px;
   padding: 16px 18px;
   border-bottom: 1px solid var(--line2);
-  background: #fbfdfd;
+  background: #fff;
 }
 
 .ruleDocPanelHeader h3 {

@@ -16,7 +16,7 @@
 }
 
 .header {
-  background: #edf2f2;
+  background: #fff;
   color: var(--muted);
   font-size: 11px;
   margin-top: 12px;
@@ -89,8 +89,8 @@
 }
 
 .topicTabs :global(.ant-tabs-tab-active) {
-  border-color: #5b9b8f;
-  background: #eef6f4;
+  border-color: #1677ff;
+  background: #e6f4ff;
 }
 
 .topicTabs :global(.ant-tabs-ink-bar) {
@@ -111,8 +111,8 @@
   justify-content: center;
   padding: 0 6px;
   border-radius: 999px;
-  background: #dcebe8;
-  color: #3d766d;
+  background: #e6f4ff;
+  color: #0958d9;
   font-size: 11px;
   font-weight: 700;
 }
@@ -126,7 +126,7 @@
 
 .regionFlow span {
   padding: 5px 7px;
-  background: #edf4f3;
+  background: #f0f5ff;
 }
 
 .regionFlow i {
@@ -156,13 +156,13 @@
 
 .youtubeHero h1 {
   margin: 10px 0 7px !important;
-  color: #20302d !important;
+  color: #000000e0 !important;
   font-size: 32px !important;
   line-height: 1.1 !important;
 }
 
 .youtubeHero :global(.ant-typography) {
-  color: #566864;
+  color: #00000073;
 }
 
 .youtubeEyebrow {
@@ -178,7 +178,7 @@
   gap: 0;
   margin-bottom: 18px;
   overflow: hidden;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 12px;
   background: #fff;
 }
@@ -186,7 +186,7 @@
 .youtubeStats > div {
   min-width: 0;
   padding: 19px 18px;
-  border-right: 1px solid #d7e2df;
+  border-right: 1px solid #d9d9d9;
 }
 
 .youtubeStats > div:last-child {
@@ -195,7 +195,7 @@
 
 .youtubeStats strong {
   display: block;
-  color: #243f3b;
+  color: #000000e0;
   font-size: 26px;
   line-height: 1.1;
 }
@@ -203,7 +203,7 @@
 .youtubeStats span {
   display: block;
   margin-top: 10px;
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
 }
 
@@ -213,7 +213,7 @@
   gap: 0;
   margin-bottom: 18px;
   overflow: hidden;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 12px;
   background: #fff;
 }
@@ -221,7 +221,7 @@
 .youtubeRuleStrip > div {
   min-width: 0;
   padding: 17px 18px;
-  border-right: 1px solid #d7e2df;
+  border-right: 1px solid #d9d9d9;
 }
 
 .youtubeRuleStrip > div:last-child {
@@ -230,14 +230,14 @@
 
 .youtubeRuleStrip b {
   display: block;
-  color: #20302d;
+  color: #000000e0;
   font-size: 14px;
 }
 
 .youtubeRuleStrip span {
   display: block;
   margin-top: 9px;
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
   line-height: 1.45;
 }
@@ -258,16 +258,16 @@
 
 .youtubeFilters :global(.ant-btn) {
   height: 34px;
-  border-color: #d7e2df;
+  border-color: #d9d9d9;
   border-radius: 10px;
-  color: #334844;
+  color: #000000e0;
   box-shadow: none;
 }
 
 .youtubeFilters :global(.ant-btn-primary) {
   color: #fff;
-  background: #5a9a8e;
-  border-color: #5a9a8e;
+  background: #1677ff;
+  border-color: #1677ff;
 }
 
 .youtubeToolbarRight {
@@ -276,7 +276,7 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-  color: #6b7c78;
+  color: #00000073;
   font-size: 12px;
 }
 
@@ -288,11 +288,11 @@
 
 .youtubeVideoCard {
   min-width: 0;
-  border-color: #d7e2df;
+  border-color: #d9d9d9;
   border-radius: 10px;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 14px 35px rgba(18, 53, 48, 0.06);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.06);
 }
 
 .youtubeVideoCard :global(.ant-card-body) {
@@ -304,7 +304,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: #edf2f2;
+  background: #fff;
 }
 
 .youtubeThumb img,
@@ -319,7 +319,7 @@
   position: absolute;
   inset: 0;
   content: '';
-  background: linear-gradient(180deg, rgba(8, 27, 24, 0.02) 30%, rgba(8, 25, 22, 0.82) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02) 30%, rgba(0, 0, 0, 0.72) 100%);
 }
 
 .youtubeSourceBadge {
@@ -330,7 +330,7 @@
   max-width: calc(100% - 16px);
   padding: 5px 8px;
   border-radius: 6px;
-  background: #4f9187;
+  background: #1677ff;
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -353,7 +353,7 @@
   background: #f47d70;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(13, 37, 34, 0.18);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
 }
 
 .youtubePlayButton:hover,
@@ -392,7 +392,7 @@
 
 .youtubeThumbFallback {
   aspect-ratio: 16 / 9;
-  background: #edf2f2;
+  background: #fff;
 }
 
 .youtubeCardBody {
@@ -410,8 +410,8 @@
   margin-inline-end: 0;
   border: 0;
   border-radius: 6px;
-  background: #e4f3f3;
-  color: #2d7471;
+  background: #e6f4ff;
+  color: #0958d9;
   font-weight: 650;
 }
 
@@ -425,7 +425,7 @@
 
 .youtubeContentTitleline b {
   min-width: 0;
-  color: #20302d;
+  color: #000000e0;
   font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -434,7 +434,7 @@
 
 .youtubeContentTitleline span {
   flex: 0 0 auto;
-  color: #6b7c78;
+  color: #00000073;
   font-size: 12px;
 }
 
@@ -453,12 +453,12 @@
   min-width: 0;
   padding: 12px 10px;
   border-radius: 7px;
-  background: #eef5f3;
+  background: #f0f5ff;
 }
 
 .youtubeStatBox strong {
   display: block;
-  color: #285e56;
+  color: #0958d9;
   font-size: 17px;
   line-height: 1.25;
   word-break: break-word;
@@ -467,7 +467,7 @@
 .youtubeStatBox span {
   display: block;
   margin-top: 6px;
-  color: #566864;
+  color: #00000073;
   font-size: 11px;
 }
 
@@ -506,8 +506,8 @@
   height: 34px;
   padding: 0 14px;
   border-radius: 10px;
-  background: #5b9b8f !important;
-  border-color: #5b9b8f !important;
+  background: #1677ff !important;
+  border-color: #1677ff !important;
   color: #fff !important;
   font-weight: 700;
   box-shadow: none;
@@ -520,8 +520,8 @@
 .youtubeInsightLine :global(.ant-btn:hover),
 .youtubeInsightLine :global(.ant-btn:focus-visible),
 .youtubeInsightLine :global(.ant-btn:active) {
-  background: #4f8f84 !important;
-  border-color: #4f8f84 !important;
+  background: #0958d9 !important;
+  border-color: #0958d9 !important;
   color: #fff !important;
 }
 
@@ -533,7 +533,7 @@
 
 .youtubeVideoCard :global(.ant-alert) {
   margin: 0 14px 14px;
-  background: #f4f7f7;
+  background: #fff;
   border-color: var(--line);
   color: var(--muted);
 }
@@ -559,7 +559,7 @@
 }
 
 .youtubeMetricNote {
-  background: #f4f7f7;
+  background: #fff;
   border-color: var(--line);
   color: var(--muted);
 }
@@ -604,7 +604,7 @@
 
 .youtubeBoundaryNote {
   padding: 12px 14px;
-  background: #f4f7f7;
+  background: #fff;
   color: var(--muted);
   line-height: 1.55;
 }
@@ -669,7 +669,7 @@
 
 .topicTrendHead {
   padding: 10px 12px;
-  background: #edf2f2;
+  background: #fff;
   color: var(--muted);
   font-size: 11px;
 }
@@ -686,7 +686,7 @@
 }
 
 .topicTrendRow:hover {
-  background: #f5f9f8;
+  background: #fafafa;
 }
 
 .topicLeaderboard {
@@ -703,10 +703,10 @@
   height: 24px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #d3dfdc;
+  border: 1px solid #d9d9d9;
   border-radius: 999px;
-  background: #eef3f2;
-  color: #5e6f6b;
+  background: #fff;
+  color: #00000073;
   font-size: 12px;
   font-weight: 800;
 }
@@ -721,7 +721,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #566864;
+  color: #00000073;
 }
 
 .topicAuthor i {
@@ -731,7 +731,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: #357f76;
+  background: #1677ff;
   color: #fff;
   font-size: 12px;
   font-style: normal;
@@ -739,7 +739,7 @@
 }
 
 .topicPositive {
-  color: #1a9b78;
+  color: #1677ff;
   font-weight: 800;
 }
 
@@ -771,7 +771,7 @@
 .topicPostPanel {
   display: grid;
   gap: 10px;
-  border-left: 2px solid #d6e4e1;
+  border-left: 2px solid #d9d9d9;
   margin: 0 12px 12px 60px;
   padding-left: 12px;
 }
@@ -833,7 +833,7 @@
 .topicSpark i {
   display: block;
   width: 5px;
-  background: #8fc5bd;
+  background: #91caff;
 }
 
 .topicSpark i:last-child {

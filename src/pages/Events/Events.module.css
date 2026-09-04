@@ -1,6 +1,6 @@
 .events,
 .eventDetailPage {
-  color: #20302d;
+  color: #000000e0;
 }
 
 .eventHero {
@@ -10,14 +10,14 @@
 .eventHero h1,
 .detailHero h1 {
   margin: 10px 0 7px !important;
-  color: #20302d !important;
+  color: #000000e0 !important;
   font-size: 32px !important;
   line-height: 1.1 !important;
 }
 
 .eventHero :global(.ant-typography),
 .detailHero :global(.ant-typography) {
-  color: #566864;
+  color: #00000073;
 }
 
 .eventEyebrow {
@@ -33,7 +33,7 @@
 .timeStrip {
   display: grid;
   overflow: hidden;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 12px;
   background: #fff;
 }
@@ -49,7 +49,7 @@
 .timeStrip > div {
   min-width: 0;
   padding: 17px 18px;
-  border-right: 1px solid #d7e2df;
+  border-right: 1px solid #d9d9d9;
 }
 
 .eventRuleStrip > div:last-child,
@@ -61,7 +61,7 @@
 
 .eventRuleStrip b {
   display: block;
-  color: #20302d;
+  color: #000000e0;
   font-size: 14px;
 }
 
@@ -72,7 +72,7 @@
 .meta {
   display: block;
   margin-top: 6px;
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
   line-height: 1.45;
 }
@@ -84,7 +84,7 @@
 
 .eventStats strong {
   display: block;
-  color: #243f3b;
+  color: #000000e0;
   font-size: 26px;
   line-height: 1.1;
 }
@@ -102,8 +102,8 @@
   gap: 0;
   overflow: hidden;
   margin-bottom: 18px;
-  border-top: 1px solid #d7e2df;
-  border-bottom: 1px solid #d7e2df;
+  border-top: 1px solid #d9d9d9;
+  border-bottom: 1px solid #d9d9d9;
 }
 
 .filterRow {
@@ -116,11 +116,11 @@
 }
 
 .filterRow + .filterRow {
-  border-top: 1px solid #e4ecea;
+  border-top: 1px solid #f0f0f0;
 }
 
 .filterRow b {
-  color: #20302d;
+  color: #000000e0;
   font-size: 15px;
 }
 
@@ -130,14 +130,14 @@
 
 .eventFilters :global(.ant-btn) {
   height: 34px;
-  border-color: #d7e2df;
+  border-color: #d9d9d9;
   border-radius: 10px;
-  color: #334844;
+  color: #000000e0;
   box-shadow: none;
 }
 
 .resetFilter {
-  color: #5b9b8f !important;
+  color: #1677ff !important;
   font-weight: 800;
 }
 
@@ -145,8 +145,8 @@
 .cardFoot :global(.ant-btn-primary),
 .packActions :global(.ant-btn-primary),
 .detailPanel :global(.ant-btn-primary) {
-  background: #5b9b8f !important;
-  border-color: #5b9b8f !important;
+  background: #1677ff !important;
+  border-color: #1677ff !important;
   color: #fff !important;
   box-shadow: none;
 }
@@ -168,26 +168,26 @@
   gap: 13px;
   min-width: 0;
   padding: 16px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 0 14px 35px rgba(18, 53, 48, 0.06);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.06);
 }
 
 .intelCard.featured {
-  border-color: #6aada2;
+  border-color: #69b1ff;
 }
 
 .intelCard h2 {
   margin: 13px 0 8px;
-  color: #20302d;
+  color: #000000e0;
   font-size: 20px;
   line-height: 1.25;
 }
 
 .intelCard p {
   margin: 0 0 12px;
-  color: #566864;
+  color: #00000073;
   line-height: 1.55;
 }
 
@@ -204,13 +204,13 @@
 .warning {
   padding: 13px 14px;
   border-radius: 8px;
-  background: #f0f7f5;
+  background: #fff;
 }
 
 .triggerBox strong {
   display: block;
   margin-top: 5px;
-  color: #20302d;
+  color: #000000e0;
   font-size: 22px;
 }
 
@@ -236,13 +236,13 @@
 }
 
 .cyan {
-  background: #e4f3f3;
-  color: #2d7471;
+  background: #e6f4ff;
+  color: #0958d9;
 }
 
 .green {
-  background: #dff2ec;
-  color: #397162;
+  background: #f6ffed;
+  color: #237804;
 }
 
 .purple {
@@ -270,21 +270,21 @@
   height: 30px;
   display: grid;
   place-items: center;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 50%;
-  color: #8aa19c;
+  color: #00000073;
   font-size: 11px;
   font-weight: 800;
 }
 
 .sourceMarks .on {
   color: #fff;
-  background: #5b9b8f;
-  border-color: #5b9b8f;
+  background: #1677ff;
+  border-color: #1677ff;
 }
 
 .noSourceMark {
-  color: #8aa19c;
+  color: #00000073;
   font-size: 12px;
   font-weight: 800;
 }
@@ -294,7 +294,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #4f9187;
+  color: #1677ff;
   font-weight: 800;
   cursor: pointer;
 }
@@ -302,9 +302,9 @@
 .detailHero {
   margin-bottom: 16px;
   padding: 24px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 12px;
-  background: #f6fbf9;
+  background: #fafafa;
 }
 
 .packActions {
@@ -319,9 +319,9 @@
 
 .changeNote {
   margin-top: 18px;
-  border-left: 3px solid #5b9b8f;
+  border-left: 3px solid #1677ff;
   border-radius: 0;
-  background: #eef7f4;
+  background: #e6f4ff;
 }
 
 .changeNote b,
@@ -338,18 +338,18 @@
 .timeStrip b {
   display: block;
   margin-top: 5px;
-  color: #20302d;
+  color: #000000e0;
 }
 
 .contractEmphasis {
-  color: #397162 !important;
+  color: #237804 !important;
 }
 
 .detailTabs {
   display: flex;
   gap: 0;
   margin-bottom: 16px;
-  border-bottom: 1px solid #d7e2df;
+  border-bottom: 1px solid #d9d9d9;
 }
 
 .detailTabs button {
@@ -357,21 +357,21 @@
   border: 0;
   border-bottom: 3px solid transparent;
   background: transparent;
-  color: #566864;
+  color: #00000073;
   font-weight: 700;
   cursor: pointer;
 }
 
 .detailTabs .activeTab {
-  color: #4f9187;
-  border-bottom-color: #5b9b8f;
+  color: #1677ff;
+  border-bottom-color: #1677ff;
 }
 
 .changeCard,
 .detailPanel {
   margin-bottom: 14px;
   padding: 18px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fff;
 }
@@ -381,8 +381,8 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  border-left: 4px solid #5b9b8f;
-  background: #f6fbf9;
+  border-left: 4px solid #1677ff;
+  background: #fafafa;
 }
 
 .changeCard b,
@@ -417,7 +417,7 @@
 
 .sectionEyebrow {
   margin-bottom: 8px;
-  color: #4f9187;
+  color: #1677ff;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -426,7 +426,7 @@
 
 .evidencePanel h2 {
   margin: 0 0 14px;
-  color: #20302d;
+  color: #000000e0;
   font-size: 20px;
 }
 
@@ -437,7 +437,7 @@
 
 .evidenceCard {
   padding: 16px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 8px;
   background: #fff;
 }
@@ -451,19 +451,19 @@
 
 .evidenceCardHead b {
   display: block;
-  color: #20302d;
+  color: #000000e0;
 }
 
 .evidenceCardHead span {
   display: block;
   margin-top: 3px;
-  color: #6b7c78;
+  color: #00000073;
   font-size: 12px;
 }
 
 .evidenceCard p {
   margin: 12px 0 10px;
-  color: #20302d;
+  color: #000000e0;
   line-height: 1.55;
 }
 
@@ -472,7 +472,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #6b7c78;
+  color: #00000073;
   font-size: 13px;
 }
 
@@ -482,7 +482,7 @@
 
 .evidenceCardFoot a {
   flex: 0 0 auto;
-  color: #4f9187;
+  color: #1677ff;
   font-weight: 700;
 }
 
@@ -495,11 +495,11 @@
 }
 
 .kvRow span {
-  color: #566864;
+  color: #00000073;
 }
 
 .kvRow b {
-  color: #20302d;
+  color: #000000e0;
 }
 
 .nextBox {
@@ -520,7 +520,7 @@
   width: 100%;
   margin-top: 12px;
   padding: 14px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 8px;
   background: #fff;
   text-align: left;
@@ -528,32 +528,32 @@
 }
 
 .activeFact {
-  border-left: 3px solid #5b9b8f;
-  background: #f6fbf9;
+  border-left: 3px solid #1677ff;
+  background: #fafafa;
 }
 
 .factRowButton p,
 .evidenceDetail p,
 .signalList p {
-  color: #566864;
+  color: #00000073;
   line-height: 1.55;
 }
 
 .factRowButton span {
-  color: #6b7c78;
+  color: #00000073;
   font-size: 12px;
 }
 
 .evidenceDetail {
   margin-top: 10px;
   padding: 14px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 8px;
   background: #fff;
 }
 
 .evidenceDetail a {
-  color: #4f9187;
+  color: #1677ff;
   font-weight: 700;
 }
 
@@ -561,7 +561,7 @@
   display: grid;
   gap: 12px;
   margin-top: 16px;
-  border-left: 2px solid #d7e2df;
+  border-left: 2px solid #d9d9d9;
   padding-left: 14px;
 }
 
@@ -576,19 +576,19 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #5b9b8f;
+  background: #1677ff;
   content: '';
 }
 
 .timelineList small {
   display: block;
   margin-top: 4px;
-  color: #6b7c78;
+  color: #00000073;
 }
 
 .signalPackage {
   margin-top: 12px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fff;
 }
@@ -605,7 +605,7 @@
 .signalPackage summary span {
   display: block;
   margin-top: 4px;
-  color: #6b7c78;
+  color: #00000073;
   font-size: 12px;
 }
 
@@ -633,14 +633,14 @@
 
 .mergeRelationList article {
   padding: 14px;
-  border: 1px solid #d7e2df;
+  border: 1px solid #d9d9d9;
   border-radius: 8px;
   background: #fff;
 }
 
 .mergeRelationList p {
   margin: 8px 0 10px;
-  color: #566864;
+  color: #00000073;
   line-height: 1.55;
 }
 
@@ -654,8 +654,8 @@
 .mergeMetaStrip span {
   padding: 6px 8px;
   border-radius: 6px;
-  background: #f0f7f5;
-  color: #566864;
+  background: #fff;
+  color: #00000073;
   font-size: 12px;
   font-weight: 700;
 }
@@ -668,7 +668,7 @@
 
 .mergeMatrix div {
   padding: 12px;
-  background: #f0f7f5;
+  background: #fff;
 }
 
 .mergeMatrix span,
@@ -677,18 +677,18 @@
 }
 
 .mergeMatrix span {
-  color: #566864;
+  color: #00000073;
   font-size: 12px;
 }
 
 .mergeMatrix b {
   margin-top: 5px;
-  color: #397162;
+  color: #237804;
 }
 
 .warning {
   margin-top: 14px;
-  color: #566864;
+  color: #00000073;
 }
 
 @media (max-width: 1180px) {
@@ -707,7 +707,7 @@
   .contractStrip > div,
   .timeStrip > div {
     border-right: 0;
-    border-bottom: 1px solid #d7e2df;
+    border-bottom: 1px solid #d9d9d9;
   }
 
   .eventRuleStrip > div:last-child,
