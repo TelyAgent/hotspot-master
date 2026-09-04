@@ -4,7 +4,10 @@ import { Button, Drawer, Empty, Input, Spin, Tabs, Tag, message } from 'antd'
 import { ArrowLeftOutlined, CheckOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  adoptOperationRecommendationContent,
+  generateOperationRecommendationContent,
   listOperationRecommendations,
+  reviseOperationRecommendationContent,
   type OperationRecommendation,
   type OperationRecommendationEvidence,
 } from '../../api'
@@ -28,14 +31,17 @@ export default function CreationWorkspace() {
   const [selectedReaders, setSelectedReaders] = useState(['AI 开发者'])
   const [selectedFormats, setSelectedFormats] = useState(['X Thread'])
   const [draft, setDraft] = useState('')
+  const [draftId, setDraftId] = useState<string>()
   const [revisionPrompt, setRevisionPrompt] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [revising, setRevising] = useState(false)
+  const [adopting, setAdopting] = useState(false)
 
   const active = useMemo(
     () => items.find((item) => item.id === recommendationId) ?? items[0] ?? null,
     [items, recommendationId],
   )
   const selectedAngles = active?.angles.filter((item) => selectedAngleIds.includes(item.id)) ?? []
-  const selectedAngle = selectedAngles[0] ?? active?.angles[0]
   const evidence = useMemo(() => (active ? buildEvidence(active) : []), [active])
 
   useEffect(() => {
@@ -55,11 +61,10 @@ export default function CreationWorkspace() {
   useEffect(() => {
     if (!active) return
     setSelectedAngleIds(active.angles[0] ? [active.angles[0].id] : [])
+    setDraft(buildInitialDraft(active, active.angles[0] ? [active.angles[0].claim] : []))
+    setDraftId(undefined)
+    setRevisionPrompt('')
   }, [active])
-
-  useEffect(() => {
-    if (active) setDraft(buildInitialDraft(active, selectedAngles.map((item) => item.claim)))
-  }, [active, selectedAngles])
 
   const toggleSelection = (value: string, setter: Dispatch<SetStateAction<string[]>>) => {
     setter((prev) => {
@@ -78,17 +83,92 @@ export default function CreationWorkspace() {
     setKitchenOpen(true)
   }
 
-  const goNextStep = () => {
+  const buildContentPayload = () => ({
+    angleIds: selectedAngleIds,
+    goals: selectedGoals,
+    readers: selectedReaders,
+    formats: selectedFormats,
+  })
+
+  const generateDraft = async () => {
+    if (!active) return
+    setGenerating(true)
+    try {
+      const response = await generateOperationRecommendationContent(active.id, buildContentPayload())
+      setDraft(response.draft.body)
+      setDraftId(response.draft.id)
+      message.success('内容已生成')
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '内容生成失败')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const reviseDraft = async () => {
+    if (!active) return
+    if (!revisionPrompt.trim()) {
+      message.warning('请先选择快捷指令或输入修改要求')
+      return
+    }
+    if (!draft.trim()) {
+      message.warning('请先生成内容')
+      return
+    }
+    setRevising(true)
+    try {
+      const response = await reviseOperationRecommendationContent(active.id, {
+        ...buildContentPayload(),
+        body: draft,
+        instruction: revisionPrompt,
+      })
+      setDraft(response.draft.body)
+      setDraftId(response.draft.id)
+      setRevisionPrompt('')
+      message.success('内容已修改')
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'AI 修改失败')
+    } finally {
+      setRevising(false)
+    }
+  }
+
+  const adoptDraft = async () => {
+    if (!active) return
+    if (!draft.trim()) {
+      message.warning('请先生成内容')
+      return
+    }
+    setAdopting(true)
+    try {
+      await adoptOperationRecommendationContent(active.id, {
+        ...buildContentPayload(),
+        draftId,
+        body: draft,
+      })
+      message.success('已标记采用，进入内容发布')
+      setKitchenOpen(false)
+      navigate('/decision/publish')
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '标记采用失败')
+    } finally {
+      setAdopting(false)
+    }
+  }
+
+  const goNextStep = async () => {
     if (step === 1 && active.angles.length > 0 && selectedAngleIds.length === 0) return message.warning('请至少选择一个承接角度')
     if (step === 2 && selectedGoals.length === 0) return message.warning('请至少选择一个内容目标')
     if (step === 3 && selectedReaders.length === 0) return message.warning('请至少选择一个目标读者')
     if (step === 4 && selectedFormats.length === 0) return message.warning('请至少选择一种内容形式')
     if (step < 5) {
       setStep((prev) => prev + 1)
+      if (step === 4) {
+        await generateDraft()
+      }
       return
     }
-    setKitchenOpen(false)
-    navigate('/decision/publish')
+    await adoptDraft()
   }
 
   if (loading && !active) {
@@ -248,7 +328,8 @@ export default function CreationWorkspace() {
               {step > 1 ? <Button onClick={() => setStep((prev) => prev - 1)}>上一步</Button> : null}
               <Button
                 type="primary"
-                onClick={goNextStep}
+                loading={step === 5 ? adopting : generating}
+                onClick={() => void goNextStep()}
               >
                 {step === 5 ? '标记采用' : '下一步'}
               </Button>
@@ -339,7 +420,9 @@ export default function CreationWorkspace() {
                 active={step === 5}
                 done={false}
               >
-              <Input.TextArea value={draft} autoSize={{ minRows: 10, maxRows: 18 }} onChange={(event) => setDraft(event.target.value)} />
+              <Spin spinning={generating} tip="正在生成内容...">
+                <Input.TextArea value={draft} autoSize={{ minRows: 10, maxRows: 18 }} onChange={(event) => setDraft(event.target.value)} />
+              </Spin>
               <div className={styles.aiBox}>
                 <h3>
                   AI 修改内容
@@ -366,13 +449,8 @@ export default function CreationWorkspace() {
                   />
                   <Button
                     type="primary"
-                    onClick={() => {
-                      if (!revisionPrompt.trim()) {
-                        message.warning('请先选择快捷指令或输入修改要求')
-                        return
-                      }
-                      message.info('AI 修改接口后续接入')
-                    }}
+                    loading={revising}
+                    onClick={() => void reviseDraft()}
                   >
                     发送
                   </Button>

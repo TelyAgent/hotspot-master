@@ -87,6 +87,39 @@ export interface OperationRecommendationRunResponse {
   items: OperationRecommendation[]
 }
 
+export interface OperationContentDraft {
+  id: string
+  contentTaskId: string
+  version: number
+  body: string
+  evidenceRefs: string[]
+  generationInput: Record<string, unknown>
+  userInstruction?: string | null
+  status: 'draft' | 'approved' | 'rejected' | 'archived'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface OperationContentDraftResponse {
+  contentTaskId: string
+  draft: OperationContentDraft
+}
+
+export interface ApprovedOperationContentDraft {
+  id: string
+  contentTaskId: string
+  recommendationId: string
+  title: string
+  summary: string
+  draft: string
+  status: string
+  updatedAt: string
+  recommendationLabels: string[]
+  selectedAngle?: string | null
+  format?: string | null
+  predxUrl?: string | null
+}
+
 export function listOperationRecommendations(params: {
   basis?: string
   priority?: string
@@ -98,6 +131,84 @@ export function listOperationRecommendations(params: {
   if (params.take) query.set('take', String(params.take))
   const suffix = query.toString() ? `?${query.toString()}` : ''
   return request<OperationRecommendation[]>(`/operations-decision/recommendations${suffix}`)
+}
+
+export function generateOperationRecommendationContent(
+  recommendationId: string,
+  body: {
+    angleIds: string[]
+    goals: string[]
+    readers: string[]
+    formats: string[]
+    userInstruction?: string
+  },
+) {
+  return request<OperationContentDraftResponse>(
+    `/operations-decision/recommendations/${encodeURIComponent(recommendationId)}/content/generate`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  )
+}
+
+export function reviseOperationRecommendationContent(
+  recommendationId: string,
+  body: {
+    angleIds: string[]
+    goals: string[]
+    readers: string[]
+    formats: string[]
+    body: string
+    instruction: string
+  },
+) {
+  return request<OperationContentDraftResponse>(
+    `/operations-decision/recommendations/${encodeURIComponent(recommendationId)}/content/revise`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  )
+}
+
+export function adoptOperationRecommendationContent(
+  recommendationId: string,
+  body: {
+    angleIds: string[]
+    goals: string[]
+    readers: string[]
+    formats: string[]
+    draftId?: string
+    body?: string
+  },
+) {
+  return request<{ contentTaskId: string; draft: OperationContentDraft; publishPath: string }>(
+    `/operations-decision/recommendations/${encodeURIComponent(recommendationId)}/content/adopt`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  )
+}
+
+export function listApprovedOperationContentDrafts(params: { take?: number } = {}) {
+  const query = new URLSearchParams()
+  if (params.take) query.set('take', String(params.take))
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request<ApprovedOperationContentDraft[]>(`/operations-decision/content-drafts/approved${suffix}`)
+}
+
+export function backfillPublishedPost(body: {
+  contentTaskId: string
+  accountName?: string
+  platform: string
+  url: string
+}) {
+  return request('/published-posts', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
 }
 
 export function runOperationRecommendations() {
