@@ -15,10 +15,12 @@ export interface PlatformCollectionConfig {
     topicKeywords?: string[]
     topicNegativeKeywords?: string[]
     topicConfigs?: TopicTrackingConfig[]
+    kolAccounts?: KolRadarAccount[]
+    kolRadarEnabled?: boolean
+    kolRadarCollectionIntervalMs?: number
     trendCollectionCron?: string
     trendCollectionIntervalMs?: number
     trendCollectionEnabled?: boolean
-    topicWatchSchedulerEnabled?: boolean
     trendEventWorkflowId?: string
     defaultTrendLimit?: number
     defaultPostLimit?: number
@@ -39,6 +41,13 @@ export interface TopicTrackingConfig {
   defaultPostLimit: number
 }
 
+export interface KolRadarAccount {
+  handle: string
+  groupTag?: string | null
+  joinedAt: string
+  enabled: boolean
+}
+
 export interface CollectionJobConfig {
   id: string
   platform: 'x'
@@ -57,7 +66,9 @@ interface XTrendCollectionConfig {
   limit: number
   collectionIntervalMs: number
   trendCollectionEnabled: boolean
-  topicWatchSchedulerEnabled: boolean
+  kolRadarEnabled: boolean
+  kolRadarCollectionIntervalMs: number
+  kolRadarAccounts: KolRadarAccount[]
 }
 
 const REGION_WOEIDS: Record<string, number> = {
@@ -87,7 +98,9 @@ export async function updatePlatformCollectionConfig(
       limit: data.variables?.defaultTrendLimit,
       collectionIntervalMs: data.variables?.trendCollectionIntervalMs,
       trendCollectionEnabled: data.variables?.trendCollectionEnabled,
-      topicWatchSchedulerEnabled: data.variables?.topicWatchSchedulerEnabled,
+      kolRadarEnabled: data.variables?.kolRadarEnabled,
+      kolRadarCollectionIntervalMs: data.variables?.kolRadarCollectionIntervalMs,
+      kolRadarAccounts: data.variables?.kolAccounts,
     }),
   })
   return toPlatformCollectionConfig(config)
@@ -140,6 +153,7 @@ export async function updateCollectionJobConfig(
 }
 
 function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCollectionConfig {
+  const kolAccounts = config.kolRadarAccounts ?? []
   return {
     id: 'x-default',
     platform: 'x',
@@ -153,10 +167,13 @@ function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCol
       regionWoeids: REGION_WOEIDS,
       trendCollectionIntervalMs: config.collectionIntervalMs,
       trendCollectionEnabled: config.trendCollectionEnabled,
-      topicWatchSchedulerEnabled: config.topicWatchSchedulerEnabled,
       defaultTrendLimit: config.limit,
       trendEventWorkflowId: 'x-trend-event-formation',
       defaultPostLimit: 3,
+      kolAccounts,
+      monitoredAccounts: kolAccounts.map((item) => item.handle),
+      kolRadarEnabled: config.kolRadarEnabled,
+      kolRadarCollectionIntervalMs: config.kolRadarCollectionIntervalMs,
     },
   }
 }

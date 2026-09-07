@@ -1,17 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Tabs } from 'antd'
 import { useApp } from '../../context/AppContext'
 import { Head } from '../../components/ui'
 import { useTrending } from '../../hooks/useTrending'
 import { useTrendRegions } from '../../hooks/useTrendRegions'
+import { useKolRadarFeed } from '../../hooks/useKolRadarFeed'
 import Ranking from './Ranking'
-import Topics from './Topics'
+import KolRadar from './KolRadar'
 import styles from './Monitor.module.css'
-
-const SUBTABS = [
-  ['ranking', '热搜排行榜'],
-  ['topics', '重点主题追踪'],
-] as const
 
 function formatCollectedAt(iso?: string): string {
   if (!iso) return '--'
@@ -23,12 +19,18 @@ function formatCollectedAt(iso?: string): string {
 }
 
 export default function Monitor() {
-  const { mt, set, region } = useApp()
+  const { region, set } = useApp()
   const trendRegions = useTrendRegions()
-  const { data, loading, error, reload } = useTrending(region)
+  const trends = useTrending(region)
+  const kolRadar = useKolRadarFeed()
+  const [activeTab, setActiveTab] = useState<'trends' | 'kol'>('trends')
 
   useEffect(() => {
-    if (!trendRegions.loading && trendRegions.regions.length > 0 && !trendRegions.regions.includes(region)) {
+    if (
+      !trendRegions.loading &&
+      trendRegions.regions.length > 0 &&
+      !trendRegions.regions.includes(region)
+    ) {
       set({ region: trendRegions.regions[0] })
     }
   }, [region, set, trendRegions.loading, trendRegions.regions])
@@ -37,37 +39,42 @@ export default function Monitor() {
     <>
       <Head
         title="热点监测"
-        desc="完整呈现和聚合各地区排行榜；是否进入响应由事件库承接。"
+        desc="完整呈现 X 热搜榜和 KOL 雷达采集结果；是否进入响应由事件库承接。"
       />
       <Tabs
-        className={styles.subtabs}
-        activeKey={mt}
-        items={SUBTABS.map(([key, label]) => ({ key, label }))}
-        onChange={(key) => set({ mt: key })}
+        activeKey={activeTab}
+        className={styles.monitorTabs}
+        items={[
+          {
+            key: 'trends',
+            label: 'X 热搜榜',
+            children: (
+              <Ranking
+                data={trends.data}
+                loading={trends.loading || trendRegions.loading}
+                error={trends.error ?? trendRegions.error}
+                regions={trendRegions.regions}
+                collectedLabel={formatCollectedAt(trends.data?.collectedAt)}
+                isMock={trends.data?.source === 'mock'}
+                onReload={trends.reload}
+              />
+            ),
+          },
+          {
+            key: 'kol',
+            label: 'KOL 雷达',
+            children: (
+              <KolRadar
+                data={kolRadar.data}
+                loading={kolRadar.loading}
+                error={kolRadar.error}
+                onReload={kolRadar.reload}
+              />
+            ),
+          },
+        ]}
+        onChange={(key) => setActiveTab(key as 'trends' | 'kol')}
       />
-      {mt === 'ranking' ? (
-        <Ranking
-          data={data}
-          loading={loading || trendRegions.loading}
-          error={error ?? trendRegions.error}
-          regions={trendRegions.regions}
-          collectedLabel={formatCollectedAt(data?.collectedAt)}
-          isMock={data?.source === 'mock'}
-          onReload={reload}
-        />
-      ) : mt === 'topics' ? (
-        <Topics />
-      ) : (
-        <Ranking
-          data={data}
-          loading={loading || trendRegions.loading}
-          error={error ?? trendRegions.error}
-          regions={trendRegions.regions}
-          collectedLabel={formatCollectedAt(data?.collectedAt)}
-          isMock={data?.source === 'mock'}
-          onReload={reload}
-        />
-      )}
     </>
   )
 }

@@ -1,3 +1,157 @@
+.monitorTabs {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 14px 16px 16px;
+}
+
+.monitorTabs :global(.ant-tabs-nav) {
+  margin-bottom: 14px;
+}
+
+.monitorTabs :global(.ant-tabs-nav-wrap) {
+  margin-bottom: 0;
+}
+
+.monitorTabs :global(.ant-tabs-tab) {
+  padding: 6px 0;
+}
+
+.monitorTabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+  margin-left: 28px;
+}
+
+.monitorTabs :global(.ant-tabs-tab-btn) {
+  font-size: 15px;
+}
+
+.monitorTabs :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+  color: #1677ff;
+  font-weight: 500;
+}
+
+.monitorTabs :global(.ant-tabs-ink-bar) {
+  height: 2px;
+}
+
+.kolWrap {
+  display: grid;
+  gap: 14px;
+}
+
+.kolStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.kolStats > div {
+  min-width: 0;
+  padding: 17px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.kolStats > div:last-child {
+  border-right: 0;
+}
+
+.kolStats strong {
+  display: block;
+  color: #000000e0;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.kolStats span {
+  display: block;
+  margin-top: 8px;
+  color: #00000073;
+  font-size: 12px;
+}
+
+.kolCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.kolCardTop {
+  display: grid;
+  gap: 8px;
+}
+
+.kolCardTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kolCardTitleRow h3 {
+  margin: 0;
+  color: #000000e0;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.kolCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: #00000073;
+  font-size: 12px;
+}
+
+.kolSummary {
+  margin: 0;
+  color: #000000a6;
+  line-height: 1.65;
+}
+
+.kolCardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.kolMetricRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kolCardFoot :global(.ant-btn-link) {
+  padding-inline: 0;
+}
+
+.kolList {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.kolList :global(.ant-list-item) {
+  padding: 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.kolList :global(.ant-list-item:last-child) {
+  border-bottom: 0;
+}
+
+.kolListItem {
+  display: block !important;
+  padding: 0 !important;
+}
+
 .subtabs {
   margin-bottom: 14px;
 }

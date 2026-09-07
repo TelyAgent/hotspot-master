@@ -227,6 +227,60 @@
   width: auto;
 }
 
+.kolAccountList {
+  display: grid;
+  gap: 10px;
+}
+
+.kolAccountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.kolAccountInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.kolAccountTitle {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.kolAccountMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.kolAccountEditors {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(160px, 220px);
+  gap: 10px;
+}
+
+.kolAccountField {
+  width: 100%;
+}
+
+.kolAccountActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .workflowMeta {
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);

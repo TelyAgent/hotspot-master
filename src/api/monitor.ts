@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { RefreshResponse, TrendingResponse } from './types'
+import type { RefreshResponse, KolRadarFeedResponse, TrendingResponse } from './types'
 import { getPlatformCollectionConfig } from './collectionConfig'
 
 interface CollectionRunResponse {
@@ -23,7 +23,12 @@ interface XTrendRankingResponse {
   }>
 }
 
-/** 获取指定地区热搜排行榜前 N 条 */
+interface KolRadarFeedApiResponse {
+  collectedAt: string
+  windowHours?: number
+  items: KolRadarFeedResponse['items']
+}
+
 export async function getTrending(region: string, limit = 30): Promise<TrendingResponse> {
   const snapshotRegion = region === 'Worldwide' ? 'global' : region
   const ranking = await request<XTrendRankingResponse>(
@@ -44,11 +49,14 @@ export async function getTrending(region: string, limit = 30): Promise<TrendingR
   }
 }
 
+export async function getKolRadarFeed(take = 30): Promise<KolRadarFeedResponse> {
+  return request<KolRadarFeedApiResponse>(`/signals/kol-radar?take=${take}`)
+}
+
 function normalizeTrendQuery(value: string) {
   return value.trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, '')
 }
 
-/** 触发立即采集（对应「立即采集」按钮） */
 export async function refreshMonitor(): Promise<RefreshResponse> {
   const config = await getPlatformCollectionConfig('x')
   const result = await request<CollectionRunResponse>('/data-sources/collect', {
