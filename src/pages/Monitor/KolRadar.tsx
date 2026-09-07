@@ -21,13 +21,15 @@ function formatDateTime(iso?: string | null) {
 export default function KolRadar({
   data,
   loading,
+  collecting,
   error,
-  onReload,
+  onCollect,
 }: {
   data: KolRadarFeedResponse | null
   loading: boolean
+  collecting: boolean
   error: string | null
-  onReload: () => void
+  onCollect: () => Promise<number>
 }) {
   const { toast } = useApp()
   const [sortBy, setSortBy] = useState<SortKey>('views')
@@ -60,9 +62,15 @@ export default function KolRadar({
   const uniqueHandles = new Set(items.map((item) => item.handle)).size
   const observedLabel = formatDateTime(data?.collectedAt || items[0]?.observedAt)
 
-  const handleRefresh = () => {
-    toast('已刷新 KOL 雷达列表')
-    onReload()
+  const handleCollect = () => {
+    toast('已发起 KOL 雷达立即采集')
+    onCollect()
+      .then((count) => {
+        toast(`KOL 雷达采集完成，新增 ${count} 条原始帖子`)
+      })
+      .catch((e: unknown) => {
+        toast(e instanceof Error ? e.message : 'KOL 雷达采集失败')
+      })
   }
 
   return (
@@ -85,8 +93,8 @@ export default function KolRadar({
             onChange={(value) => setSortBy(value)}
           />
         </Space>
-        <Button type="primary" icon={<ReloadOutlined />} onClick={handleRefresh}>
-          刷新列表
+        <Button type="primary" icon={<ReloadOutlined />} loading={collecting} onClick={handleCollect}>
+          立即采集
         </Button>
       </div>
       <section className={styles.kolWrap}>

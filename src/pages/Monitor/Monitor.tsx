@@ -67,8 +67,9 @@ export default function Monitor() {
               <KolRadar
                 data={kolRadar.data}
                 loading={kolRadar.loading}
+                collecting={kolRadar.collecting}
                 error={kolRadar.error}
-                onReload={kolRadar.reload}
+                onCollect={kolRadar.collectNow}
               />
             ),
           },

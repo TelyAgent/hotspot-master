@@ -53,6 +53,12 @@ export async function getKolRadarFeed(take = 30): Promise<KolRadarFeedResponse> 
   return request<KolRadarFeedApiResponse>(`/signals/kol-radar?take=${take}`)
 }
 
+export async function collectKolRadar(): Promise<CollectionRunResponse> {
+  return request<CollectionRunResponse>('/data-sources/kol-radar/collect', {
+    method: 'POST',
+  })
+}
+
 function normalizeTrendQuery(value: string) {
   return value.trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, '')
 }
