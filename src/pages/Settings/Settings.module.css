@@ -111,7 +111,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 18px;
-  background: #fff;
+  background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
 }
 
 .blockHeader {
@@ -191,6 +191,28 @@
   font-weight: 700;
 }
 
+.kolAccountHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.kolAccountHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.kolAccountHint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 @media (max-width: 760px) {
   .settingControls {
     grid-template-columns: 1fr;
@@ -229,18 +251,20 @@
 
 .kolAccountList {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .kolAccountRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 14px 16px;
   border: 1px solid var(--line2);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
 }
 
 .kolAccountInfo {
@@ -254,6 +278,12 @@
   font-weight: 700;
 }
 
+.kolAccountTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .kolAccountMeta {
   display: flex;
   flex-wrap: wrap;
@@ -262,16 +292,6 @@
   margin-top: 6px;
   color: var(--muted);
   font-size: 12px;
-}
-
-.kolAccountEditors {
-  display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(160px, 220px);
-  gap: 10px;
-}
-
-.kolAccountField {
-  width: 100%;
 }
 
 .kolAccountActions {
@@ -318,6 +338,21 @@
   gap: 8px;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .kolAccountHeader,
+  .kolAccountRow {
+    grid-template-columns: 1fr;
+  }
+
+  .kolAccountHeader {
+    align-items: flex-start;
+  }
+
+  .kolAccountActions {
+    justify-content: flex-start;
+  }
 }
 
 .topicForm {

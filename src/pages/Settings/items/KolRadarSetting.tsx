@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Input, Spin, Switch, Tag } from 'antd'
+import { Alert, Button, Form, Input, Modal, Spin, Switch, Tag } from 'antd'
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
@@ -12,12 +12,20 @@ import styles from '../Settings.module.css'
 
 const DEFAULT_KOL_INTERVAL_MS = 6 * 60 * 60 * 1000
 
+type KolAccountFormValues = {
+  handle: string
+  groupTag?: string
+}
+
 export default function KolRadarSetting() {
   const { toast } = useApp()
+  const [addForm] = Form.useForm<KolAccountFormValues>()
   const [config, setConfig] = useState<PlatformCollectionConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savingToggle, setSavingToggle] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [addingAccount, setAddingAccount] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [kolRadarEnabled, setKolRadarEnabled] = useState(true)
   const [kolAccounts, setKolAccounts] = useState<KolRadarAccount[]>([])
@@ -25,6 +33,10 @@ export default function KolRadarSetting() {
   const intervalLabel = useMemo(
     () => formatIntervalMs(config?.variables.kolRadarCollectionIntervalMs ?? DEFAULT_KOL_INTERVAL_MS),
     [config],
+  )
+  const enabledAccountCount = useMemo(
+    () => kolAccounts.filter((account) => account.enabled).length,
+    [kolAccounts],
   )
 
   useEffect(() => {
@@ -109,28 +121,72 @@ export default function KolRadarSetting() {
     }
   }
 
-  const handleKolAccountUpdate = (index: number, patch: Partial<KolRadarAccount>) => {
-    setKolAccounts((prev) =>
-      prev.map((item, currentIndex) =>
-        currentIndex === index ? { ...item, ...patch } : item,
-      ),
-    )
+  const openAddModal = () => {
+    addForm.setFieldsValue({ handle: '', groupTag: '' })
+    setAddModalOpen(true)
   }
 
-  const handleAddKolAccount = () => {
-    setKolAccounts((prev) => [
-      ...prev,
-      {
-        handle: '',
-        groupTag: null,
-        joinedAt: new Date().toISOString(),
-        enabled: true,
-      },
-    ])
+  const handleAddKolAccount = async () => {
+    try {
+      const values = await addForm.validateFields()
+      const handle = values.handle.trim()
+      const groupTag = values.groupTag?.trim()
+
+      if (!handle) {
+        return
+      }
+
+      if (kolAccounts.some((account) => account.handle.toLowerCase() === handle.toLowerCase())) {
+        addForm.setFields([
+          {
+            name: 'handle',
+            errors: ['该账号已存在，请换一个 handle'],
+          },
+        ])
+        return
+      }
+
+      const nextAccounts = [
+        ...kolAccounts,
+        {
+          handle,
+          groupTag: groupTag ? groupTag : null,
+          joinedAt: new Date().toISOString(),
+          enabled: true,
+        },
+      ]
+
+      setAddingAccount(true)
+      try {
+        await persist({ kolAccounts: nextAccounts })
+        setKolAccounts(nextAccounts)
+        setAddModalOpen(false)
+        addForm.resetFields()
+        toast(`已添加 KOL 账号：${handle}`)
+      } catch (e) {
+        toast(e instanceof Error ? e.message : '添加 KOL 账号失败')
+      } finally {
+        setAddingAccount(false)
+      }
+    } catch {
+      // form validation already handled by antd
+    }
   }
 
-  const handleRemoveKolAccount = (index: number) => {
-    setKolAccounts((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
+  const handleRemoveKolAccount = async (index: number) => {
+    const previous = kolAccounts
+    const nextAccounts = kolAccounts.filter((_, currentIndex) => currentIndex !== index)
+    setKolAccounts(nextAccounts)
+    setSavingToggle(true)
+    try {
+      await persist({ kolAccounts: nextAccounts })
+      toast(`已删除 KOL 账号 ${previous[index]?.handle ?? ''}`)
+    } catch (e) {
+      setKolAccounts(previous)
+      toast(e instanceof Error ? e.message : '删除 KOL 账号失败')
+    } finally {
+      setSavingToggle(false)
+    }
   }
 
   const handleSaveAll = async () => {
@@ -184,8 +240,8 @@ export default function KolRadarSetting() {
         <section className={styles.twitterBlock}>
           <div className={styles.blockHeader}>
             <div>
-              <h3>定时采集</h3>
-              <p className="small">关闭后只保留手动采集入口。</p>
+              <h3>KOL 雷达采集</h3>
+              <p className="small">只采集已启用账号最近 6 小时帖子，按 handle 做窗口去重。</p>
             </div>
             <span className={styles.statusBadge}>{intervalLabel}</span>
           </div>
@@ -206,35 +262,25 @@ export default function KolRadarSetting() {
             </div>
           </div>
 
-          <div className={styles.regionHeader}>已选账号（{kolAccounts.length}）</div>
-          <div className={styles.inlineActions}>
-            <Button icon={<PlusOutlined />} onClick={handleAddKolAccount}>
-              添加账号
-            </Button>
+          <div className={styles.kolAccountHeader}>
+            <div>
+              <div className={styles.regionHeader}>已选账号（{kolAccounts.length}）</div>
+              <div className={styles.kolAccountHint}>启用中的账号会进入采集；停用后保留在列表里。</div>
+            </div>
+            <div className={styles.kolAccountHeaderActions}>
+              <Tag color="blue">{enabledAccountCount} 个已启用</Tag>
+              <Button icon={<PlusOutlined />} onClick={openAddModal}>
+                添加账号
+              </Button>
+            </div>
           </div>
           <div className={styles.kolAccountList}>
             {kolAccounts.map((account, index) => (
               <div className={styles.kolAccountRow} key={`${account.joinedAt}-${index}`}>
                 <div className={styles.kolAccountInfo}>
-                  <div className={styles.kolAccountEditors}>
-                    <Input
-                      className={styles.kolAccountField}
-                      placeholder="输入 handle"
-                      value={account.handle}
-                      onChange={(event) =>
-                        handleKolAccountUpdate(index, { handle: event.target.value })
-                      }
-                    />
-                    <Input
-                      className={styles.kolAccountField}
-                      placeholder="分组标签（可选）"
-                      value={account.groupTag ?? ''}
-                      onChange={(event) =>
-                        handleKolAccountUpdate(index, {
-                          groupTag: event.target.value ? event.target.value : null,
-                        })
-                      }
-                    />
+                  <div className={styles.kolAccountTitleRow}>
+                    <div className={styles.kolAccountTitle}>{account.handle}</div>
+                    <Tag color={account.enabled ? 'green' : 'default'}>{account.enabled ? '启用' : '停用'}</Tag>
                   </div>
                   <div className={styles.kolAccountMeta}>
                     {account.groupTag ? <Tag color="blue">{account.groupTag}</Tag> : <Tag>未分组</Tag>}
@@ -252,7 +298,7 @@ export default function KolRadarSetting() {
                   <Button
                     danger
                     icon={<DeleteOutlined />}
-                    onClick={() => handleRemoveKolAccount(index)}
+                    onClick={() => void handleRemoveKolAccount(index)}
                   >
                     删除
                   </Button>
@@ -270,6 +316,44 @@ export default function KolRadarSetting() {
           />
         </section>
       </div>
+
+      <Modal
+        title="添加 KOL 账号"
+        open={addModalOpen}
+        confirmLoading={addingAccount}
+        okText="添加"
+        cancelText="取消"
+        onCancel={() => {
+          setAddModalOpen(false)
+          addForm.resetFields()
+        }}
+        onOk={() => void handleAddKolAccount()}
+        destroyOnClose
+      >
+        <Form
+          form={addForm}
+          layout="vertical"
+          initialValues={{ handle: '', groupTag: '' }}
+        >
+          <Form.Item
+            label="账号 handle"
+            name="handle"
+            rules={[
+              { required: true, message: '请输入账号 handle' },
+              { whitespace: true, message: '账号 handle 不能为空' },
+            ]}
+          >
+            <Input placeholder="例如 OpenAI、Reuters、@handle" />
+          </Form.Item>
+          <Form.Item
+            label="分组标签（可选）"
+            name="groupTag"
+            rules={[{ max: 20, message: '分组标签最多 20 个字符' }]}
+          >
+            <Input placeholder="例如 AI / 产品、宏观数据、政治与选举" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </section>
   )
 }
