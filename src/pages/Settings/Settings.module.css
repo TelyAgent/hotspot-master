@@ -124,6 +124,14 @@
   border-bottom: 1px solid var(--line2);
 }
 
+.blockHeaderMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .blockHeader h3 {
   margin: 0 0 6px;
   font-size: 15px;

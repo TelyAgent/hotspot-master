@@ -18,6 +18,7 @@ export interface PlatformCollectionConfig {
     kolAccounts?: KolRadarAccount[]
     kolRadarEnabled?: boolean
     kolRadarCollectionIntervalMs?: number
+    kolRadarMinViews?: number
     trendCollectionCron?: string
     trendCollectionIntervalMs?: number
     trendCollectionEnabled?: boolean
@@ -68,6 +69,7 @@ interface XTrendCollectionConfig {
   trendCollectionEnabled: boolean
   kolRadarEnabled: boolean
   kolRadarCollectionIntervalMs: number
+  kolRadarMinViews: number
   kolRadarAccounts: KolRadarAccount[]
 }
 
@@ -100,6 +102,7 @@ export async function updatePlatformCollectionConfig(
       trendCollectionEnabled: data.variables?.trendCollectionEnabled,
       kolRadarEnabled: data.variables?.kolRadarEnabled,
       kolRadarCollectionIntervalMs: data.variables?.kolRadarCollectionIntervalMs,
+      kolRadarMinViews: data.variables?.kolRadarMinViews,
       kolRadarAccounts: data.variables?.kolAccounts,
     }),
   })
@@ -174,6 +177,7 @@ function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCol
       monitoredAccounts: kolAccounts.map((item) => item.handle),
       kolRadarEnabled: config.kolRadarEnabled,
       kolRadarCollectionIntervalMs: config.kolRadarCollectionIntervalMs,
+      kolRadarMinViews: config.kolRadarMinViews,
     },
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Form, Input, Modal, Spin, Switch, Tag } from 'antd'
+import { Alert, Button, Form, Input, InputNumber, Modal, Spin, Switch, Tag } from 'antd'
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
@@ -11,6 +11,7 @@ import { useApp } from '../../../context/AppContext'
 import styles from '../Settings.module.css'
 
 const DEFAULT_KOL_INTERVAL_MS = 6 * 60 * 60 * 1000
+const DEFAULT_KOL_MIN_VIEWS = 10000
 
 type KolAccountFormValues = {
   handle: string
@@ -28,6 +29,7 @@ export default function KolRadarSetting() {
   const [addingAccount, setAddingAccount] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [kolRadarEnabled, setKolRadarEnabled] = useState(true)
+  const [kolRadarMinViews, setKolRadarMinViews] = useState(DEFAULT_KOL_MIN_VIEWS)
   const [kolAccounts, setKolAccounts] = useState<KolRadarAccount[]>([])
 
   const intervalLabel = useMemo(
@@ -50,6 +52,7 @@ export default function KolRadarSetting() {
         if (!mounted) return
         setConfig(nextConfig)
         setKolRadarEnabled(nextConfig.variables.kolRadarEnabled ?? true)
+        setKolRadarMinViews(nextConfig.variables.kolRadarMinViews ?? DEFAULT_KOL_MIN_VIEWS)
         setKolAccounts(nextConfig.variables.kolAccounts ?? [])
       } catch (e) {
         if (!mounted) return
@@ -67,6 +70,7 @@ export default function KolRadarSetting() {
 
   const persist = async (patch: {
     kolRadarEnabled?: boolean
+    kolRadarMinViews?: number
     kolAccounts?: KolRadarAccount[]
   } = {}) => {
     if (!config) return null
@@ -76,6 +80,7 @@ export default function KolRadarSetting() {
       variables: {
         ...config.variables,
         kolRadarEnabled: patch.kolRadarEnabled ?? kolRadarEnabled,
+        kolRadarMinViews: patch.kolRadarMinViews ?? kolRadarMinViews,
         kolRadarCollectionIntervalMs:
           config.variables.kolRadarCollectionIntervalMs ?? DEFAULT_KOL_INTERVAL_MS,
         kolAccounts: nextKolAccounts,
@@ -84,6 +89,7 @@ export default function KolRadarSetting() {
 
     setConfig(nextConfig)
     setKolRadarEnabled(nextConfig.variables.kolRadarEnabled ?? true)
+    setKolRadarMinViews(nextConfig.variables.kolRadarMinViews ?? DEFAULT_KOL_MIN_VIEWS)
     setKolAccounts(nextConfig.variables.kolAccounts ?? [])
     return nextConfig
   }
@@ -119,6 +125,10 @@ export default function KolRadarSetting() {
     } finally {
       setSavingToggle(false)
     }
+  }
+
+  const handleKolMinViewsChange = (value: number | null) => {
+    setKolRadarMinViews(value ?? DEFAULT_KOL_MIN_VIEWS)
   }
 
   const openAddModal = () => {
@@ -243,7 +253,10 @@ export default function KolRadarSetting() {
               <h3>KOL 雷达采集</h3>
               <p className="small">只采集已启用账号最近 6 小时帖子，按 handle 做窗口去重。</p>
             </div>
-            <span className={styles.statusBadge}>{intervalLabel}</span>
+            <div className={styles.blockHeaderMeta}>
+              <span className={styles.statusBadge}>{intervalLabel}</span>
+              <span className={styles.statusBadge}>最低 {kolRadarMinViews.toLocaleString()} views</span>
+            </div>
           </div>
 
           <div className={styles.settingControls}>
@@ -258,6 +271,25 @@ export default function KolRadarSetting() {
                 unCheckedChildren="关闭"
                 loading={savingToggle}
                 onChange={handleKolRadarSwitch}
+              />
+            </div>
+            <div className={styles.switchRow}>
+              <div>
+                <strong>入榜 views 门槛</strong>
+                <span>先过滤再排序，低于门槛的帖子不进入快照。</span>
+              </div>
+              <InputNumber
+                min={0}
+                step={1000}
+                value={kolRadarMinViews}
+                onChange={handleKolMinViewsChange}
+                style={{ width: 180 }}
+                formatter={(value) =>
+                  value === undefined || value === null
+                    ? ''
+                    : Number(value).toLocaleString()
+                }
+                parser={(value) => Number(String(value ?? '').replace(/,/g, ''))}
               />
             </div>
           </div>
@@ -307,13 +339,13 @@ export default function KolRadarSetting() {
             ))}
           </div>
 
-          <Alert
-            style={{ marginTop: 12 }}
-            type="info"
-            showIcon
-            message="采集规则"
-            description="只从 KOL list 内账号取数，按最近 6 小时滚动窗口采集，默认按 views 从高到低排序。"
-          />
+        <Alert
+          style={{ marginTop: 12 }}
+          type="info"
+          showIcon
+          message="采集规则"
+          description={`只从 KOL list 内账号取数，按最近 6 小时滚动窗口采集，先按 views >= ${kolRadarMinViews.toLocaleString()} 过滤，再按 views 从高到低排序。`}
+        />
         </section>
       </div>
 
