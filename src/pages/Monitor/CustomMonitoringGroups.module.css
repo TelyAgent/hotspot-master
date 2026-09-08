@@ -1,0 +1,615 @@
+.groupDrawer :global(.ant-drawer-body) {
+  padding: 0;
+  background: #fafafa;
+}
+
+.drawerBody,
+.managerBody {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.drawerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.drawerFooter > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.drawerFooter > div {
+  display: flex;
+  gap: 8px;
+}
+
+.formSection,
+.managerItem,
+.emptyBoard {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.formSection {
+  padding: 16px;
+}
+
+.sectionHead,
+.managerItemHead,
+.emptyBoardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.sectionHead {
+  margin-bottom: 14px;
+}
+
+.sectionHead h3,
+.managerItem h3,
+.emptyBoardHead h2 {
+  margin: 0;
+  color: var(--ink);
+}
+
+.sectionHead h3 {
+  font-size: 16px;
+}
+
+.sectionHead p,
+.managerItem p,
+.emptyBoardHead p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fieldBlock {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.fieldBlock label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fieldBlock > small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.fieldBlock :global(.ant-input-number) {
+  width: 100%;
+}
+
+.fullField {
+  grid-column: 1 / -1;
+}
+
+.metricFilterHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metricFilterHead > small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.engagementGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.engagementGrid > div {
+  display: grid;
+  gap: 6px;
+}
+
+.engagementGrid span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rangeFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.rangeFields :global(.ant-input-number) {
+  width: 100%;
+}
+
+.rangeFields > span {
+  color: var(--muted);
+}
+
+.errorText {
+  color: var(--r) !important;
+}
+
+.monitoringSettings {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 18px;
+  align-items: end;
+}
+
+.enableRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  gap: 16px;
+  padding: 9px 12px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+}
+
+.enableRow b,
+.enableRow span {
+  display: block;
+}
+
+.enableRow span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.accountCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.accountCell i {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--g);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.accountCell span,
+.accountCell b,
+.accountCell small {
+  display: block;
+  min-width: 0;
+}
+
+.accountCell small {
+  color: var(--muted);
+}
+
+.engagementCell span,
+.engagementCell small {
+  display: block;
+  white-space: nowrap;
+}
+
+.engagementCell small {
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.managerItem {
+  padding: 15px;
+}
+
+.managerTitleLine,
+.managerActions,
+.managerMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.managerActions {
+  justify-content: flex-end;
+}
+
+.managerMeta {
+  gap: 16px;
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line2);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.customSummary {
+  display: grid;
+  grid-template-columns: 1.45fr repeat(4, 1fr);
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.customSummary > div {
+  min-width: 0;
+  padding: 14px 16px;
+  border-right: 1px solid var(--line);
+}
+
+.customSummary > div:last-child {
+  border-right: 0;
+}
+
+.customSummary span,
+.customSummary p {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.customSummary h1 {
+  margin: 3px 0;
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.customSummary strong,
+.customSummary button {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--g);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.customSummary button:hover {
+  color: var(--g2);
+}
+
+.customSummary .timeValue {
+  font-size: 17px;
+  line-height: 2.05;
+}
+
+.customActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -2px 0 14px;
+}
+
+.customActions > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.customActions > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mockNotice > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mockNotice :global(.ant-tag) {
+  margin: 0;
+}
+
+.mockBoard {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mockBoardHead {
+  padding: 16px 18px 10px;
+}
+
+.mockTrendHead,
+.mockTrendRow {
+  display: grid;
+  grid-template-columns: 48px minmax(280px, 1.5fr) 160px 120px 120px 100px 140px;
+  gap: 12px;
+  align-items: center;
+}
+
+.mockTrendHead {
+  padding: 10px 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.sourceAccountFilterTrigger {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sourceAccountFilterTrigger:hover,
+.sourceAccountFilterTrigger:focus-visible,
+.sourceAccountFilterActive {
+  color: #1677ff;
+}
+
+.sourceAccountFilterTrigger:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #91caff;
+  outline-offset: 3px;
+}
+
+.sourceAccountFilterTrigger i {
+  display: inline-flex;
+  min-width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e6f4ff;
+  color: #0958d9;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.sourceAccountFilterPanel {
+  width: 168px;
+  padding: 2px;
+}
+
+.sourceAccountFilterHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sourceAccountFilterHead :global(.ant-btn) {
+  height: 24px;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.sourceAccountFilterOptions {
+  display: grid;
+  gap: 9px;
+}
+
+.sourceAccountFilterOptions :global(.ant-checkbox-wrapper) {
+  margin-inline-start: 0;
+  font-size: 13px;
+}
+
+.mockTrendRow {
+  width: 100%;
+  padding: 13px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line2);
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mockTrendRow:hover {
+  background: #fafafa;
+}
+
+.mockRankItem:last-child .mockTrendRow {
+  border-bottom: 0;
+}
+
+.mockRankBadge {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mockRankHot {
+  border-color: #e8bb57;
+  background: #fff8dc;
+  color: #c58916;
+}
+
+.mockContentCell,
+.mockContentCell b,
+.mockContentCell small {
+  display: block;
+  min-width: 0;
+}
+
+.mockContentCell b {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mockContentCell small {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 3px;
+  overflow: hidden;
+  background: transparent;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mockAuthor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mockAuthor i {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--g);
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.mockPositive {
+  color: #389e0d;
+  font-weight: 600;
+}
+
+.mockPostPanel {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line2);
+  background: #fafafa;
+}
+
+.mockPostPanel p {
+  margin: 10px 0;
+  line-height: 1.65;
+}
+
+.mockPostMeta,
+.mockPostMetrics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mockPostMeta :global(.ant-tag) {
+  margin: 0;
+}
+
+.viralFormula {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d6e4ff;
+  border-radius: 8px;
+  background: #f0f5ff;
+}
+
+.viralFormulaHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.viralFormulaHead > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0958d9;
+  font-weight: 700;
+}
+
+.viralFormulaHead :global(.ant-tag) {
+  margin: 0;
+}
+
+.viralFormula > strong {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.viralFormula > p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 1180px) {
+  .customSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customSummary > div {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mockBoard {
+    overflow-x: auto;
+  }
+
+  .mockTrendHead,
+  .mockTrendRow {
+    min-width: 1080px;
+  }
+}
+
+@media (max-width: 760px) {
+  .engagementGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
