@@ -55,7 +55,7 @@ export default function KolRadar({
   const customGroups = useCustomMonitoringGroups()
   const { accounts: accountPool } = useAccountPool()
   const [sortBy, setSortBy] = useState<SortKey>('views')
-  const [activeTab, setActiveTab] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<string>('all')
   const [managerOpen, setManagerOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<CustomMonitoringGroup | null>(null)
@@ -76,13 +76,13 @@ export default function KolRadar({
     setActiveTab(`custom:${group.id}`)
     setEditorOpen(false)
     setEditingGroup(null)
-    toast(group.enabled ? '监控群组已保存并开启' : '监控群组已保存为草稿')
+    toast('监控群组已保存')
   }
 
   const deleteCustomGroup = (id: string) => {
     customGroups.deleteGroup(id)
     if (activeTab === `custom:${id}`) {
-      setActiveTab('')
+      setActiveTab('all')
     }
     toast('监控群组已删除')
   }
@@ -120,40 +120,56 @@ export default function KolRadar({
     })
   }, [accountPool, customGroups.groups, items])
 
+  const allTabs = useMemo<RadarTab[]>(() => {
+    if (tabs.length === 0) return []
+    return [
+      {
+        key: 'all',
+        label: '全部',
+        items,
+        title: '全部',
+        description: '展示所有 KOL 雷达采集数据',
+      },
+      ...tabs,
+    ]
+  }, [tabs, items])
+
+  const tabActions = (
+    <div className={styles.monitorTabsHeaderActions}>
+      <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup}>
+        新建群组
+      </Button>
+      {tabs.length > 0 ? (
+        <Button
+          type="primary"
+          icon={<SettingOutlined />}
+          aria-label="管理群组"
+          onClick={() => setManagerOpen(true)}
+        />
+      ) : null}
+    </div>
+  )
+
   useEffect(() => {
-    if (tabs.length === 0) {
+    if (allTabs.length === 0) {
       setActiveTab('')
       return
     }
 
-    if (!tabs.some((tab) => tab.key === activeTab)) {
-      setActiveTab(tabs[0].key)
+    if (!allTabs.some((tab) => tab.key === activeTab)) {
+      setActiveTab('all')
     }
-  }, [activeTab, tabs])
+  }, [activeTab, allTabs])
 
   return (
     <>
-      <div className={styles.monitorTabsHeader}>
-        <div className={styles.monitorTabsHeaderActions}>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup}>
-            新建群组
-          </Button>
-          {tabs.length > 0 ? (
-            <Button
-              type="primary"
-              icon={<SettingOutlined />}
-              aria-label="管理群组"
-              onClick={() => setManagerOpen(true)}
-            />
-          ) : null}
-        </div>
-      </div>
-      {tabs.length > 0 ? (
+      {allTabs.length > 0 ? (
         <Tabs
           className={styles.topicTabs}
           activeKey={activeTab}
           onChange={setActiveTab}
-          items={tabs.map((tab) => ({
+          tabBarExtraContent={tabActions}
+          items={allTabs.map((tab) => ({
             key: tab.key,
             label: tab.label,
             children: (
@@ -183,9 +199,11 @@ export default function KolRadar({
           }))}
         />
       ) : (
-        <RadarBoard
-          title="全部"
-          description="当前还没有任何群组，下面展示所有 KOL 雷达数据"
+        <>
+          <div className={styles.monitorTabsHeader}>{tabActions}</div>
+          <RadarBoard
+            title="全部"
+            description="当前还没有任何群组，下面展示所有 KOL 雷达数据"
           items={items}
           loading={loading}
           collecting={collecting}
@@ -205,7 +223,8 @@ export default function KolRadar({
           }}
           uniqueHandles={new Set(items.map((item) => item.handle)).size}
         />
-      )}
+      </>
+    )}
       <CustomGroupEditorDrawer
         open={editorOpen}
         group={editingGroup}
@@ -220,10 +239,6 @@ export default function KolRadar({
         groups={customGroups.groups}
         onClose={() => setManagerOpen(false)}
         onEdit={openEditGroup}
-        onToggle={(id) => {
-          customGroups.toggleGroup(id)
-          toast('监控状态已更新')
-        }}
         onDelete={deleteCustomGroup}
       />
     </>

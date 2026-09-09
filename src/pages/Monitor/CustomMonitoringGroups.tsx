@@ -19,8 +19,6 @@ import {
   DeleteOutlined,
   EditOutlined,
   FilterOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
   ReloadOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -54,7 +52,6 @@ export interface CustomMonitoringGroup {
   id: string
   name: string
   purpose: string
-  enabled: boolean
   intervalHours: number
   filters: CustomGroupFilters
   createdAt: string
@@ -156,14 +153,6 @@ export function useCustomMonitoringGroups() {
     setGroups((current) => current.filter((group) => group.id !== id))
   }
 
-  const toggleGroup = (id: string) => {
-    setGroups((current) => current.map((group) => (
-      group.id === id
-        ? { ...group, enabled: !group.enabled, updatedAt: new Date().toISOString() }
-        : group
-    )))
-  }
-
   const markCollected = (id: string) => {
     setGroups((current) => current.map((group) => (
       group.id === id
@@ -172,7 +161,7 @@ export function useCustomMonitoringGroups() {
     )))
   }
 
-  return { groups, saveGroup, deleteGroup, toggleGroup, markCollected }
+  return { groups, saveGroup, deleteGroup, markCollected }
 }
 
 export function getMatchedAccounts(
@@ -219,7 +208,6 @@ export function CustomGroupEditorDrawer({
   }, [group, open])
 
   const matchedAccounts = useMemo(() => getMatchedAccounts(draft, pool), [draft, pool])
-  const canEnable = matchedAccounts.length > 0
   const rangeInvalid = draft.filters.followerMin != null
     && draft.filters.followerMax != null
     && draft.filters.followerMin > draft.filters.followerMax
@@ -238,7 +226,6 @@ export function CustomGroupEditorDrawer({
       ...draft,
       name: draft.name.trim(),
       purpose: draft.purpose.trim(),
-      enabled: canEnable ? draft.enabled : false,
       updatedAt: now,
     })
   }
@@ -258,7 +245,7 @@ export function CustomGroupEditorDrawer({
           <div>
             <Button onClick={onClose}>取消</Button>
             <Button type="primary" disabled={!draft.name.trim() || rangeInvalid} onClick={save}>
-              {canEnable && draft.enabled ? '保存并开启' : '保存草稿'}
+              保存
             </Button>
           </div>
         </div>
@@ -464,9 +451,6 @@ export function CustomGroupEditorDrawer({
           )}
         </section>
 
-        {!canEnable && draft.name.trim() ? (
-          <Alert type="warning" showIcon title="当前没有匹配账号，群组会保存为草稿且不会启动采集。" />
-        ) : null}
       </div>
     </Drawer>
   )
@@ -477,14 +461,12 @@ export function CustomGroupManagerDrawer({
   groups,
   onClose,
   onEdit,
-  onToggle,
   onDelete,
 }: {
   open: boolean
   groups: CustomMonitoringGroup[]
   onClose: () => void
   onEdit: (group: CustomMonitoringGroup) => void
-  onToggle: (id: string) => void
   onDelete: (id: string) => void
 }) {
   const { accounts: pool } = useAccountPool()
@@ -500,20 +482,11 @@ export function CustomGroupManagerDrawer({
                 <div>
                   <div className={styles.managerTitleLine}>
                     <h3>{group.name}</h3>
-                    <Tag color={group.enabled ? 'processing' : 'default'}>{group.enabled ? '监控中' : '已暂停'}</Tag>
                   </div>
                   <p>{group.purpose || '未填写监控目的'}</p>
                 </div>
                 <div className={styles.managerActions}>
                   <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(group)}>编辑</Button>
-                  <Button
-                    size="small"
-                    icon={group.enabled ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                    disabled={!group.enabled && accounts.length === 0}
-                    onClick={() => onToggle(group.id)}
-                  >
-                    {group.enabled ? '暂停' : '开启'}
-                  </Button>
                   <Popconfirm
                     title="删除这个监控群组？"
                     description="删除后不会影响历史榜单数据。"
@@ -594,7 +567,7 @@ export function CustomGroupDetail({
         <div>
           <span>当前群组 · 自定义</span>
           <h1>{group.name}帖子榜</h1>
-          <p>{group.enabled ? '监控中' : '已暂停'} · 每 {group.intervalHours} 小时采集 · {group.purpose || '未填写监控目的'}</p>
+          <p>每 {group.intervalHours} 小时采集 · {group.purpose || '未填写监控目的'}</p>
         </div>
         <div>
           <span>圈内上榜</span>
@@ -629,7 +602,6 @@ export function CustomGroupDetail({
             <h2>{group.name} · 圈内榜</h2>
             <p>当前群组帖子 Top 10 · 基于匹配账号生成</p>
           </div>
-          {!group.enabled ? <Tag>群组已暂停</Tag> : null}
         </div>
         <div className={styles.mockTrendHead}>
           <span>排名</span>
@@ -786,7 +758,6 @@ function createDraft(group: CustomMonitoringGroup | null): CustomMonitoringGroup
     id: `custom-${Date.now()}`,
     name: '',
     purpose: '',
-    enabled: true,
     intervalHours: 3,
     filters: { ...EMPTY_FILTERS },
     createdAt: now,
@@ -800,7 +771,10 @@ function loadGroups(): CustomMonitoringGroup[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed)
-      ? parsed.map((group) => ({ ...group, filters: normalizeFilters(group.filters) }))
+      ? parsed.map((group) => {
+          const { enabled: _enabled, ...rest } = group ?? {}
+          return { ...rest, filters: normalizeFilters(group.filters) }
+        })
       : []
   } catch {
     return []
