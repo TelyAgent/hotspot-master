@@ -11,6 +11,7 @@ import {
   useCustomMonitoringGroups,
   type CustomMonitoringGroup,
 } from './CustomMonitoringGroups'
+import { useAccountPool } from '../../hooks/useAccountPool'
 
 type SortKey = 'views' | 'latest' | 'likes' | 'comments' | 'handle'
 
@@ -52,6 +53,7 @@ export default function KolRadar({
 }) {
   const { toast } = useApp()
   const customGroups = useCustomMonitoringGroups()
+  const { accounts: accountPool } = useAccountPool()
   const [sortBy, setSortBy] = useState<SortKey>('views')
   const [activeTab, setActiveTab] = useState<string>('')
   const [managerOpen, setManagerOpen] = useState(false)
@@ -90,7 +92,7 @@ export default function KolRadar({
 
   const tabs = useMemo(() => {
     return customGroups.groups.map((group) => {
-      const matchedHandles = getMatchedAccounts(group).map((account) => normalizeHandle(account.handle))
+      const matchedHandles = getMatchedAccounts(group, accountPool).map((account) => normalizeHandle(account.handle))
       const nextItems = items.filter((item) => matchedHandles.includes(normalizeHandle(item.handle)))
       return {
         key: `custom:${group.id}`,
@@ -116,7 +118,7 @@ export default function KolRadar({
         description: group.purpose || '自定义群组过滤结果',
       }
     })
-  }, [customGroups.groups, items])
+  }, [accountPool, customGroups.groups, items])
 
   useEffect(() => {
     if (tabs.length === 0) {

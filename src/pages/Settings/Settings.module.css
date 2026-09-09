@@ -302,6 +302,47 @@
   font-size: 12px;
 }
 
+.kolAccountMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.metricItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: default;
+}
+
+.metricIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.metricValue {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.bioHint {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
 .kolAccountActions {
   display: flex;
   align-items: center;

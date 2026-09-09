@@ -25,33 +25,17 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import styles from './CustomMonitoringGroups.module.css'
+import {
+  ACCOUNT_TYPE_OPTIONS,
+  useAccountPool,
+  type AccountType,
+  type MonitoringAccount,
+} from '../../hooks/useAccountPool'
+
+export type { AccountType, MonitoringAccount }
+export { inferAccountType } from '../../hooks/useAccountPool'
 
 const STORAGE_KEY = 'hotspot-monitor.custom-monitoring-groups.v1'
-
-export type AccountType = 'official' | 'kol' | 'media' | 'project' | 'institution'
-
-const ACCOUNT_TYPE_OPTIONS: { value: AccountType; label: string }[] = [
-  { value: 'official', label: '官方账号' },
-  { value: 'kol', label: 'KOL' },
-  { value: 'media', label: '媒体' },
-  { value: 'project', label: '项目方' },
-  { value: 'institution', label: '机构' },
-]
-
-export interface MonitoringAccount {
-  id: string
-  handle: string
-  name: string
-  followers: number
-  weeklyPosts: number
-  avgComments: number
-  avgReposts: number
-  avgViews: number
-  avgLikes: number
-  region: string
-  lastActiveAt: string
-  accountType: AccountType
-}
 
 export interface CustomGroupFilters {
   followerMin: number | null
@@ -90,22 +74,8 @@ interface MockMonitoringPost {
   status: 'hot_event_candidate' | 'watching'
 }
 
-const ACCOUNT_POOL: MonitoringAccount[] = [
-  { id: 'polymarket', handle: 'Polymarket', name: 'Polymarket', followers: 1_400_000, weeklyPosts: 96, avgComments: 420, avgReposts: 1_600, avgViews: 780_000, avgLikes: 12_000, region: '美国', lastActiveAt: '2026-09-04T05:32:00Z', accountType: 'project' },
-  { id: 'kalshi', handle: 'Kalshi', name: 'Kalshi', followers: 540_000, weeklyPosts: 82, avgComments: 260, avgReposts: 880, avgViews: 430_000, avgLikes: 7_800, region: '美国', lastActiveAt: '2026-09-04T05:18:00Z', accountType: 'project' },
-  { id: 'watcherguru', handle: 'WatcherGuru', name: 'Watcher.Guru', followers: 2_900_000, weeklyPosts: 124, avgComments: 680, avgReposts: 2_800, avgViews: 1_800_000, avgLikes: 24_000, region: '美国', lastActiveAt: '2026-09-04T05:06:00Z', accountType: 'kol' },
-  { id: 'coindesk', handle: 'CoinDesk', name: 'CoinDesk', followers: 3_200_000, weeklyPosts: 118, avgComments: 350, avgReposts: 1_300, avgViews: 620_000, avgLikes: 9_600, region: '美国', lastActiveAt: '2026-09-04T04:52:00Z', accountType: 'media' },
-  { id: 'reuters', handle: 'Reuters', name: 'Reuters', followers: 26_000_000, weeklyPosts: 210, avgComments: 520, avgReposts: 2_100, avgViews: 2_400_000, avgLikes: 32_000, region: '英国', lastActiveAt: '2026-09-04T05:40:00Z', accountType: 'media' },
-  { id: 'business', handle: 'business', name: 'Bloomberg', followers: 11_600_000, weeklyPosts: 184, avgComments: 410, avgReposts: 1_500, avgViews: 1_650_000, avgLikes: 22_000, region: '美国', lastActiveAt: '2026-09-04T05:35:00Z', accountType: 'media' },
-  { id: 'openai', handle: 'OpenAI', name: 'OpenAI', followers: 4_800_000, weeklyPosts: 22, avgComments: 1_600, avgReposts: 6_800, avgViews: 5_800_000, avgLikes: 105_000, region: '美国', lastActiveAt: '2026-09-03T22:20:00Z', accountType: 'official' },
-  { id: 'anthropicai', handle: 'AnthropicAI', name: 'Anthropic', followers: 1_100_000, weeklyPosts: 18, avgComments: 1_200, avgReposts: 4_700, avgViews: 3_600_000, avgLikes: 78_000, region: '美国', lastActiveAt: '2026-09-03T19:10:00Z', accountType: 'official' },
-  { id: 'techcrunch', handle: 'TechCrunch', name: 'TechCrunch', followers: 10_400_000, weeklyPosts: 136, avgComments: 260, avgReposts: 980, avgViews: 510_000, avgLikes: 8_500, region: '美国', lastActiveAt: '2026-09-04T05:27:00Z', accountType: 'media' },
-  { id: 'a16z', handle: 'a16z', name: 'Andreessen Horowitz', followers: 810_000, weeklyPosts: 31, avgComments: 340, avgReposts: 1_200, avgViews: 390_000, avgLikes: 9_200, region: '美国', lastActiveAt: '2026-09-03T23:42:00Z', accountType: 'institution' },
-  { id: 'nikkeiasia', handle: 'NikkeiAsia', name: 'Nikkei Asia', followers: 470_000, weeklyPosts: 88, avgComments: 140, avgReposts: 420, avgViews: 180_000, avgLikes: 3_300, region: '日本', lastActiveAt: '2026-09-04T04:31:00Z', accountType: 'media' },
-  { id: 'cointelegraph', handle: 'Cointelegraph', name: 'Cointelegraph', followers: 2_400_000, weeklyPosts: 105, avgComments: 390, avgReposts: 1_600, avgViews: 760_000, avgLikes: 12_800, region: '未知', lastActiveAt: '2026-09-04T05:11:00Z', accountType: 'media' },
-]
+const REGION_FALLBACK = '未知'
 
-const REGION_OPTIONS = ['美国', '英国', '日本', '韩国', '新加坡', '未知'].map((value) => ({ value, label: value }))
 const INTERVAL_OPTIONS = [
   { value: 1, label: '每 1 小时' },
   { value: 3, label: '每 3 小时' },
@@ -113,19 +83,6 @@ const INTERVAL_OPTIONS = [
   { value: 12, label: '每 12 小时' },
   { value: 24, label: '每天' },
 ]
-
-export function inferAccountType(handle: string): AccountType {
-  const normalized = handle.replace(/^@/, '').toLowerCase()
-  if (['openai', 'anthropicai', 'googledeepmind', 'metaai', 'xai', 'microsoft'].includes(normalized)) {
-    return 'official'
-  }
-  if (['reuters', 'ap', 'bbcworld', 'business', 'bloomberg', 'techcrunch', 'coindesk', 'cointelegraph', 'nikkeiasia'].includes(normalized)) {
-    return 'media'
-  }
-  if (['polymarket', 'kalshi'].includes(normalized)) return 'project'
-  if (['a16z', 'ycombinator'].includes(normalized)) return 'institution'
-  return 'kol'
-}
 
 export function SourceAccountFilter({
   value,
@@ -218,11 +175,14 @@ export function useCustomMonitoringGroups() {
   return { groups, saveGroup, deleteGroup, toggleGroup, markCollected }
 }
 
-export function getMatchedAccounts(group: CustomMonitoringGroup) {
+export function getMatchedAccounts(
+  group: CustomMonitoringGroup,
+  pool: MonitoringAccount[],
+) {
   const includeSet = new Set(group.filters.manualIncludes)
   const excludeSet = new Set(group.filters.manualExcludes)
 
-  return ACCOUNT_POOL.filter((account) => {
+  return pool.filter((account) => {
     if (excludeSet.has(account.id)) return false
     if (includeSet.has(account.id)) return true
     if (group.filters.followerMin != null && account.followers < group.filters.followerMin) return false
@@ -248,18 +208,17 @@ export function CustomGroupEditorDrawer({
   onClose: () => void
   onSave: (group: CustomMonitoringGroup) => void
 }) {
+  // 模块级共享缓存，多个组件同时挂载不会重复请求
+  const { accounts: pool, updatedAt: poolUpdatedAt, loading: poolLoading, refreshing, error: poolError, refresh } = useAccountPool()
   const [draft, setDraft] = useState<CustomMonitoringGroup>(() => createDraft(group))
-  const [refreshingPool, setRefreshingPool] = useState(false)
-  const [previewUpdatedAt, setPreviewUpdatedAt] = useState(() => new Date().toISOString())
 
   useEffect(() => {
     if (open) {
       setDraft(createDraft(group))
-      setPreviewUpdatedAt(new Date().toISOString())
     }
   }, [group, open])
 
-  const matchedAccounts = useMemo(() => getMatchedAccounts(draft), [draft])
+  const matchedAccounts = useMemo(() => getMatchedAccounts(draft, pool), [draft, pool])
   const canEnable = matchedAccounts.length > 0
   const rangeInvalid = draft.filters.followerMin != null
     && draft.filters.followerMax != null
@@ -284,12 +243,7 @@ export function CustomGroupEditorDrawer({
     })
   }
 
-  const refreshAccountPool = async () => {
-    setRefreshingPool(true)
-    await new Promise((resolve) => window.setTimeout(resolve, 600))
-    setPreviewUpdatedAt(new Date().toISOString())
-    setRefreshingPool(false)
-  }
+  const refreshAccountPool = () => refresh()
 
   return (
     <Drawer
@@ -434,7 +388,7 @@ export function CustomGroupEditorDrawer({
                 mode="multiple"
                 allowClear
                 value={draft.filters.regions}
-                options={REGION_OPTIONS}
+                options={regionOptions(pool)}
                 placeholder="全部区域"
                 onChange={(regions) => patchFilters({ regions })}
               />
@@ -446,7 +400,7 @@ export function CustomGroupEditorDrawer({
                 mode="multiple"
                 allowClear
                 value={draft.filters.manualIncludes}
-                options={accountOptions(draft.filters.manualExcludes)}
+                options={accountOptions(pool, draft.filters.manualExcludes)}
                 placeholder="可选；手动纳入会覆盖筛选条件"
                 onChange={(manualIncludes) => patchFilters({ manualIncludes })}
               />
@@ -457,7 +411,7 @@ export function CustomGroupEditorDrawer({
                 mode="multiple"
                 allowClear
                 value={draft.filters.manualExcludes}
-                options={accountOptions(draft.filters.manualIncludes)}
+                options={accountOptions(pool, draft.filters.manualIncludes)}
                 placeholder="可选；排除优先级最高"
                 onChange={(manualExcludes) => patchFilters({ manualExcludes })}
               />
@@ -469,27 +423,44 @@ export function CustomGroupEditorDrawer({
           <div className={styles.sectionHead}>
             <div>
               <h3>匹配账号预览</h3>
-              <p>账号池数据更新时间：{formatTime(previewUpdatedAt)}</p>
+              <p>
+                {poolLoading && !pool.length
+                  ? '账号池加载中…'
+                  : `账号池 ${pool.length} 个账号 · 指标更新于 ${poolUpdatedAt ? formatTime(poolUpdatedAt) : '--'}`}
+              </p>
             </div>
             <Button
               size="small"
               icon={<ReloadOutlined />}
-              loading={refreshingPool}
+              loading={refreshing}
               onClick={() => void refreshAccountPool()}
             >
               刷新账号池
             </Button>
           </div>
+          {poolError ? (
+            <Alert
+              type="error"
+              showIcon
+              style={{ marginBottom: 12 }}
+              title="账号池加载失败"
+              description={poolError}
+            />
+          ) : null}
           {matchedAccounts.length ? (
             <Table
               size="small"
               rowKey="id"
               columns={ACCOUNT_COLUMNS}
               dataSource={matchedAccounts}
+              loading={poolLoading && !pool.length}
               pagination={{ pageSize: 5, size: 'small', showSizeChanger: false }}
             />
           ) : (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无符合条件的账号，请放宽筛选条件" />
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={poolLoading ? '账号池加载中…' : '暂无符合条件的账号，请放宽筛选条件'}
+            />
           )}
         </section>
 
@@ -516,12 +487,13 @@ export function CustomGroupManagerDrawer({
   onToggle: (id: string) => void
   onDelete: (id: string) => void
 }) {
+  const { accounts: pool } = useAccountPool()
   return (
     <Drawer title="管理监控群组" size={620} open={open} onClose={onClose} className={styles.groupDrawer}>
       <div className={styles.managerBody}>
         <Alert title="自定义群组按筛选规则每天更新账号成员；手动纳入和排除始终优先。" showIcon />
         {groups.length ? groups.map((group) => {
-          const accounts = getMatchedAccounts(group)
+          const accounts = getMatchedAccounts(group, pool)
           return (
             <section className={styles.managerItem} key={group.id}>
               <div className={styles.managerItemHead}>
@@ -576,7 +548,8 @@ export function CustomGroupAccountsDrawer({
   group: CustomMonitoringGroup | null
   onClose: () => void
 }) {
-  const accounts = group ? getMatchedAccounts(group) : []
+  const { accounts: pool } = useAccountPool()
+  const accounts = group ? getMatchedAccounts(group, pool) : []
   return (
     <Drawer
       title={group ? `${group.name} · 监控账号` : '监控账号'}
@@ -602,7 +575,8 @@ export function CustomGroupDetail({
   onEdit: () => void
   onViewAccounts: () => void
 }) {
-  const accounts = getMatchedAccounts(group)
+  const { accounts: pool } = useAccountPool()
+  const accounts = getMatchedAccounts(group, pool)
   const mockPosts = useMemo(() => buildMockPosts(group, accounts), [accounts, group])
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
   const [accountTypeFilter, setAccountTypeFilter] = useState<AccountType[]>([])
@@ -843,9 +817,17 @@ function normalizeFilters(filters?: Partial<CustomGroupFilters>): CustomGroupFil
   }
 }
 
-function accountOptions(disabledIds: string[]) {
+function regionOptions(accounts: MonitoringAccount[]) {
+  const regions = new Set(accounts.map((account) => account.region || REGION_FALLBACK))
+  regions.add(REGION_FALLBACK)
+  return Array.from(regions)
+    .sort((left, right) => left.localeCompare(right, 'zh-CN'))
+    .map((value) => ({ value, label: value }))
+}
+
+function accountOptions(accounts: MonitoringAccount[], disabledIds: string[]) {
   const disabled = new Set(disabledIds)
-  return ACCOUNT_POOL.map((account) => ({
+  return accounts.map((account) => ({
     value: account.id,
     label: `${account.name} · @${account.handle}`,
     disabled: disabled.has(account.id),

@@ -15,7 +15,6 @@ export interface PlatformCollectionConfig {
     topicKeywords?: string[]
     topicNegativeKeywords?: string[]
     topicConfigs?: TopicTrackingConfig[]
-    kolAccounts?: KolRadarAccount[]
     kolRadarEnabled?: boolean
     kolRadarCollectionIntervalMs?: number
     kolRadarMinViews?: number
@@ -42,13 +41,6 @@ export interface TopicTrackingConfig {
   defaultPostLimit: number
 }
 
-export interface KolRadarAccount {
-  handle: string
-  groupTag?: string | null
-  joinedAt: string
-  enabled: boolean
-}
-
 export interface CollectionJobConfig {
   id: string
   platform: 'x'
@@ -70,7 +62,6 @@ interface XTrendCollectionConfig {
   kolRadarEnabled: boolean
   kolRadarCollectionIntervalMs: number
   kolRadarMinViews: number
-  kolRadarAccounts: KolRadarAccount[]
 }
 
 const REGION_WOEIDS: Record<string, number> = {
@@ -103,7 +94,6 @@ export async function updatePlatformCollectionConfig(
       kolRadarEnabled: data.variables?.kolRadarEnabled,
       kolRadarCollectionIntervalMs: data.variables?.kolRadarCollectionIntervalMs,
       kolRadarMinViews: data.variables?.kolRadarMinViews,
-      kolRadarAccounts: data.variables?.kolAccounts,
     }),
   })
   return toPlatformCollectionConfig(config)
@@ -156,7 +146,6 @@ export async function updateCollectionJobConfig(
 }
 
 function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCollectionConfig {
-  const kolAccounts = config.kolRadarAccounts ?? []
   return {
     id: 'x-default',
     platform: 'x',
@@ -173,8 +162,6 @@ function toPlatformCollectionConfig(config: XTrendCollectionConfig): PlatformCol
       defaultTrendLimit: config.limit,
       trendEventWorkflowId: 'x-trend-event-formation',
       defaultPostLimit: 3,
-      kolAccounts,
-      monitoredAccounts: kolAccounts.map((item) => item.handle),
       kolRadarEnabled: config.kolRadarEnabled,
       kolRadarCollectionIntervalMs: config.kolRadarCollectionIntervalMs,
       kolRadarMinViews: config.kolRadarMinViews,

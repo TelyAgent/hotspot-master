@@ -1,12 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Form, Input, InputNumber, Modal, Spin, Switch, Tag } from 'antd'
-import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
+import { Alert, Button, Form, Input, InputNumber, Modal, Spin, Switch, Tag, Tooltip } from 'antd'
+import {
+  ClockCircleOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  GlobalOutlined,
+  HeartOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  SyncOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
 import {
   getPlatformCollectionConfig,
   updatePlatformCollectionConfig,
-  type KolRadarAccount,
   type PlatformCollectionConfig,
 } from '../../../api/collectionConfig'
+import {
+  createAccountProfile,
+  deleteAccountProfile,
+  listAccountProfiles,
+  refreshAccountProfiles,
+  updateAccountProfile,
+  type AccountProfile,
+  type AccountProfileRefreshResult,
+} from '../../../api/accountProfiles'
 import { useApp } from '../../../context/AppContext'
 import styles from '../Settings.module.css'
 
@@ -30,14 +50,16 @@ export default function KolRadarSetting() {
   const [error, setError] = useState<string | null>(null)
   const [kolRadarEnabled, setKolRadarEnabled] = useState(true)
   const [kolRadarMinViews, setKolRadarMinViews] = useState(DEFAULT_KOL_MIN_VIEWS)
-  const [kolAccounts, setKolAccounts] = useState<KolRadarAccount[]>([])
+  const [kolAccounts, setKolAccounts] = useState<AccountProfile[]>([])
+  const [pendingHandle, setPendingHandle] = useState<string | null>(null)
+  const [refreshingProfiles, setRefreshingProfiles] = useState(false)
 
   const intervalLabel = useMemo(
     () => formatIntervalMs(config?.variables.kolRadarCollectionIntervalMs ?? DEFAULT_KOL_INTERVAL_MS),
     [config],
   )
   const enabledAccountCount = useMemo(
-    () => kolAccounts.filter((account) => account.enabled).length,
+    () => kolAccounts.filter((account) => account.monitorEnabled).length,
     [kolAccounts],
   )
 
@@ -48,12 +70,15 @@ export default function KolRadarSetting() {
       setLoading(true)
       setError(null)
       try {
-        const nextConfig = await getPlatformCollectionConfig('x')
+        const [nextConfig, accounts] = await Promise.all([
+          getPlatformCollectionConfig('x'),
+          listAccountProfiles({ monitoring: true }),
+        ])
         if (!mounted) return
         setConfig(nextConfig)
         setKolRadarEnabled(nextConfig.variables.kolRadarEnabled ?? true)
         setKolRadarMinViews(nextConfig.variables.kolRadarMinViews ?? DEFAULT_KOL_MIN_VIEWS)
-        setKolAccounts(nextConfig.variables.kolAccounts ?? [])
+        setKolAccounts(accounts)
       } catch (e) {
         if (!mounted) return
         setError(e instanceof Error ? e.message : '加载 KOL 雷达配置失败')
@@ -68,14 +93,12 @@ export default function KolRadarSetting() {
     }
   }, [])
 
-  const persist = async (patch: {
+  const persistConfig = async (patch: {
     kolRadarEnabled?: boolean
     kolRadarMinViews?: number
-    kolAccounts?: KolRadarAccount[]
   } = {}) => {
     if (!config) return null
 
-    const nextKolAccounts = patch.kolAccounts ?? kolAccounts
     const nextConfig = await updatePlatformCollectionConfig('x', {
       variables: {
         ...config.variables,
@@ -83,14 +106,12 @@ export default function KolRadarSetting() {
         kolRadarMinViews: patch.kolRadarMinViews ?? kolRadarMinViews,
         kolRadarCollectionIntervalMs:
           config.variables.kolRadarCollectionIntervalMs ?? DEFAULT_KOL_INTERVAL_MS,
-        kolAccounts: nextKolAccounts,
       },
     })
 
     setConfig(nextConfig)
     setKolRadarEnabled(nextConfig.variables.kolRadarEnabled ?? true)
     setKolRadarMinViews(nextConfig.variables.kolRadarMinViews ?? DEFAULT_KOL_MIN_VIEWS)
-    setKolAccounts(nextConfig.variables.kolAccounts ?? [])
     return nextConfig
   }
 
@@ -99,7 +120,7 @@ export default function KolRadarSetting() {
     setKolRadarEnabled(checked)
     setSavingToggle(true)
     try {
-      await persist({ kolRadarEnabled: checked })
+      await persistConfig({ kolRadarEnabled: checked })
       toast(checked ? 'KOL 雷达定时采集已开启' : 'KOL 雷达定时采集已关闭')
     } catch (e) {
       setKolRadarEnabled(previous)
@@ -109,21 +130,27 @@ export default function KolRadarSetting() {
     }
   }
 
-  const handleKolAccountSwitch = async (index: number, checked: boolean) => {
+  const handleKolAccountSwitch = async (account: AccountProfile, checked: boolean) => {
     const previous = kolAccounts
-    const nextAccounts = kolAccounts.map((item, currentIndex) =>
-      currentIndex === index ? { ...item, enabled: checked } : item,
+    setKolAccounts((current) =>
+      current.map((item) =>
+        item.handle === account.handle ? { ...item, monitorEnabled: checked } : item,
+      ),
     )
-    setKolAccounts(nextAccounts)
     setSavingToggle(true)
+    setPendingHandle(account.handle)
     try {
-      await persist({ kolAccounts: nextAccounts })
-      toast(`KOL 账号 ${nextAccounts[index]?.handle ?? ''} 已${checked ? '启用' : '停用'}`)
+      const updated = await updateAccountProfile(account.handle, { monitorEnabled: checked })
+      setKolAccounts((current) =>
+        current.map((item) => (item.handle === updated.handle ? updated : item)),
+      )
+      toast(`KOL 账号 ${displayHandle(updated)} 已${checked ? '启用' : '停用'}`)
     } catch (e) {
       setKolAccounts(previous)
       toast(e instanceof Error ? e.message : '保存 KOL 账号状态失败')
     } finally {
       setSavingToggle(false)
+      setPendingHandle(null)
     }
   }
 
@@ -139,14 +166,18 @@ export default function KolRadarSetting() {
   const handleAddKolAccount = async () => {
     try {
       const values = await addForm.validateFields()
-      const handle = values.handle.trim()
+      const handle = values.handle.trim().replace(/^@/, '')
       const groupTag = values.groupTag?.trim()
 
       if (!handle) {
         return
       }
 
-      if (kolAccounts.some((account) => account.handle.toLowerCase() === handle.toLowerCase())) {
+      if (
+        kolAccounts.some(
+          (account) => account.handle.toLowerCase() === handle.toLowerCase(),
+        )
+      ) {
         addForm.setFields([
           {
             name: 'handle',
@@ -156,23 +187,17 @@ export default function KolRadarSetting() {
         return
       }
 
-      const nextAccounts = [
-        ...kolAccounts,
-        {
-          handle,
-          groupTag: groupTag ? groupTag : null,
-          joinedAt: new Date().toISOString(),
-          enabled: true,
-        },
-      ]
-
       setAddingAccount(true)
       try {
-        await persist({ kolAccounts: nextAccounts })
-        setKolAccounts(nextAccounts)
+        const created = await createAccountProfile({
+          handle,
+          groupTag: groupTag ? groupTag : null,
+          monitorEnabled: true,
+        })
+        setKolAccounts((current) => [...current, created])
         setAddModalOpen(false)
         addForm.resetFields()
-        toast(`已添加 KOL 账号：${handle}`)
+        toast(`已添加 KOL 账号：${displayHandle(created)}`)
       } catch (e) {
         toast(e instanceof Error ? e.message : '添加 KOL 账号失败')
       } finally {
@@ -183,31 +208,50 @@ export default function KolRadarSetting() {
     }
   }
 
-  const handleRemoveKolAccount = async (index: number) => {
+  const handleRemoveKolAccount = async (account: AccountProfile) => {
     const previous = kolAccounts
-    const nextAccounts = kolAccounts.filter((_, currentIndex) => currentIndex !== index)
-    setKolAccounts(nextAccounts)
+    setKolAccounts((current) => current.filter((item) => item.handle !== account.handle))
     setSavingToggle(true)
+    setPendingHandle(account.handle)
     try {
-      await persist({ kolAccounts: nextAccounts })
-      toast(`已删除 KOL 账号 ${previous[index]?.handle ?? ''}`)
+      await deleteAccountProfile(account.handle)
+      toast(`已删除 KOL 账号 ${displayHandle(account)}`)
     } catch (e) {
       setKolAccounts(previous)
       toast(e instanceof Error ? e.message : '删除 KOL 账号失败')
     } finally {
       setSavingToggle(false)
+      setPendingHandle(null)
     }
   }
 
   const handleSaveAll = async () => {
     setSaving(true)
     try {
-      await persist()
+      await persistConfig()
       toast('KOL 雷达配置已保存')
     } catch (e) {
       toast(e instanceof Error ? e.message : '保存 KOL 雷达配置失败')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleRefreshProfiles = async () => {
+    setRefreshingProfiles(true)
+    try {
+      const result: AccountProfileRefreshResult = await refreshAccountProfiles()
+      if (result.missingKey) {
+        toast('未配置 TWITTERAPI_IO_KEY，跳过静态资料刷新')
+      } else {
+        toast(`已刷新 ${result.refreshed}/${result.scanned} 个账号资料`)
+      }
+      const accounts = await listAccountProfiles({ monitoring: true })
+      setKolAccounts(accounts)
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '刷新账号资料失败')
+    } finally {
+      setRefreshingProfiles(false)
     }
   }
 
@@ -301,36 +345,74 @@ export default function KolRadarSetting() {
             </div>
             <div className={styles.kolAccountHeaderActions}>
               <Tag color="blue">{enabledAccountCount} 个已启用</Tag>
+              <Button
+                icon={<ReloadOutlined spin={refreshingProfiles} />}
+                loading={refreshingProfiles}
+                onClick={() => void handleRefreshProfiles()}
+              >
+                刷新账号资料
+              </Button>
               <Button icon={<PlusOutlined />} onClick={openAddModal}>
                 添加账号
               </Button>
             </div>
           </div>
           <div className={styles.kolAccountList}>
-            {kolAccounts.map((account, index) => (
-              <div className={styles.kolAccountRow} key={`${account.joinedAt}-${index}`}>
+            {kolAccounts.map((account) => (
+              <div className={styles.kolAccountRow} key={account.handle}>
                 <div className={styles.kolAccountInfo}>
                   <div className={styles.kolAccountTitleRow}>
-                    <div className={styles.kolAccountTitle}>{account.handle}</div>
-                    <Tag color={account.enabled ? 'green' : 'default'}>{account.enabled ? '启用' : '停用'}</Tag>
+                    <div className={styles.kolAccountTitle}>{displayHandle(account)}</div>
+                    <Tag color={account.monitorEnabled ? 'green' : 'default'}>
+                      {account.monitorEnabled ? '启用' : '停用'}
+                    </Tag>
+                  </div>
+                  <div className={styles.kolAccountMetrics}>
+                    <Metric icon={<UserOutlined />} label="粉丝" value={formatFollowers(account.followers)} />
+                    <Metric icon={<FileTextOutlined />} label="7天发帖" value={account.weeklyPosts > 0 ? String(account.weeklyPosts) : '--'} />
+                    <Metric icon={<EyeOutlined />} label="7天均views" value={formatViews(account.avgViews)} />
+                    <Metric icon={<HeartOutlined />} label="7天均likes" value={formatViews(account.avgLikes)} />
+                    {account.region ? (
+                      <Metric icon={<GlobalOutlined />} label="区域" value={account.region} />
+                    ) : (
+                      <Metric icon={<GlobalOutlined />} label="区域" value="--" />
+                    )}
+                    <Metric
+                      icon={<ClockCircleOutlined />}
+                      label="最近活跃"
+                      value={account.lastActiveAt ? formatRelativeTime(account.lastActiveAt) : '--'}
+                      tooltip={account.lastActiveAt ? formatDateTime(account.lastActiveAt) : undefined}
+                    />
+                    <Metric
+                      icon={<SyncOutlined />}
+                      label="资料更新"
+                      value={account.lastFetchedAt ? formatRelativeTime(account.lastFetchedAt) : '--'}
+                      tooltip={account.lastFetchedAt ? formatDateTime(account.lastFetchedAt) : undefined}
+                    />
                   </div>
                   <div className={styles.kolAccountMeta}>
                     {account.groupTag ? <Tag color="blue">{account.groupTag}</Tag> : <Tag>未分组</Tag>}
                     <span>加入 {formatJoinedAt(account.joinedAt)}</span>
+                    {account.bio ? (
+                      <Tooltip title={account.bio}>
+                        <span className={styles.bioHint}>{account.bio.slice(0, 60)}</span>
+                      </Tooltip>
+                    ) : null}
                   </div>
                 </div>
                 <div className={styles.kolAccountActions}>
                   <Switch
-                    checked={account.enabled}
+                    checked={account.monitorEnabled}
                     checkedChildren="启用"
                     unCheckedChildren="停用"
-                    loading={savingToggle}
-                    onChange={(checked) => void handleKolAccountSwitch(index, checked)}
+                    loading={savingToggle && pendingHandle === account.handle}
+                    onChange={(checked) => void handleKolAccountSwitch(account, checked)}
                   />
                   <Button
                     danger
                     icon={<DeleteOutlined />}
-                    onClick={() => void handleRemoveKolAccount(index)}
+                    loading={savingToggle && pendingHandle === account.handle}
+                    onClick={() => void handleRemoveKolAccount(account)}
                   >
                     删除
                   </Button>
@@ -390,6 +472,10 @@ export default function KolRadarSetting() {
   )
 }
 
+function displayHandle(account: AccountProfile) {
+  return account.displayHandle ?? account.handle
+}
+
 function formatIntervalMs(ms: number) {
   if (ms % (60 * 60 * 1000) === 0) {
     return `每 ${ms / (60 * 60 * 1000)} 小时`
@@ -414,4 +500,73 @@ function formatJoinedAt(value: string) {
     minute: '2-digit',
     hour12: false,
   }).format(date)
+}
+
+function Metric({
+  icon,
+  label,
+  value,
+  tooltip,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: React.ReactNode
+  tooltip?: string
+}) {
+  const content = (
+    <span className={styles.metricItem}>
+      <span className={styles.metricIcon}>{icon}</span>
+      <span className={styles.metricValue}>{value}</span>
+    </span>
+  )
+
+  if (tooltip) {
+    return <Tooltip title={`${label} · ${tooltip}`}>{content}</Tooltip>
+  }
+
+  return <Tooltip title={label}>{content}</Tooltip>
+}
+
+function formatNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '--'
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
+  return String(value)
+}
+
+function formatFollowers(value: number | null | undefined): string {
+  return formatNumber(value)
+}
+
+function formatViews(value: number | null | undefined): string {
+  return formatNumber(value)
+}
+
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '--'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
+}
+
+function formatRelativeTime(value: string | null | undefined): string {
+  if (!value) return '--'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (seconds < 60) return '刚刚'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} 分钟前`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} 小时前`
+  const days = Math.floor(hours / 24)
+  return `${days} 天前`
 }
