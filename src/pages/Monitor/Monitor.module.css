@@ -33,6 +33,122 @@
   height: 2px;
 }
 
+.hotTopics,
+.hotTweets {
+  display: grid;
+  gap: 14px;
+}
+
+.monitorSectionHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.monitorSectionHead h2 {
+  margin: 0;
+  color: #000000e0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.monitorSectionHead p {
+  margin: 6px 0 0;
+  color: #00000073;
+  line-height: 1.5;
+}
+
+.hotTopicList,
+.hotTweetList {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.hotTopicList :global(.ant-list-item),
+.hotTweetList :global(.ant-list-item) {
+  padding: 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.hotTopicList :global(.ant-list-item:last-child),
+.hotTweetList :global(.ant-list-item:last-child) {
+  border-bottom: 0;
+}
+
+.hotTopicItem,
+.hotTweetItem {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.hotTopicRank,
+.hotTweetRank {
+  flex: 0 0 42px;
+  color: #1677ff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.hotTopicBody,
+.hotTweetBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.hotTopicTitleRow,
+.hotTweetTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hotTopicTitleRow h3 {
+  margin: 0;
+  color: #000000e0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.hotTopicBody p,
+.hotTweetBody p {
+  margin: 7px 0 10px;
+  color: #000000a6;
+  line-height: 1.6;
+}
+
+.hotTopicMeta,
+.hotTweetMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: #00000073;
+  font-size: 12px;
+}
+
+.hotTweetTitleRow strong {
+  color: #000000e0;
+  font-size: 16px;
+}
+
+.hotTweetHandle {
+  margin-left: 8px;
+  color: #00000073;
+  font-size: 13px;
+}
+
+.hotTweetItem > :global(.ant-btn) {
+  flex: 0 0 auto;
+  align-self: center;
+  padding-inline: 0;
+}
+
 .kolWrap {
   display: grid;
   gap: 14px;
