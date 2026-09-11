@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Alert, Button, Empty, List, Tabs, Tag } from 'antd'
-import { LinkOutlined } from '@ant-design/icons'
 import { useApp } from '../../context/AppContext'
 import { Head } from '../../components/ui'
 import { useTrending } from '../../hooks/useTrending'
@@ -33,7 +32,6 @@ type HotTweet = {
   replies: number
   reposts: number
   postedAt: string
-  url: string
   type: '原创' | '二创'
 }
 
@@ -48,7 +46,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 551,
     reposts: 175,
     postedAt: '14 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -61,7 +58,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 221,
     reposts: 1500,
     postedAt: '9 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -74,7 +70,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 333,
     reposts: 7,
     postedAt: '8 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -87,7 +82,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 382,
     reposts: 212,
     postedAt: '9 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -100,7 +94,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 285,
     reposts: 3,
     postedAt: '9 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -113,7 +106,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 182,
     reposts: 14,
     postedAt: '6 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -126,7 +118,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 481,
     reposts: 8,
     postedAt: '8 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -139,7 +130,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 511,
     reposts: 51,
     postedAt: '22 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -152,7 +142,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 192,
     reposts: 44,
     postedAt: '23 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -165,7 +154,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 404,
     reposts: 175,
     postedAt: '23 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -178,7 +166,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 85,
     reposts: 47,
     postedAt: '7 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -191,7 +178,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 323,
     reposts: 452,
     postedAt: '17 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -204,7 +190,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 121,
     reposts: 81,
     postedAt: '7 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -217,7 +202,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 500,
     reposts: 0,
     postedAt: '23 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -230,7 +214,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 159,
     reposts: 34,
     postedAt: '7 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -243,7 +226,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 461,
     reposts: 5,
     postedAt: '19 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -256,7 +238,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 224,
     reposts: 29,
     postedAt: '20 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -269,7 +250,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 75,
     reposts: 5,
     postedAt: '21 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -282,7 +262,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 138,
     reposts: 82,
     postedAt: '13 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -295,7 +274,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 372,
     reposts: 20,
     postedAt: '5 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -308,7 +286,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 40,
     reposts: 6,
     postedAt: '14 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -321,7 +298,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 721,
     reposts: 16,
     postedAt: '18 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -334,7 +310,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 57,
     reposts: 3,
     postedAt: '21 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -347,7 +322,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 16,
     reposts: 6,
     postedAt: '1 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -360,7 +334,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 139,
     reposts: 74,
     postedAt: '7 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -373,7 +346,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 552,
     reposts: 35,
     postedAt: '22 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -386,7 +358,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 140,
     reposts: 33,
     postedAt: '18 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -399,7 +370,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 73,
     reposts: 2,
     postedAt: '5 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -412,7 +382,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 66,
     reposts: 0,
     postedAt: '8 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
   {
@@ -425,7 +394,6 @@ const MOCK_HOT_TWEETS: HotTweet[] = [
     replies: 449,
     reposts: 13,
     postedAt: '19 小时前',
-    url: 'https://sopilot.net/zh/rank/tweets?range=24h',
     type: '二创',
   },
 ]
@@ -604,26 +572,11 @@ function HotTweets() {
                   <span>转发 {formatNumber(tweet.reposts)}</span>
                 </div>
               </div>
-              <Button
-                type="link"
-                icon={<LinkOutlined />}
-                href={tweet.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                查看榜单
-              </Button>
             </div>
           </List.Item>
         )}
       />
-      <div className="note">
-        数据结构参考{' '}
-        <a href="https://sopilot.net/zh/rank/tweets?range=24h" target="_blank" rel="noreferrer">
-          SoPilot 推文起爆榜
-        </a>
-        ，当前为前端 mock 数据。
-      </div>
+      <div className="note">数据结构参考 SoPilot 推文起爆榜，当前为前端 mock 数据。</div>
     </section>
   )
 }
